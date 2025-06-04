@@ -171,7 +171,7 @@ const Producto = () => {
     delete producto.idCategoriaNavigation;
 
     let response;
-    if (producto.idProducto == 0) {
+    if (producto.idProducto === 0) {
       response = await fetch("api/producto/Guardar", {
         method: "POST",
         headers: {
@@ -195,9 +195,9 @@ const Producto = () => {
       setVerModal(!verModal);
 
       Swal.fire(
-        `${producto.idProducto == 0 ? "Guardado" : "Actualizado"}`,
+        `${producto.idProducto === 0 ? "Guardado" : "Actualizado"}`,
         `El producto fue ${
-          producto.idProducto == 0 ? "Agregado" : "Actualizado"
+          producto.idProducto === 0 ? "Agregado" : "Actualizado"
         }`,
         "success"
       );
@@ -218,6 +218,7 @@ const Producto = () => {
       cancelButtonText: "No, volver",
     }).then((result) => {
       if (result.isConfirmed) {
+        // eslint-disable-next-line no-unused-vars
         const response = fetch("api/producto/Eliminar/" + id, {
           method: "DELETE",
         }).then((response) => {
