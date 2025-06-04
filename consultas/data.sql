@@ -10,9 +10,11 @@ go
 
 --INSERTAR USUARIO
 INSERT INTO Usuario(nombre,correo,telefono,idRol,clave,esActivo) values
+('victor','user@gmail.com','87549961',1,'123',1),
 ('kenley','kenleyjos619@gmail.com','58083149',1,'U2FsdGVkX1/YgR8IrHK58PdLOAfeGhnJEMFLZhOixHg=',1),
 ('victor','victorR@gmail.com','87549961',2,'U2FsdGVkX1/YgR8IrHK58PdLOAfeGhnJEMFLZhOixHg=',1)
 
+select * from Usuario
 
 go
 -- INSERTAR CATEGORÍAS
