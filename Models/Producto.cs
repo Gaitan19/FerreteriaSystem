@@ -46,6 +46,12 @@ namespace ReactVentas.Models
         /// </summary>
         public int? IdCategoria { get; set; }
 
+        /// <summary>  
+        /// Gets or sets the identifier for the supplier of the product.  
+        /// Optional field.  
+        /// </summary>  
+        public int? IdProveedor { get; set; }
+
         /// <summary>
         /// Gets or sets the stock quantity available for the product.
         /// Optional field.
@@ -74,6 +80,11 @@ namespace ReactVentas.Models
         /// Navigation property to the related category entity.
         /// </summary>
         public virtual Categoria? IdCategoriaNavigation { get; set; }
+
+        /// <summary>  
+        /// Navigation property to the related supplier entity.  
+        /// </summary>  
+        public virtual Proveedor? IdProveedorNavigation { get; set; }
 
         /// <summary>
         /// Navigation property to the collection of sale details associated with the product.

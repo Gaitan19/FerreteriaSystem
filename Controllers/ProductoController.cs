@@ -26,6 +26,7 @@ namespace ReactVentas.Controllers
             {
                 lista = await _context.Productos
                     .Include(c => c.IdCategoriaNavigation)
+                    .Include(p => p.IdProveedorNavigation)
                     .OrderByDescending(c => c.IdProducto)
                     .ToListAsync();
 
