@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import DataTable from 'react-data-table-component';
+import { useEffect, useState } from "react";
+import DataTable from "react-data-table-component";
 import {
   Card,
   CardBody,
@@ -14,14 +14,14 @@ import {
   ModalFooter,
   Row,
   Col,
-} from 'reactstrap';
-import Swal from 'sweetalert2';
+} from "reactstrap";
+import Swal from "sweetalert2";
 
 const modeloProducto = {
   idProducto: 0,
-  codigo: '',
-  marca: '',
-  descripcion: '',
+  codigo: "",
+  marca: "",
+  descripcion: "",
   idCategoria: 0,
   stock: 1,
   precio: 0,
@@ -38,10 +38,10 @@ const Producto = () => {
   const handleChange = (e) => {
     let value;
 
-    if (e.target.name == 'idCategoria') {
+    if (e.target.name === "idCategoria") {
       value = e.target.value;
-    } else if (e.target.name == 'esActivo') {
-      value = e.target.value == 'true' ? true : false;
+    } else if (e.target.name === "esActivo") {
+      value = e.target.value === "true" ? true : false;
     } else {
       value = e.target.value;
     }
@@ -53,20 +53,19 @@ const Producto = () => {
   };
 
   const obtenerCategorias = async () => {
-    let response = await fetch('api/categoria/Lista');
+    let response = await fetch("api/categoria/Lista");
     if (response.ok) {
       let data = await response.json();
       setCategorias(() => data.filter((item) => item.esActivo));
-      console.log('categorias :>> ', categorias);
     }
   };
 
   const obtenerProductos = async () => {
-    let response = await fetch('api/producto/Lista');
+    let response = await fetch("api/producto/Lista");
 
     if (response.ok) {
       let data = await response.json();
-      setProductos(() => data.filter((item) => item.esActivo));
+      setProductos(() => data);
       setPendiente(false);
     }
   };
@@ -78,42 +77,42 @@ const Producto = () => {
 
   const columns = [
     {
-      name: 'Codigo',
+      name: "Codigo",
       selector: (row) => row.codigo,
       sortable: true,
     },
     {
-      name: 'Marca',
+      name: "Marca",
       selector: (row) => row.marca,
       sortable: true,
     },
     {
-      name: 'Descripcion',
+      name: "Descripcion",
       selector: (row) => row.descripcion,
       sortable: true,
     },
     {
-      name: 'Categoria',
+      name: "Categoria",
       selector: (row) => row.idCategoriaNavigation,
       sortable: true,
       cell: (row) => row.idCategoriaNavigation.descripcion,
     },
     {
-      name: 'Estado',
+      name: "Estado",
       selector: (row) => row.esActivo,
       sortable: true,
       cell: (row) => {
         let clase;
         clase = row.esActivo
-          ? 'badge badge-info p-2'
-          : 'badge badge-danger p-2';
+          ? "badge badge-info p-2"
+          : "badge badge-danger p-2";
         return (
-          <span className={clase}>{row.esActivo ? 'Activo' : 'No Activo'}</span>
+          <span className={clase}>{row.esActivo ? "Activo" : "No Activo"}</span>
         );
       },
     },
     {
-      name: '',
+      name: "",
       cell: (row) => (
         <>
           <Button
@@ -140,22 +139,22 @@ const Producto = () => {
   const customStyles = {
     headCells: {
       style: {
-        fontSize: '13px',
+        fontSize: "13px",
         fontWeight: 800,
       },
     },
     headRow: {
       style: {
-        backgroundColor: '#eee',
+        backgroundColor: "#eee",
       },
     },
   };
 
   const paginationComponentOptions = {
-    rowsPerPageText: 'Filas por página',
-    rangeSeparatorText: 'de',
+    rowsPerPageText: "Filas por página",
+    rangeSeparatorText: "de",
     selectAllRowsItem: true,
-    selectAllRowsItemText: 'Todos',
+    selectAllRowsItemText: "Todos",
   };
 
   const abrirEditarModal = (data) => {
@@ -172,19 +171,19 @@ const Producto = () => {
     delete producto.idCategoriaNavigation;
 
     let response;
-    if (producto.idProducto == 0) {
-      response = await fetch('api/producto/Guardar', {
-        method: 'POST',
+    if (producto.idProducto === 0) {
+      response = await fetch("api/producto/Guardar", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify(producto),
       });
     } else {
-      response = await fetch('api/producto/Editar', {
-        method: 'PUT',
+      response = await fetch("api/producto/Editar", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify(producto),
       });
@@ -196,47 +195,39 @@ const Producto = () => {
       setVerModal(!verModal);
 
       Swal.fire(
-        `${producto.idProducto == 0 ? 'Guardado' : 'Actualizado'}`,
+        `${producto.idProducto === 0 ? "Guardado" : "Actualizado"}`,
         `El producto fue ${
-          producto.idProducto == 0 ? 'Agregado' : 'Actualizado'
+          producto.idProducto === 0 ? "Agregado" : "Actualizado"
         }`,
-        'success'
+        "success"
       );
     } else {
-      Swal.fire('Opp!', 'No se pudo guardar.', 'warning');
+      Swal.fire("Opp!", "No se pudo guardar.", "warning");
     }
   };
 
-  const eliminarProducto = async (dataDelete) => {
+  const eliminarProducto = async (id) => {
     Swal.fire({
-      title: 'Esta seguro?',
-      text: 'Desesa eliminar este producto',
-      icon: 'warning',
+      title: "Esta seguro?",
+      text: "Desea eliminar el producto",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Si, continuar',
-      cancelButtonText: 'No, volver',
-    }).then(async (result) => {
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Si, continuar",
+      cancelButtonText: "No, volver",
+    }).then((result) => {
       if (result.isConfirmed) {
-        delete dataDelete.idCategoriaNavigation;
-        let response;
-        dataDelete.esActivo = !dataDelete.esActivo;
-        dataDelete.precio = -1;
-        response = await fetch('api/producto/Editar', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json;charset=utf-8',
-          },
-          body: JSON.stringify(dataDelete),
-        });
+        // eslint-disable-next-line no-unused-vars
+        const response = fetch("api/producto/Eliminar/" + id, {
+          method: "DELETE",
+        }).then((response) => {
+          if (response.ok) {
+            obtenerProductos();
 
-        if (response.ok) {
-          Swal.fire('Eliminado!', 'El producto fue eliminado.', 'success');
-          await obtenerProductos();
-        } else {
-          Swal.fire('Opp!', 'No se pudo Eliminar.', 'warning');
-        }
+            Swal.fire("Eliminado!", "El producto fue eliminado.", "success");
+          }
+        });
       }
     });
   };
@@ -249,7 +240,7 @@ const Producto = () => {
   return (
     <>
       <Card>
-        <CardHeader style={{ backgroundColor: '#4e73df', color: 'white' }}>
+        <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
           Lista de Productos
         </CardHeader>
         <CardBody>
@@ -319,24 +310,22 @@ const Producto = () => {
                   <Label>Categoria</Label>
                   <Input
                     bsSize="sm"
-                    type={'select'}
+                    type={"select"}
                     name="idCategoria"
                     onChange={handleChange}
                     value={producto.idCategoria}
                     required
                   >
                     <option value={0}>Seleccionar</option>
-                    {categorias.map((item) => {
-                      if (item.esActivo)
-                        return (
-                          <option
-                            key={item.idCategoria}
-                            value={item.idCategoria}
-                          >
-                            {item.descripcion}
-                          </option>
-                        );
-                    })}
+                    {categorias.map((item) =>
+                      item.esActivo ? (
+                        <option key={item.idCategoria} value={item.idCategoria}>
+                          {item.descripcion}
+                        </option>
+                      ) : (
+                        <></>
+                      )
+                    )}
                   </Input>
                 </FormGroup>
               </Col>
@@ -377,7 +366,7 @@ const Producto = () => {
                   <Label>Estado</Label>
                   <Input
                     bsSize="sm"
-                    type={'select'}
+                    type={"select"}
                     name="esActivo"
                     onChange={handleChange}
                     value={producto.esActivo}

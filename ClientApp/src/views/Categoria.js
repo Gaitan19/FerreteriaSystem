@@ -1,5 +1,5 @@
-﻿import { useEffect, useState } from 'react';
-import DataTable from 'react-data-table-component';
+﻿import { useEffect, useState } from "react";
+import DataTable from "react-data-table-component";
 import {
   Card,
   CardBody,
@@ -12,12 +12,12 @@ import {
   Input,
   FormGroup,
   ModalFooter,
-} from 'reactstrap';
-import Swal from 'sweetalert2';
+} from "reactstrap";
+import Swal from "sweetalert2";
 
 const modeloCategoria = {
   idCategoria: 0,
-  descripcion: '',
+  descripcion: "",
   esActivo: true,
 };
 
@@ -29,8 +29,8 @@ const Categoria = () => {
 
   const handleChange = (e) => {
     let value =
-      e.target.nodeName === 'SELECT'
-        ? e.target.value == 'true'
+      e.target.nodeName === "SELECT"
+        ? e.target.value === "true"
           ? true
           : false
         : e.target.value;
@@ -42,11 +42,11 @@ const Categoria = () => {
   };
 
   const obtenerCategorias = async () => {
-    let response = await fetch('api/categoria/Lista');
+    let response = await fetch("api/categoria/Lista");
 
     if (response.ok) {
       let data = await response.json();
-      setCategorias(() => data.filter((item) => item.esActivo));
+      setCategorias(() => data);
       setPendiente(false);
     }
   };
@@ -57,26 +57,26 @@ const Categoria = () => {
 
   const columns = [
     {
-      name: 'Descripcion',
+      name: "Descripcion",
       selector: (row) => row.descripcion,
       sortable: true,
     },
     {
-      name: 'Estado',
+      name: "Estado",
       selector: (row) => row.esActivo,
       sortable: true,
       cell: (row) => {
         let clase;
         clase = row.esActivo
-          ? 'badge badge-info p-2'
-          : 'badge badge-danger p-2';
+          ? "badge badge-info p-2"
+          : "badge badge-danger p-2";
         return (
-          <span className={clase}>{row.esActivo ? 'Activo' : 'No Activo'}</span>
+          <span className={clase}>{row.esActivo ? "Activo" : "No Activo"}</span>
         );
       },
     },
     {
-      name: '',
+      name: "",
       cell: (row) => (
         <>
           <Button
@@ -103,22 +103,22 @@ const Categoria = () => {
   const customStyles = {
     headCells: {
       style: {
-        fontSize: '13px',
+        fontSize: "13px",
         fontWeight: 800,
       },
     },
     headRow: {
       style: {
-        backgroundColor: '#eee',
+        backgroundColor: "#eee",
       },
     },
   };
 
   const paginationComponentOptions = {
-    rowsPerPageText: 'Filas por página',
-    rangeSeparatorText: 'de',
+    rowsPerPageText: "Filas por página",
+    rangeSeparatorText: "de",
     selectAllRowsItem: true,
-    selectAllRowsItemText: 'Todos',
+    selectAllRowsItemText: "Todos",
   };
 
   const abrirEditarModal = (data) => {
@@ -133,19 +133,19 @@ const Categoria = () => {
 
   const guardarCambios = async () => {
     let response;
-    if (categoria.idCategoria == 0) {
-      response = await fetch('api/categoria/Guardar', {
-        method: 'POST',
+    if (categoria.idCategoria === 0) {
+      response = await fetch("api/categoria/Guardar", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify(categoria),
       });
     } else {
-      response = await fetch('api/categoria/Editar', {
-        method: 'PUT',
+      response = await fetch("api/categoria/Editar", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify(categoria),
       });
@@ -156,47 +156,39 @@ const Categoria = () => {
       setCategoria(modeloCategoria);
       setVerModal(!verModal);
       Swal.fire(
-        `${categoria.idCategoria == 0 ? 'Guardada' : 'Actualizada'}`,
+        `${categoria.idCategoria === 0 ? "Guardada" : "Actualizada"}`,
         `La categoria fue ${
-          categoria.idCategoria == 0 ? 'Agregada' : 'Actualizada'
+          categoria.idCategoria === 0 ? "Agregada" : "Actualizada"
         }`,
-        'success'
+        "success"
       );
     } else {
-      alert('error al guardar');
+      alert("error al guardar");
     }
   };
 
-  const eliminarCategoria = async (deleteCategoria) => {
+  const eliminarCategoria = async (id) => {
     Swal.fire({
-      title: 'Esta seguro?',
-      text: 'Desesa eliminar esta categoria',
-      icon: 'warning',
+      title: "Esta seguro?",
+      text: "Desesa eliminar esta categoria",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Si, continuar',
-      cancelButtonText: 'No, volver',
-    }).then(async (result) => {
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Si, continuar",
+      cancelButtonText: "No, volver",
+    }).then((result) => {
       if (result.isConfirmed) {
-        let response;
+        // eslint-disable-next-line no-unused-vars
+        const response = fetch("api/categoria/Eliminar/" + id, {
+          method: "DELETE",
+        }).then((response) => {
+          if (response.ok) {
+            obtenerCategorias();
 
-        deleteCategoria.esActivo = false;
-
-        response = await fetch('api/categoria/Editar', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json;charset=utf-8',
-          },
-          body: JSON.stringify(deleteCategoria),
+            Swal.fire("Eliminado!", "La categoria fue eliminada.", "success");
+          }
         });
-        if (response.ok) {
-          obtenerCategorias();
-
-          Swal.fire('Eliminado!', 'La categoria fue eliminada.', 'success');
-        }
-
-        
       }
     });
   };
@@ -209,7 +201,7 @@ const Categoria = () => {
   return (
     <>
       <Card>
-        <CardHeader style={{ backgroundColor: '#4e73df', color: 'white' }}>
+        <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
           Lista de Categorias
         </CardHeader>
         <CardBody>
@@ -250,7 +242,7 @@ const Categoria = () => {
               <Label>Estado</Label>
               <Input
                 bsSize="sm"
-                type={'select'}
+                type={"select"}
                 name="esActivo"
                 onChange={handleChange}
                 value={categoria.esActivo}

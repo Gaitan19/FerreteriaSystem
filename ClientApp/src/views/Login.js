@@ -3,7 +3,6 @@ import { UserContext } from "../context/UserProvider"
 import Swal from 'sweetalert2'
 import { Navigate } from "react-router-dom"
 import { FaEyeSlash, FaEye } from 'react-icons/fa';
-import { cifrarPassword, decifrarPassword } from "../utils/cifrado";
 
 const Login = () => {
 
@@ -11,29 +10,8 @@ const Login = () => {
     const [_clave, set_Clave] = useState("")
     const { user, iniciarSession } = useContext(UserContext)
     const [visiblePassword, setVisiblePassword] = useState(false);
-    const [usuarios, setUsuarios] = useState([]);
 
-    const obtenerUsuarios = async () => {
-        let response = await fetch("api/usuario/Lista");
-
-        if (response.ok) {
-            let data = await response.json()
-            const tempData = [];
-            data.forEach((item) => {
-                if (item.esActivo) {
-                    item.clave = decifrarPassword(item.clave);
-                    tempData.push(item)
-                }
-            })
-            setUsuarios(() => tempData)
-        }
-
-    }
-
-    useEffect(() => {
-        obtenerUsuarios();
-    }, [])
-
+   
 
     if (user != null) {
         return <Navigate to="/" />
@@ -48,58 +26,40 @@ const Login = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        try {
 
-            let request = {
-                correo: _correo,
-                clave: _clave
-            }
-            let data;
-            let foundedData = false;
-            let userFounded = false;
+        let request = {
+            correo: _correo,
+            clave:_clave
+        }
 
-
-            usuarios.forEach((item) => {
-                if (item.correo === _correo) {
-                    userFounded = true
-                }
-
-                if (item.clave === _clave && item.correo === _correo) {
-                    data = item;
-                    foundedData = true;
-
-                }
-            })
-
-
-            if (foundedData) {
-                data.clave = cifrarPassword(data.clave);
-                iniciarSession(data)
-            }
-            else if (!userFounded) {
+        const api = fetch("api/session/Login", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            },
+            body: JSON.stringify(request)
+        })
+        .then((response) => {
+            return response.ok ? response.json() : Promise.reject(response);
+        })
+        .then((dataJson) => {
+            if (dataJson.idUsuario == 0) {
                 Swal.fire(
                     'Opps!',
-                    'Correo no encontrado',
+                    'No se encontro el usuario',
                     'error'
                 )
             } else {
-                Swal.fire(
-                    'Opps!',
-                    'Contraseña incorrecta',
-                    'error'
-                )
+                iniciarSession(dataJson)
             }
-        } catch (error) {
+
+        }).catch((error) => {
             Swal.fire(
                 'Opps!',
                 'No se pudo iniciar sessión',
                 'error'
             )
-        }
-
-
-
-       
+        })
     }
 
     return (
