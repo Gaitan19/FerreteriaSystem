@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import DataTable from 'react-data-table-component';
+import { useEffect, useState } from "react";
+import DataTable from "react-data-table-component";
 import {
   Card,
   CardBody,
@@ -14,15 +14,16 @@ import {
   ModalFooter,
   Row,
   Col,
-} from 'reactstrap';
-import Swal from 'sweetalert2';
+} from "reactstrap";
+import Swal from "sweetalert2";
 
 const modeloProveedor = {
   idProveedor: 0,
-  nombre: '',
-  correo: '',
-  telefono: '',
-  fechaRegistro: '',
+  nombre: "",
+  correo: "",
+  telefono: "",
+  esActivo: true,
+  fechaRegistro: "",
 };
 
 const Proveedor = () => {
@@ -32,14 +33,21 @@ const Proveedor = () => {
   const [verModal, setVerModal] = useState(false);
 
   const handleChange = (e) => {
+    let value;
+    if (e.target.name === "esActivo") {
+      value = e.target.value === "true" ? true : false;
+    } else {
+      value = e.target.value;
+    }
+
     setProveedor({
       ...proveedor,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     });
   };
 
   const obtenerProveedores = async () => {
-    let response = await fetch('api/proveedor/Lista');
+    let response = await fetch("api/proveedor/Lista");
     if (response.ok) {
       let data = await response.json();
       setProveedores(data);
@@ -53,22 +61,36 @@ const Proveedor = () => {
 
   const columns = [
     {
-      name: 'Nombre',
+      name: "Nombre",
       selector: (row) => row.nombre,
       sortable: true,
     },
     {
-      name: 'Correo',
+      name: "Correo",
       selector: (row) => row.correo,
       sortable: true,
     },
     {
-      name: 'Telefono',
+      name: "Telefono",
       selector: (row) => row.telefono,
       sortable: true,
     },
     {
-      name: '',
+      name: "Estado",
+      selector: (row) => row.esActivo,
+      sortable: true,
+      cell: (row) => {
+        let clase;
+        clase = row.esActivo
+          ? "badge badge-info p-2"
+          : "badge badge-danger p-2";
+        return (
+          <span className={clase}>{row.esActivo ? "Activo" : "No Activo"}</span>
+        );
+      },
+    },
+    {
+      name: "",
       cell: (row) => (
         <>
           <Button
@@ -95,22 +117,22 @@ const Proveedor = () => {
   const customStyles = {
     headCells: {
       style: {
-        fontSize: '13px',
+        fontSize: "13px",
         fontWeight: 800,
       },
     },
     headRow: {
       style: {
-        backgroundColor: '#eee',
+        backgroundColor: "#eee",
       },
     },
   };
 
   const paginationComponentOptions = {
-    rowsPerPageText: 'Filas por página',
-    rangeSeparatorText: 'de',
+    rowsPerPageText: "Filas por página",
+    rangeSeparatorText: "de",
     selectAllRowsItem: true,
-    selectAllRowsItemText: 'Todos',
+    selectAllRowsItemText: "Todos",
   };
 
   const abrirEditarModal = (data) => {
@@ -125,25 +147,26 @@ const Proveedor = () => {
 
   const guardarCambios = async () => {
     let response;
-    if (proveedor.idProveedor == 0) {
+    if (proveedor.idProveedor === 0) {
       const newProveedor = {
         nombre: proveedor.nombre,
         correo: proveedor.correo,
         telefono: proveedor.telefono,
+        esActivo: proveedor.esActivo,
       };
 
-      response = await fetch('api/proveedor/Guardar', {
-        method: 'POST',
+      response = await fetch("api/proveedor/Guardar", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify(newProveedor),
       });
     } else {
-      response = await fetch('api/proveedor/Editar', {
-        method: 'PUT',
+      response = await fetch("api/proveedor/Editar", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify(proveedor),
       });
@@ -151,44 +174,44 @@ const Proveedor = () => {
 
     if (response.ok) {
       Swal.fire(
-        `${proveedor.idProveedor == 0 ? 'Guardado' : 'Actualizado'}`,
+        `${proveedor.idProveedor === 0 ? "Guardado" : "Actualizado"}`,
         `El proveedor fue ${
-          proveedor.idProveedor == 0 ? 'agregado' : 'actualizado'
+          proveedor.idProveedor === 0 ? "agregado" : "actualizado"
         }`,
-        'success'
+        "success"
       );
 
       await obtenerProveedores();
       setProveedor(modeloProveedor);
       setVerModal(!verModal);
     } else {
-      alert('Error al guardar');
+      alert("Error al guardar");
     }
   };
 
   const eliminarProveedor = async (proveedorDelete) => {
     Swal.fire({
-      title: '¿Está seguro?',
-      text: 'Desea eliminar el proveedor',
-      icon: 'warning',
+      title: "¿Está seguro?",
+      text: "Desea eliminar el proveedor",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, continuar',
-      cancelButtonText: 'No, volver',
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, continuar",
+      cancelButtonText: "No, volver",
     }).then(async (result) => {
       if (result.isConfirmed) {
         let response = await fetch(
           `api/proveedor/Eliminar/${proveedorDelete.idProveedor}`,
           {
-            method: 'DELETE',
+            method: "DELETE",
           }
         );
 
         if (response.ok) {
           obtenerProveedores();
 
-          Swal.fire('Eliminado!', 'El proveedor fue eliminado.', 'success');
+          Swal.fire("Eliminado!", "El proveedor fue eliminado.", "success");
         }
       }
     });
@@ -202,7 +225,7 @@ const Proveedor = () => {
   return (
     <>
       <Card>
-        <CardHeader style={{ backgroundColor: '#4e73df', color: 'white' }}>
+        <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
           Lista de Proveedores
         </CardHeader>
         <CardBody>
@@ -266,6 +289,21 @@ const Proveedor = () => {
                     onChange={handleChange}
                     value={proveedor.telefono}
                   />
+                </FormGroup>
+              </Col>
+              <Col sm={6}>
+                <FormGroup>
+                  <Label>Estado</Label>
+                  <Input
+                    bsSize="sm"
+                    type={"select"}
+                    name="esActivo"
+                    onChange={handleChange}
+                    value={proveedor.esActivo}
+                  >
+                    <option value={true}>Activo</option>
+                    <option value={false}>No Activo</option>
+                  </Input>
                 </FormGroup>
               </Col>
             </Row>

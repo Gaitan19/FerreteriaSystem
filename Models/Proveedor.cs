@@ -10,6 +10,11 @@ namespace ReactVentas.Models
     [Table("Proveedor")]
     public partial class Proveedor
     {
+
+        public Proveedor()  
+        {  
+            Productos = new HashSet<Producto>();  
+        } 
         /// <summary>
         /// Gets or sets the unique identifier for the supplier.
         /// </summary>
@@ -33,9 +38,16 @@ namespace ReactVentas.Models
         /// </summary>
         public string? Telefono { get; set; }
 
+        public bool? EsActivo { get; set; }
+
         /// <summary>
         /// Gets or sets the date and time when the supplier was registered.
         /// </summary>
         public DateTime FechaRegistro { get; set; }
+
+        /// <summary>  
+        /// Navigation property to the collection of products supplied by this provider.  
+        /// </summary>  
+        public virtual ICollection<Producto> Productos { get; set; }
     }
 }

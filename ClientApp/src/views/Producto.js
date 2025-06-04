@@ -23,6 +23,7 @@ const modeloProducto = {
   marca: "",
   descripcion: "",
   idCategoria: 0,
+  idProveedor: 0,
   stock: 1,
   precio: 0,
   esActivo: true,
@@ -33,12 +34,13 @@ const Producto = () => {
   const [pendiente, setPendiente] = useState(true);
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
 
   const handleChange = (e) => {
     let value;
 
-    if (e.target.name === "idCategoria") {
+    if (e.target.name === "idCategoria" || e.target.name === "idProveedor") {
       value = e.target.value;
     } else if (e.target.name === "esActivo") {
       value = e.target.value === "true" ? true : false;
@@ -60,6 +62,14 @@ const Producto = () => {
     }
   };
 
+  const obtenerProveedores = async () => {
+    let response = await fetch("api/proveedor/Lista");
+    if (response.ok) {
+      let data = await response.json();
+      setProveedores(() => data.filter((item) => item.esActivo));
+    }
+  };
+
   const obtenerProductos = async () => {
     let response = await fetch("api/producto/Lista");
 
@@ -73,6 +83,7 @@ const Producto = () => {
   useEffect(() => {
     obtenerCategorias();
     obtenerProductos();
+    obtenerProveedores();
   }, []);
 
   const columns = [
@@ -96,6 +107,12 @@ const Producto = () => {
       selector: (row) => row.idCategoriaNavigation,
       sortable: true,
       cell: (row) => row.idCategoriaNavigation.descripcion,
+    },
+    {
+      name: "Proveedor",
+      selector: (row) => row.idProveedorNavigation,
+      sortable: true,
+      cell: (row) => row.idProveedorNavigation?.nombre || "Sin proveedor",
     },
     {
       name: "Estado",
@@ -169,6 +186,7 @@ const Producto = () => {
 
   const guardarCambios = async () => {
     delete producto.idCategoriaNavigation;
+    delete producto.idProveedorNavigation;
 
     let response;
     if (producto.idProducto === 0) {
@@ -236,6 +254,8 @@ const Producto = () => {
     event.preventDefault();
     guardarCambios();
   };
+
+  console.log(productos);
 
   return (
     <>
@@ -333,6 +353,25 @@ const Producto = () => {
             <Row>
               <Col sm={6}>
                 <FormGroup>
+                  <Label>Proveedor</Label>
+                  <Input
+                    bsSize="sm"
+                    type={"select"}
+                    name="idProveedor"
+                    onChange={handleChange}
+                    value={producto.idProveedor}
+                  >
+                    <option value={0}>Seleccionar</option>
+                    {proveedores.map((item) => (
+                      <option key={item.idProveedor} value={item.idProveedor}>
+                        {item.nombre}
+                      </option>
+                    ))}
+                  </Input>
+                </FormGroup>
+              </Col>
+              <Col sm={6}>
+                <FormGroup>
                   <Label>Stock</Label>
                   <Input
                     bsSize="sm"
@@ -360,6 +399,7 @@ const Producto = () => {
                 </FormGroup>
               </Col>
             </Row>
+            <Row></Row>
             <Row>
               <Col sm="6">
                 <FormGroup>

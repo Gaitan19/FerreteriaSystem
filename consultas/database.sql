@@ -34,6 +34,16 @@ descripcion varchar(80),
 esActivo bit,
 fechaRegistro datetime default getdate()
 )
+go
+create table Proveedor (
+    idProveedor int primary key identity(1,1),
+    nombre varchar(100),
+    correo varchar(100),
+    telefono varchar(40),
+	esActivo bit,
+    fechaRegistro datetime default getdate()
+)
+
 
 go 
 create table Producto (
@@ -42,6 +52,7 @@ codigo varchar(100) unique,
 marca varchar(100),
 descripcion varchar(200),
 idCategoria int references Categoria(idCategoria),
+idProveedor int references Proveedor(idProveedor),
 stock int,
 precio decimal(10,2),
 esActivo bit,
@@ -82,10 +93,4 @@ fechaRegistro datetime default getdate()
 )
 go
 
-create table Proveedor (
-    idProveedor int primary key identity(1,1),
-    nombre varchar(100),
-    correo varchar(100),
-    telefono varchar(40),
-    fechaRegistro datetime default getdate()
-)
+

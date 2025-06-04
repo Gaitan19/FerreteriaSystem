@@ -125,6 +125,8 @@ namespace ReactVentas.Models
                     .HasDefaultValueSql("(getdate())");
 
                 entity.Property(e => e.IdCategoria).HasColumnName("idCategoria");
+                entity.Property(e => e.IdProveedor).HasColumnName("idProveedor");  
+
 
                 entity.Property(e => e.Marca)
                     .HasMaxLength(100)
@@ -141,6 +143,12 @@ namespace ReactVentas.Models
                     .WithMany(p => p.Productos)
                     .HasForeignKey(d => d.IdCategoria)
                     .HasConstraintName("FK__Producto__idCate__5812160E");
+
+  
+                entity.HasOne(d => d.IdProveedorNavigation)  
+                    .WithMany(p => p.Productos)  
+                    .HasForeignKey(d => d.IdProveedor)  
+                    .HasConstraintName("FK__Producto__idProv__45F365D3");
             });
 
             modelBuilder.Entity<Proveedor>(entity =>
@@ -164,6 +172,8 @@ namespace ReactVentas.Models
                     .HasMaxLength(40)
                     .IsUnicode(false)
                     .HasColumnName("telefono");
+
+                entity.Property(e => e.EsActivo).HasColumnName("esActivo");
 
                 entity.Property(e => e.FechaRegistro)
                     .HasColumnType("datetime")
