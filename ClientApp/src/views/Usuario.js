@@ -1,5 +1,5 @@
-﻿import { useEffect, useState } from 'react';
-import DataTable from 'react-data-table-component';
+﻿import { useEffect, useState } from "react";
+import DataTable from "react-data-table-component";
 import {
   Card,
   CardBody,
@@ -14,18 +14,17 @@ import {
   ModalFooter,
   Row,
   Col,
-} from 'reactstrap';
-import Swal from 'sweetalert2';
-import { FaEyeSlash, FaEye } from 'react-icons/fa';
-import { cifrarPassword, decifrarPassword } from '../utils/cifrado';
+} from "reactstrap";
+import Swal from "sweetalert2";
+import { FaEyeSlash, FaEye } from "react-icons/fa";
 
 const modeloUsuario = {
   idUsuario: 0,
-  nombre: '',
-  correo: '',
-  telefono: '',
+  nombre: "",
+  correo: "",
+  telefono: "",
   idRol: 0,
-  clave: '',
+  clave: "",
   esActivo: true,
 };
 
@@ -40,10 +39,10 @@ const Usuario = () => {
   const handleChange = (e) => {
     let value;
 
-    if (e.target.name == 'idRol') {
+    if (e.target.name === "idRol") {
       value = e.target.value;
-    } else if (e.target.name == 'esActivo') {
-      value = e.target.value == 'true' ? true : false;
+    } else if (e.target.name === "esActivo") {
+      value = e.target.value === "true" ? true : false;
     } else {
       value = e.target.value;
     }
@@ -55,7 +54,7 @@ const Usuario = () => {
   };
 
   const obtenerRoles = async () => {
-    let response = await fetch('api/rol/Lista');
+    let response = await fetch("api/rol/Lista");
     if (response.ok) {
       let data = await response.json();
       setRoles(data);
@@ -63,18 +62,11 @@ const Usuario = () => {
   };
 
   const obtenerUsuarios = async () => {
-    let response = await fetch('api/usuario/Lista');
+    let response = await fetch("api/usuario/Lista");
 
     if (response.ok) {
       let data = await response.json();
-      const tempData = [];
-      data.forEach((item) => {
-        if (item.esActivo) {
-          item.clave = decifrarPassword(item.clave);
-          tempData.push(item);
-        }
-      });
-      setUsuarios(() => tempData);
+      setUsuarios(data);
       setPendiente(false);
     }
   };
@@ -86,42 +78,42 @@ const Usuario = () => {
 
   const columns = [
     {
-      name: 'Nombre',
+      name: "Nombre",
       selector: (row) => row.nombre,
       sortable: true,
     },
     {
-      name: 'Correo',
+      name: "Correo",
       selector: (row) => row.correo,
       sortable: true,
     },
     {
-      name: 'Telefono',
+      name: "Telefono",
       selector: (row) => row.telefono,
       sortable: true,
     },
     {
-      name: 'Rol',
+      name: "Rol",
       selector: (row) => row.idRolNavigation,
       sortable: true,
       cell: (row) => row.idRolNavigation.descripcion,
     },
     {
-      name: 'Estado',
+      name: "Estado",
       selector: (row) => row.esActivo,
       sortable: true,
       cell: (row) => {
         let clase;
         clase = row.esActivo
-          ? 'badge badge-info p-2'
-          : 'badge badge-danger p-2';
+          ? "badge badge-info p-2"
+          : "badge badge-danger p-2";
         return (
-          <span className={clase}>{row.esActivo ? 'Activo' : 'No Activo'}</span>
+          <span className={clase}>{row.esActivo ? "Activo" : "No Activo"}</span>
         );
       },
     },
     {
-      name: '',
+      name: "",
       cell: (row) => (
         <>
           <Button
@@ -144,22 +136,22 @@ const Usuario = () => {
   const customStyles = {
     headCells: {
       style: {
-        fontSize: '13px',
+        fontSize: "13px",
         fontWeight: 800,
       },
     },
     headRow: {
       style: {
-        backgroundColor: '#eee',
+        backgroundColor: "#eee",
       },
     },
   };
 
   const paginationComponentOptions = {
-    rowsPerPageText: 'Filas por página',
-    rangeSeparatorText: 'de',
+    rowsPerPageText: "Filas por página",
+    rangeSeparatorText: "de",
     selectAllRowsItem: true,
-    selectAllRowsItemText: 'Todos',
+    selectAllRowsItemText: "Todos",
   };
 
   const abrirEditarModal = (data) => {
@@ -177,75 +169,55 @@ const Usuario = () => {
     delete usuario.idRolNavigation;
 
     let response;
-    if (usuario.idUsuario == 0) {
-      usuario.clave = cifrarPassword(usuario.clave);
-      response = await fetch('api/usuario/Guardar', {
-        method: 'POST',
+    if (usuario.idUsuario === 0) {
+      response = await fetch("api/usuario/Guardar", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify(usuario),
       });
     } else {
-      usuario.clave = cifrarPassword(usuario.clave);
-      response = await fetch('api/usuario/Editar', {
-        method: 'PUT',
+      response = await fetch("api/usuario/Editar", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify(usuario),
       });
     }
 
     if (response.ok) {
-      Swal.fire(
-        `${usuario.idUsuario == 0 ? 'Guardado' : 'Actualizado'}`,
-        `El usuario fue ${usuario.idUsuario == 0 ? 'Agregado' : 'Actualizado'}`,
-        'success'
-      );
-
       await obtenerUsuarios();
       setUsuario(modeloUsuario);
       setVerModal(!verModal);
-      setVisiblePassword(() => false);
     } else {
-      setVisiblePassword(() => false);
-
-      alert('error al guardar');
+      alert("error al guardar");
     }
   };
 
-  const eliminarUsuario = async (usuarioDelete) => {
+  const eliminarUsuario = async (id) => {
     Swal.fire({
-      title: 'Esta seguro?',
-      text: 'Desea eliminar el usuario',
-      icon: 'warning',
+      title: "Esta seguro?",
+      text: "Desea eliminar el usuario",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Si, continuar',
-      cancelButtonText: 'No, volver',
-    }).then(async (result) => {
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Si, continuar",
+      cancelButtonText: "No, volver",
+    }).then((result) => {
       if (result.isConfirmed) {
-        let response;
-        delete usuarioDelete.idRolNavigation;
-        usuarioDelete.esActivo = false;
-        usuarioDelete.correo = 'userDeleted@mail.com';
+        // eslint-disable-next-line no-unused-vars
+        const response = fetch("api/usuario/Eliminar/" + id, {
+          method: "DELETE",
+        }).then((response) => {
+          if (response.ok) {
+            obtenerUsuarios();
 
-        response = await fetch('api/usuario/Editar', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json;charset=utf-8',
-          },
-          body: JSON.stringify(usuarioDelete),
+            Swal.fire("Eliminado!", "El usuario fue eliminado.", "success");
+          }
         });
-
-        if (response.ok) {
-          obtenerUsuarios();
-
-          Swal.fire('Eliminado!', 'El usuario fue eliminado.', 'success');
-        }
-       
       }
     });
   };
@@ -262,7 +234,7 @@ const Usuario = () => {
   return (
     <>
       <Card>
-        <CardHeader style={{ backgroundColor: '#4e73df', color: 'white' }}>
+        <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
           Lista de Usuarios
         </CardHeader>
         <CardBody>
@@ -333,7 +305,7 @@ const Usuario = () => {
                   <Label>Rol</Label>
                   <Input
                     bsSize="sm"
-                    type={'select'}
+                    type={"select"}
                     name="idRol"
                     onChange={handleChange}
                     value={usuario.idRol}
@@ -359,7 +331,7 @@ const Usuario = () => {
                     name="clave"
                     onChange={handleChange}
                     value={usuario.clave}
-                    type={`${visiblePassword ? 'text' : 'password'}`}
+                    type={`${visiblePassword ? "text" : "password"}`}
                     required
                   />
                   <button
@@ -380,7 +352,7 @@ const Usuario = () => {
                   <Label>Estado</Label>
                   <Input
                     bsSize="sm"
-                    type={'select'}
+                    type={"select"}
                     name="esActivo"
                     onChange={handleChange}
                     value={usuario.esActivo}
