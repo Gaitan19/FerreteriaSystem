@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
 using ReactVentas.Models.DTO;
+using ReactVentas.Services;
 
 namespace ReactVentas.Controllers
 {
@@ -11,35 +12,36 @@ namespace ReactVentas.Controllers
     public class SessionController : ControllerBase
     {
         private readonly DBREACT_VENTAContext _context;
+        private readonly IPasswordService _passwordService;
 
-        public SessionController(DBREACT_VENTAContext context)
+        public SessionController(DBREACT_VENTAContext context, IPasswordService passwordService)
         {
             _context = context;
+            _passwordService = passwordService;
         }
 
         [HttpPost]
         [Route("Login")]
         public async Task<IActionResult> Login([FromBody] Dtosesion request)
         {
-            // Initialize a new Usuario object to store the result of the login attempt.
             Usuario usuario = new Usuario();
             try
             {
-                // Attempt to find the user in the database based on the provided email and password.
-                usuario = _context.Usuarios.Include(u => u.IdRolNavigation)
-                    .Where(u => u.Correo == request.correo && u.Clave == request.clave)
-                    .FirstOrDefault();
+                usuario = await _context.Usuarios
+                    .Include(u => u.IdRolNavigation)
+                    .FirstOrDefaultAsync(u => u.Correo == request.correo);
 
-                // If no user is found, initialize a new Usuario object.
-                if(usuario == null)
+                if (usuario == null ||
+                    !_passwordService.VerifyPassword(request.clave, usuario.Clave))
+                {
                     usuario = new Usuario();
+                    return StatusCode(StatusCodes.Status401Unauthorized, usuario);
+                }
 
-                // Return a 200 OK status along with the user information.
                 return StatusCode(StatusCodes.Status200OK, usuario);
             }
             catch
             {
-                // Return a 500 Internal Server Error status if an exception occurs during the process.
                 return StatusCode(StatusCodes.Status500InternalServerError, usuario);
             }
         }

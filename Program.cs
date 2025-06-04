@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
 using Microsoft.AspNetCore.ResponseCompression;
+using ReactVentas.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,9 @@ builder.Services.AddResponseCompression(options =>
     options.EnableForHttps = true;
     options.Providers.Add<GzipCompressionProvider>();
 });
+
+// Registrar servicio de contraseñas
+builder.Services.AddScoped<IPasswordService, PasswordService>();
 
 builder.Services.AddControllers().AddJsonOptions(option =>
 {

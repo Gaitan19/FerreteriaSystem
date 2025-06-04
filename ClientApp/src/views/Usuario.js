@@ -26,6 +26,8 @@ const modeloUsuario = {
   idRol: 0,
   clave: "",
   esActivo: true,
+  claveActual: "",  // Nuevo campo para validación
+  claveNueva: ""   // Nuevo campo para cambio
 };
 
 const Usuario = () => {
@@ -35,39 +37,38 @@ const Usuario = () => {
   const [roles, setRoles] = useState([]);
   const [verModal, setVerModal] = useState(false);
   const [visiblePassword, setVisiblePassword] = useState(false);
+  const [cambiandoClave, setCambiandoClave] = useState(false); // Estado para controlar cambio de clave
 
   const handleChange = (e) => {
-    let value;
-
-    if (e.target.name === "idRol") {
-      value = e.target.value;
-    } else if (e.target.name === "esActivo") {
-      value = e.target.value === "true" ? true : false;
-    } else {
-      value = e.target.value;
-    }
-
+    const { name, value } = e.target;
     setUsuario({
       ...usuario,
-      [e.target.name]: value,
+      [name]: value
     });
   };
 
   const obtenerRoles = async () => {
-    let response = await fetch("api/rol/Lista");
-    if (response.ok) {
-      let data = await response.json();
-      setRoles(data);
+    try {
+      let response = await fetch("api/rol/Lista");
+      if (response.ok) {
+        let data = await response.json();
+        setRoles(data);
+      }
+    } catch (error) {
+      Swal.fire("Error", "Error al obtener roles", "error");
     }
   };
 
   const obtenerUsuarios = async () => {
-    let response = await fetch("api/usuario/Lista");
-
-    if (response.ok) {
-      let data = await response.json();
-      setUsuarios(data);
-      setPendiente(false);
+    try {
+      let response = await fetch("api/usuario/Lista");
+      if (response.ok) {
+        let data = await response.json();
+        setUsuarios(data);
+        setPendiente(false);
+      }
+    } catch (error) {
+      Swal.fire("Error", "Error al obtener usuarios", "error");
     }
   };
 
@@ -103,9 +104,8 @@ const Usuario = () => {
       selector: (row) => row.esActivo,
       sortable: true,
       cell: (row) => {
-        let clase;
-        clase = row.esActivo
-          ? "badge badge-info p-2"
+        let clase = row.esActivo 
+          ? "badge badge-info p-2" 
           : "badge badge-danger p-2";
         return (
           <span className={clase}>{row.esActivo ? "Activo" : "No Activo"}</span>
@@ -113,9 +113,9 @@ const Usuario = () => {
       },
     },
     {
-      name: "",
+      name: "Acciones",
       cell: (row) => (
-        <>
+        <div className="d-flex">
           <Button
             color="primary"
             size="sm"
@@ -124,11 +124,14 @@ const Usuario = () => {
           >
             <i className="fas fa-pen-alt"></i>
           </Button>
-
-          <Button color="danger" size="sm" onClick={() => eliminarUsuario(row)}>
+          <Button 
+            color="danger" 
+            size="sm" 
+            onClick={() => eliminarUsuario(row.idUsuario)}
+          >
             <i className="fas fa-trash-alt"></i>
           </Button>
-        </>
+        </div>
       ),
     },
   ];
@@ -155,68 +158,105 @@ const Usuario = () => {
   };
 
   const abrirEditarModal = (data) => {
-    setUsuario(data);
-    setVerModal(!verModal);
+    setUsuario({
+      ...data,
+      clave: "",
+      claveActual: "",
+      claveNueva: ""
+    });
+    setCambiandoClave(false);
+    setVerModal(true);
+  };
+
+  const abrirNuevoModal = () => {
+    setUsuario(modeloUsuario);
+    setCambiandoClave(false);
+    setVerModal(true);
   };
 
   const cerrarModal = () => {
     setUsuario(modeloUsuario);
-    setVerModal(!verModal);
-    setVisiblePassword(() => false);
+    setVerModal(false);
+    setVisiblePassword(false);
+    setCambiandoClave(false);
   };
 
   const guardarCambios = async () => {
-    delete usuario.idRolNavigation;
+    try {
+      let payload;
+      let url;
+      let method;
 
-    let response;
-    if (usuario.idUsuario === 0) {
-      response = await fetch("api/usuario/Guardar", {
-        method: "POST",
+      if (usuario.idUsuario === 0) {
+        // Nuevo usuario
+        payload = { ...usuario };
+        delete payload.idRolNavigation;
+        url = "api/usuario/Guardar";
+        method = "POST";
+      } else {
+        // Edición existente
+        payload = {
+          IdUsuario: usuario.idUsuario,
+          Nombre: usuario.nombre,
+          Correo: usuario.correo,
+          Telefono: usuario.telefono,
+          IdRol: usuario.idRol,
+          EsActivo: usuario.esActivo,
+          ClaveActual: cambiandoClave ? usuario.claveActual : "",
+          ClaveNueva: cambiandoClave ? usuario.claveNueva : ""
+        };
+        url = "api/usuario/Editar";
+        method = "PATCH";
+      }
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json;charset=utf-8",
         },
-        body: JSON.stringify(usuario),
+        body: JSON.stringify(payload),
       });
-    } else {
-      response = await fetch("api/usuario/Editar", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json;charset=utf-8",
-        },
-        body: JSON.stringify(usuario),
-      });
-    }
 
-    if (response.ok) {
-      await obtenerUsuarios();
-      setUsuario(modeloUsuario);
-      setVerModal(!verModal);
-    } else {
-      alert("error al guardar");
+      if (response.ok) {
+        await obtenerUsuarios();
+        cerrarModal();
+        Swal.fire("Éxito", "Operación realizada correctamente", "success");
+      } else {
+        const error = await response.text();
+        Swal.fire("Error", error, "error");
+      }
+    } catch (error) {
+      Swal.fire("Error", "Error en la conexión con el servidor", "error");
     }
   };
 
   const eliminarUsuario = async (id) => {
     Swal.fire({
-      title: "Esta seguro?",
-      text: "Desea eliminar el usuario",
+      title: "¿Está seguro?",
+      text: "¿Desea eliminar este usuario permanentemente?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Si, continuar",
-      cancelButtonText: "No, volver",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
-        // eslint-disable-next-line no-unused-vars
-        const response = fetch("api/usuario/Eliminar/" + id, {
+        fetch(`api/usuario/Eliminar/${id}`, {
           method: "DELETE",
-        }).then((response) => {
+        })
+        .then(response => {
           if (response.ok) {
             obtenerUsuarios();
-
             Swal.fire("Eliminado!", "El usuario fue eliminado.", "success");
+          } else {
+            return response.text().then(error => {
+              Swal.fire("Error", error, "error");
+            });
           }
+        })
+        .catch(error => {
+          Swal.fire("Error", "Error al conectar con el servidor", "error");
         });
       }
     });
@@ -228,24 +268,28 @@ const Usuario = () => {
   };
 
   const handleVisiblePassword = () => {
-    setVisiblePassword((preVisible) => !preVisible);
+    setVisiblePassword((prev) => !prev);
   };
 
   return (
     <>
-      <Card>
-        <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
-          Lista de Usuarios
+      <Card className="shadow mb-4">
+        <CardHeader 
+          className="py-3" 
+          style={{ backgroundColor: "#4e73df", color: "white" }}
+        >
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="m-0 font-weight-bold">Lista de Usuarios</h6>
+            <Button
+              color="success"
+              size="sm"
+              onClick={abrirNuevoModal}
+            >
+              <i className="fas fa-plus mr-1"></i> Nuevo Usuario
+            </Button>
+          </div>
         </CardHeader>
         <CardBody>
-          <Button
-            color="success"
-            size="sm"
-            onClick={() => setVerModal(!verModal)}
-          >
-            Nuevo Usuario
-          </Button>
-          <hr></hr>
           <DataTable
             columns={columns}
             data={usuarios}
@@ -253,18 +297,21 @@ const Usuario = () => {
             pagination
             paginationComponentOptions={paginationComponentOptions}
             customStyles={customStyles}
+            noDataComponent="No hay usuarios registrados"
           />
         </CardBody>
       </Card>
 
-      <Modal isOpen={verModal}>
-        <ModalHeader>Detalle Usuario</ModalHeader>
+      <Modal isOpen={verModal} toggle={cerrarModal} centered>
+        <ModalHeader toggle={cerrarModal}>
+          {usuario.idUsuario === 0 ? "Nuevo Usuario" : "Editar Usuario"}
+        </ModalHeader>
         <form onSubmit={handleSubmit}>
           <ModalBody>
             <Row>
               <Col sm={6}>
                 <FormGroup>
-                  <Label>Nombre</Label>
+                  <Label>Nombre *</Label>
                   <Input
                     bsSize="sm"
                     name="nombre"
@@ -276,7 +323,7 @@ const Usuario = () => {
               </Col>
               <Col sm={6}>
                 <FormGroup>
-                  <Label>Correo</Label>
+                  <Label>Correo *</Label>
                   <Input
                     bsSize="sm"
                     name="correo"
@@ -288,10 +335,11 @@ const Usuario = () => {
                 </FormGroup>
               </Col>
             </Row>
+            
             <Row>
               <Col sm={6}>
                 <FormGroup>
-                  <Label>Telefono</Label>
+                  <Label>Teléfono</Label>
                   <Input
                     bsSize="sm"
                     name="telefono"
@@ -302,16 +350,16 @@ const Usuario = () => {
               </Col>
               <Col sm={6}>
                 <FormGroup>
-                  <Label>Rol</Label>
+                  <Label>Rol *</Label>
                   <Input
                     bsSize="sm"
-                    type={"select"}
+                    type="select"
                     name="idRol"
                     onChange={handleChange}
                     value={usuario.idRol}
                     required
                   >
-                    <option value={0}>Seleccionar</option>
+                    <option value="">Seleccionar rol...</option>
                     {roles.map((item) => (
                       <option key={item.idRol} value={item.idRol}>
                         {item.descripcion}
@@ -321,55 +369,136 @@ const Usuario = () => {
                 </FormGroup>
               </Col>
             </Row>
-            <Row>
-              <Col sm="6">
-                <FormGroup>
-                  <Label>Contraseña</Label>
-                  <Input
-                    className="Input-user-new"
-                    bsSize="sm"
-                    name="clave"
-                    onChange={handleChange}
-                    value={usuario.clave}
-                    type={`${visiblePassword ? "text" : "password"}`}
-                    required
-                  />
-                  <button
-                    className="Button-visible-usuario"
-                    type="button"
-                    onClick={handleVisiblePassword}
-                  >
-                    {visiblePassword ? (
-                      <FaEyeSlash className="Button-icon" />
-                    ) : (
-                      <FaEye className="Button-icon" />
-                    )}
-                  </button>
-                </FormGroup>
-              </Col>
-              <Col sm="6">
-                <FormGroup>
-                  <Label>Estado</Label>
-                  <Input
-                    bsSize="sm"
-                    type={"select"}
-                    name="esActivo"
-                    onChange={handleChange}
-                    value={usuario.esActivo}
-                  >
-                    <option value={true}>Activo</option>
-                    <option value={false}>No Activo</option>
-                  </Input>
-                </FormGroup>
-              </Col>
-            </Row>
+            
+            {/* Contraseña para nuevo usuario */}
+            {usuario.idUsuario === 0 && (
+              <Row>
+                <Col sm="6">
+                  <FormGroup>
+                    <Label>Contraseña *</Label>
+                    <div className="position-relative">
+                      <Input
+                        bsSize="sm"
+                        name="clave"
+                        onChange={handleChange}
+                        value={usuario.clave}
+                        type={visiblePassword ? "text" : "password"}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-sm position-absolute"
+                        style={{ right: 5, top: 0, zIndex: 10 }}
+                        onClick={handleVisiblePassword}
+                      >
+                        {visiblePassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                  </FormGroup>
+                </Col>
+                <Col sm="6">
+                  <FormGroup>
+                    <Label>Estado *</Label>
+                    <Input
+                      bsSize="sm"
+                      type="select"
+                      name="esActivo"
+                      onChange={handleChange}
+                      value={usuario.esActivo}
+                      required
+                    >
+                      <option value={true}>Activo</option>
+                      <option value={false}>Inactivo</option>
+                    </Input>
+                  </FormGroup>
+                </Col>
+              </Row>
+            )}
+            
+            {/* Campos para edición de usuario existente */}
+            {usuario.idUsuario !== 0 && (
+              <>
+                <Row>
+                  <Col sm="6">
+                    <FormGroup>
+                      <Label>Estado *</Label>
+                      <Input
+                        bsSize="sm"
+                        type="select"
+                        name="esActivo"
+                        onChange={handleChange}
+                        value={usuario.esActivo}
+                        required
+                      >
+                        <option value={true}>Activo</option>
+                        <option value={false}>Inactivo</option>
+                      </Input>
+                    </FormGroup>
+                  </Col>
+                  <Col sm="6">
+                    <FormGroup className="d-flex align-items-center mt-4">
+                      <Input
+                        type="checkbox"
+                        id="cambiarClave"
+                        checked={cambiandoClave}
+                        onChange={() => setCambiandoClave(!cambiandoClave)}
+                        className="mr-2"
+                      />
+                      <Label for="cambiarClave" className="mb-0">
+                        Cambiar contraseña
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                
+                {cambiandoClave && (
+                  <Row>
+                    <Col sm="6">
+                      <FormGroup>
+                        <Label>Contraseña Actual *</Label>
+                        <Input
+                          bsSize="sm"
+                          name="claveActual"
+                          onChange={handleChange}
+                          value={usuario.claveActual}
+                          type="password"
+                          required
+                        />
+                      </FormGroup>
+                    </Col>
+                    <Col sm="6">
+                      <FormGroup>
+                        <Label>Nueva Contraseña *</Label>
+                        <Input
+                          bsSize="sm"
+                          name="claveNueva"
+                          onChange={handleChange}
+                          value={usuario.claveNueva}
+                          type="password"
+                          required
+                        />
+                      </FormGroup>
+                    </Col>
+                  </Row>
+                )}
+              </>
+            )}
           </ModalBody>
-          <ModalFooter>
-            <Button size="sm" color="primary" type="submit">
-              Guardar
+          
+          <ModalFooter className="d-flex justify-content-between">
+            <Button 
+              color="secondary" 
+              size="sm" 
+              onClick={cerrarModal}
+            >
+              Cancelar
             </Button>
-            <Button size="sm" color="danger" onClick={cerrarModal}>
-              Cerrar
+            <Button 
+              type="submit" 
+              color="primary" 
+              size="sm"
+            >
+              {usuario.idUsuario === 0 ? "Crear Usuario" : "Guardar Cambios"}
             </Button>
           </ModalFooter>
         </form>
