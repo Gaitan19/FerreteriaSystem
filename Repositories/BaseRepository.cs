@@ -7,9 +7,9 @@ using System.Reflection;
 namespace ReactVentas.Repositories
 {
     /// <summary>
-    /// Base repository implementation that provides common operations for entities with soft delete support
+    /// Implementación del repositorio base que proporciona operaciones comunes para entidades con soporte de eliminación suave
     /// </summary>
-    /// <typeparam name="T">Entity type</typeparam>
+    /// <typeparam name="T">Tipo de entidad</typeparam>
     public class BaseRepository<T> : IBaseRepository<T> where T : class
     {
         protected readonly DBREACT_VENTAContext _context;
@@ -22,24 +22,24 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets all entities (both active and inactive)
+        /// Obtiene todas las entidades (tanto activas como inactivas)
         /// </summary>
         public virtual async Task<List<T>> GetAllAsync()
         {
-            // Return all entities regardless of EsActivo status to maintain original API behavior
+            // Retorna todas las entidades sin importar el estado EsActivo para mantener el comportamiento original de la API
             return await _dbSet.OrderByDescending(GetIdProperty()).ToListAsync();
         }
 
         /// <summary>
-        /// Gets only active entities (where EsActivo = true)
+        /// Obtiene solo las entidades activas (donde EsActivo = true)
         /// </summary>
         public virtual async Task<List<T>> GetActiveAsync()
         {
-            // Check if entity has EsActivo property for soft delete filtering
+            // Verifica si la entidad tiene la propiedad EsActivo para filtrado de eliminación suave
             var esActivoProperty = typeof(T).GetProperty("EsActivo");
             if (esActivoProperty != null)
             {
-                // Create expression: entity => entity.EsActivo == true
+                // Crea expresión: entity => entity.EsActivo == true
                 var parameter = Expression.Parameter(typeof(T), "entity");
                 var property = Expression.Property(parameter, "EsActivo");
                 var constant = Expression.Constant(true, typeof(bool?));
@@ -49,12 +49,12 @@ namespace ReactVentas.Repositories
                 return await _dbSet.Where(lambda).OrderByDescending(GetIdProperty()).ToListAsync();
             }
 
-            // If no EsActivo property, return all entities
+            // Si no tiene propiedad EsActivo, retorna todas las entidades
             return await _dbSet.OrderByDescending(GetIdProperty()).ToListAsync();
         }
 
         /// <summary>
-        /// Gets entity by id, only if active
+        /// Obtiene una entidad por id, solo si está activa
         /// </summary>
         public virtual async Task<T?> GetByIdAsync(int id)
         {
@@ -62,7 +62,7 @@ namespace ReactVentas.Repositories
             
             if (entity == null) return null;
 
-            // Check if entity is active
+            // Verifica si la entidad está activa
             var esActivoProperty = typeof(T).GetProperty("EsActivo");
             if (esActivoProperty != null)
             {
@@ -74,13 +74,13 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets entities based on a condition, filtered by active status
+        /// Obtiene entidades basadas en una condición, filtradas por estado activo
         /// </summary>
         public virtual async Task<List<T>> GetWhereAsync(Expression<Func<T, bool>> predicate)
         {
             var query = _dbSet.Where(predicate);
 
-            // Add active filter if entity has EsActivo property
+            // Agrega filtro activo si la entidad tiene propiedad EsActivo
             var esActivoProperty = typeof(T).GetProperty("EsActivo");
             if (esActivoProperty != null)
             {
@@ -97,11 +97,11 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Adds a new entity with EsActivo = true and FechaRegistro = now
+        /// Agrega una nueva entidad con EsActivo = true y FechaRegistro = ahora
         /// </summary>
         public virtual async Task<T> AddAsync(T entity)
         {
-            // Set default values for common properties
+            // Establece valores predeterminados para propiedades comunes
             var esActivoProperty = typeof(T).GetProperty("EsActivo");
             if (esActivoProperty != null && esActivoProperty.GetValue(entity) == null)
             {
@@ -119,7 +119,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Updates an existing entity
+        /// Actualiza una entidad existente
         /// </summary>
         public virtual async Task<T> UpdateAsync(T entity)
         {
@@ -128,7 +128,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Performs soft delete by setting EsActivo to false
+        /// Realiza eliminación suave estableciendo EsActivo en false
         /// </summary>
         public virtual async Task<bool> SoftDeleteAsync(int id)
         {
@@ -143,12 +143,12 @@ namespace ReactVentas.Repositories
                 return true;
             }
 
-            // If entity doesn't have EsActivo property, cannot perform soft delete
+            // Si la entidad no tiene propiedad EsActivo, no se puede realizar eliminación suave
             return false;
         }
 
         /// <summary>
-        /// Saves changes to the database
+        /// Guarda los cambios en la base de datos
         /// </summary>
         public virtual async Task<int> SaveChangesAsync()
         {
@@ -156,7 +156,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets the ID property expression for ordering
+        /// Obtiene la expresión de propiedad ID para ordenamiento
         /// </summary>
         private Expression<Func<T, object>> GetIdProperty()
         {

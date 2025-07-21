@@ -3,28 +3,28 @@ using ReactVentas.Models;
 namespace ReactVentas.Interfaces
 {
     /// <summary>
-    /// Repository interface for Producto entity operations
+    /// Interfaz del repositorio para operaciones de la entidad Producto
     /// </summary>
     public interface IProductoRepository : IBaseRepository<Producto>
     {
         /// <summary>
-        /// Gets products with their category and supplier information
+        /// Obtiene productos con su información de categoría y proveedor
         /// </summary>
-        /// <returns>List of products with related data</returns>
+        /// <returns>Lista de productos con datos relacionados</returns>
         Task<List<Producto>> GetProductsWithRelatedDataAsync();
 
         /// <summary>
-        /// Gets products by category
+        /// Obtiene productos por categoría
         /// </summary>
-        /// <param name="categoriaId">Category identifier</param>
-        /// <returns>List of products in the specified category</returns>
+        /// <param name="categoriaId">Identificador de la categoría</param>
+        /// <returns>Lista de productos de la categoría especificada</returns>
         Task<List<Producto>> GetProductsByCategoryAsync(int categoriaId);
 
         /// <summary>
-        /// Gets products by supplier
+        /// Obtiene productos por proveedor
         /// </summary>
-        /// <param name="proveedorId">Supplier identifier</param>
-        /// <returns>List of products from the specified supplier</returns>
+        /// <param name="proveedorId">Identificador del proveedor</param>
+        /// <returns>Lista de productos del proveedor especificado</returns>
         Task<List<Producto>> GetProductsBySupplierAsync(int proveedorId);
     }
 }

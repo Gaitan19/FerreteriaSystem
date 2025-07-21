@@ -3,14 +3,14 @@ using ReactVentas.Models;
 namespace ReactVentas.Interfaces
 {
     /// <summary>
-    /// Repository interface for Rol entity operations
+    /// Interfaz del repositorio para operaciones de la entidad Rol
     /// </summary>
     public interface IRolRepository : IBaseRepository<Rol>
     {
         /// <summary>
-        /// Gets roles with their users
+        /// Obtiene roles con sus usuarios
         /// </summary>
-        /// <returns>List of roles with users</returns>
+        /// <returns>Lista de roles con usuarios</returns>
         Task<List<Rol>> GetRolesWithUsersAsync();
     }
 }

@@ -3,62 +3,62 @@ using System.Linq.Expressions;
 namespace ReactVentas.Interfaces
 {
     /// <summary>
-    /// Base repository interface that defines common operations for entities
+    /// Interfaz del repositorio base que define operaciones comunes para entidades
     /// </summary>
-    /// <typeparam name="T">Entity type</typeparam>
+    /// <typeparam name="T">Tipo de entidad</typeparam>
     public interface IBaseRepository<T> where T : class
     {
         /// <summary>
-        /// Gets all entities (both active and inactive)
+        /// Obtiene todas las entidades (tanto activas como inactivas)
         /// </summary>
-        /// <returns>List of all entities</returns>
+        /// <returns>Lista de todas las entidades</returns>
         Task<List<T>> GetAllAsync();
 
         /// <summary>
-        /// Gets only active entities (where EsActivo = true)
+        /// Obtiene solo las entidades activas (donde EsActivo = true)
         /// </summary>
-        /// <returns>List of active entities</returns>
+        /// <returns>Lista de entidades activas</returns>
         Task<List<T>> GetActiveAsync();
 
         /// <summary>
-        /// Gets entity by id
+        /// Obtiene una entidad por su id
         /// </summary>
-        /// <param name="id">Entity identifier</param>
-        /// <returns>Entity if found, null otherwise</returns>
+        /// <param name="id">Identificador de la entidad</param>
+        /// <returns>Entidad si se encuentra, null en caso contrario</returns>
         Task<T?> GetByIdAsync(int id);
 
         /// <summary>
-        /// Gets entities based on a condition
+        /// Obtiene entidades basadas en una condición
         /// </summary>
-        /// <param name="predicate">Filter condition</param>
-        /// <returns>Filtered list of entities</returns>
+        /// <param name="predicate">Condición de filtro</param>
+        /// <returns>Lista filtrada de entidades</returns>
         Task<List<T>> GetWhereAsync(Expression<Func<T, bool>> predicate);
 
         /// <summary>
-        /// Adds a new entity
+        /// Agrega una nueva entidad
         /// </summary>
-        /// <param name="entity">Entity to add</param>
-        /// <returns>Added entity</returns>
+        /// <param name="entity">Entidad a agregar</param>
+        /// <returns>Entidad agregada</returns>
         Task<T> AddAsync(T entity);
 
         /// <summary>
-        /// Updates an existing entity
+        /// Actualiza una entidad existente
         /// </summary>
-        /// <param name="entity">Entity to update</param>
-        /// <returns>Updated entity</returns>
+        /// <param name="entity">Entidad a actualizar</param>
+        /// <returns>Entidad actualizada</returns>
         Task<T> UpdateAsync(T entity);
 
         /// <summary>
-        /// Performs soft delete by setting IsActive to false
+        /// Realiza eliminación suave estableciendo EsActivo en false
         /// </summary>
-        /// <param name="id">Entity identifier</param>
-        /// <returns>True if deletion was successful, false otherwise</returns>
+        /// <param name="id">Identificador de la entidad</param>
+        /// <returns>True si la eliminación fue exitosa, false en caso contrario</returns>
         Task<bool> SoftDeleteAsync(int id);
 
         /// <summary>
-        /// Saves changes to the database
+        /// Guarda los cambios en la base de datos
         /// </summary>
-        /// <returns>Number of affected rows</returns>
+        /// <returns>Número de filas afectadas</returns>
         Task<int> SaveChangesAsync();
     }
 }

@@ -5,7 +5,7 @@ using ReactVentas.Models;
 namespace ReactVentas.Repositories
 {
     /// <summary>
-    /// Repository implementation for Rol entity
+    /// Implementación del repositorio para la entidad Rol
     /// </summary>
     public class RolRepository : BaseRepository<Rol>, IRolRepository
     {
@@ -14,7 +14,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets roles with their users
+        /// Obtiene roles con sus usuarios
         /// </summary>
         public async Task<List<Rol>> GetRolesWithUsersAsync()
         {
@@ -26,7 +26,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Override GetAllAsync to order by IdRol descending and include all records
+        /// Sobrescribe GetAllAsync para ordenar por IdRol descendente e incluir todos los registros
         /// </summary>
         public override async Task<List<Rol>> GetAllAsync()
         {
@@ -36,7 +36,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets only active roles
+        /// Obtiene solo los roles activos
         /// </summary>
         public override async Task<List<Rol>> GetActiveAsync()
         {

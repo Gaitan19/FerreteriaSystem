@@ -3,21 +3,21 @@ using ReactVentas.Models;
 namespace ReactVentas.Interfaces
 {
     /// <summary>
-    /// Repository interface for Proveedor entity operations
+    /// Interfaz del repositorio para operaciones de la entidad Proveedor
     /// </summary>
     public interface IProveedorRepository : IBaseRepository<Proveedor>
     {
         /// <summary>
-        /// Gets suppliers with their products
+        /// Obtiene proveedores con sus productos
         /// </summary>
-        /// <returns>List of suppliers with products</returns>
+        /// <returns>Lista de proveedores con productos</returns>
         Task<List<Proveedor>> GetSuppliersWithProductsAsync();
 
         /// <summary>
-        /// Gets supplier by email
+        /// Obtiene proveedor por email
         /// </summary>
-        /// <param name="email">Supplier email</param>
-        /// <returns>Supplier if found, null otherwise</returns>
+        /// <param name="email">Email del proveedor</param>
+        /// <returns>Proveedor si se encuentra, null en caso contrario</returns>
         Task<Proveedor?> GetByEmailAsync(string email);
     }
 }

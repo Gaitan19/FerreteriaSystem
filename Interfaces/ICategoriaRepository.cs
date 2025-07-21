@@ -3,14 +3,14 @@ using ReactVentas.Models;
 namespace ReactVentas.Interfaces
 {
     /// <summary>
-    /// Repository interface for Categoria entity operations
+    /// Interfaz del repositorio para operaciones de la entidad Categoria
     /// </summary>
     public interface ICategoriaRepository : IBaseRepository<Categoria>
     {
         /// <summary>
-        /// Gets categories with their related products
+        /// Obtiene categorías con sus productos relacionados
         /// </summary>
-        /// <returns>List of categories with products</returns>
+        /// <returns>Lista de categorías con productos</returns>
         Task<List<Categoria>> GetCategoriasWithProductsAsync();
     }
 }

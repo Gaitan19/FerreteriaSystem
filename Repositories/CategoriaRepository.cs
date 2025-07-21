@@ -5,7 +5,7 @@ using ReactVentas.Models;
 namespace ReactVentas.Repositories
 {
     /// <summary>
-    /// Repository implementation for Categoria entity
+    /// Implementación del repositorio para la entidad Categoria
     /// </summary>
     public class CategoriaRepository : BaseRepository<Categoria>, ICategoriaRepository
     {
@@ -14,7 +14,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets categories with their related products
+        /// Obtiene categorías con sus productos relacionados
         /// </summary>
         public async Task<List<Categoria>> GetCategoriasWithProductsAsync()
         {
@@ -26,7 +26,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Override GetAllAsync to order by IdCategoria descending and include all records
+        /// Sobrescribe GetAllAsync para ordenar por IdCategoria descendente e incluir todos los registros
         /// </summary>
         public override async Task<List<Categoria>> GetAllAsync()
         {
@@ -36,7 +36,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets only active categories
+        /// Obtiene solo las categorías activas
         /// </summary>
         public override async Task<List<Categoria>> GetActiveAsync()
         {

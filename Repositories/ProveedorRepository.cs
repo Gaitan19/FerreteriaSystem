@@ -5,7 +5,7 @@ using ReactVentas.Models;
 namespace ReactVentas.Repositories
 {
     /// <summary>
-    /// Repository implementation for Proveedor entity
+    /// Implementación del repositorio para la entidad Proveedor
     /// </summary>
     public class ProveedorRepository : BaseRepository<Proveedor>, IProveedorRepository
     {
@@ -14,7 +14,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets suppliers with their products
+        /// Obtiene proveedores con sus productos
         /// </summary>
         public async Task<List<Proveedor>> GetSuppliersWithProductsAsync()
         {
@@ -26,7 +26,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets supplier by email
+        /// Obtiene proveedor por email
         /// </summary>
         public async Task<Proveedor?> GetByEmailAsync(string email)
         {
@@ -35,7 +35,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Override GetAllAsync to order by IdProveedor descending and include all records
+        /// Sobrescribe GetAllAsync para ordenar por IdProveedor descendente e incluir todos los registros
         /// </summary>
         public override async Task<List<Proveedor>> GetAllAsync()
         {
@@ -45,7 +45,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets only active suppliers
+        /// Obtiene solo los proveedores activos
         /// </summary>
         public override async Task<List<Proveedor>> GetActiveAsync()
         {

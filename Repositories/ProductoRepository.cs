@@ -5,7 +5,7 @@ using ReactVentas.Models;
 namespace ReactVentas.Repositories
 {
     /// <summary>
-    /// Repository implementation for Producto entity
+    /// Implementación del repositorio para la entidad Producto
     /// </summary>
     public class ProductoRepository : BaseRepository<Producto>, IProductoRepository
     {
@@ -14,7 +14,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets products with their category and supplier information (all records)
+        /// Obtiene productos con su información de categoría y proveedor (todos los registros)
         /// </summary>
         public async Task<List<Producto>> GetProductsWithRelatedDataAsync()
         {
@@ -26,7 +26,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets active products with their category and supplier information
+        /// Obtiene productos activos con su información de categoría y proveedor
         /// </summary>
         public async Task<List<Producto>> GetActiveProductsWithRelatedDataAsync()
         {
@@ -39,7 +39,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets products by category
+        /// Obtiene productos por categoría
         /// </summary>
         public async Task<List<Producto>> GetProductsByCategoryAsync(int categoriaId)
         {
@@ -52,7 +52,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets products by supplier
+        /// Obtiene productos por proveedor
         /// </summary>
         public async Task<List<Producto>> GetProductsBySupplierAsync(int proveedorId)
         {
@@ -65,7 +65,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Override GetAllAsync to include related data and proper ordering
+        /// Sobrescribe GetAllAsync para incluir datos relacionados y ordenamiento apropiado
         /// </summary>
         public override async Task<List<Producto>> GetAllAsync()
         {

@@ -5,7 +5,7 @@ using ReactVentas.Models;
 namespace ReactVentas.Repositories
 {
     /// <summary>
-    /// Repository implementation for Usuario entity
+    /// Implementación del repositorio para la entidad Usuario
     /// </summary>
     public class UsuarioRepository : BaseRepository<Usuario>, IUsuarioRepository
     {
@@ -14,7 +14,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets users with their role information (all records)
+        /// Obtiene usuarios con su información de rol (todos los registros)
         /// </summary>
         public async Task<List<Usuario>> GetUsersWithRoleAsync()
         {
@@ -25,7 +25,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets active users with their role information
+        /// Obtiene usuarios activos con su información de rol
         /// </summary>
         public async Task<List<Usuario>> GetActiveUsersWithRoleAsync()
         {
@@ -37,7 +37,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets user by email
+        /// Obtiene usuario por email
         /// </summary>
         public async Task<Usuario?> GetByEmailAsync(string email)
         {
@@ -47,7 +47,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets users by role
+        /// Obtiene usuarios por rol
         /// </summary>
         public async Task<List<Usuario>> GetUsersByRoleAsync(int rolId)
         {
@@ -59,7 +59,7 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Override GetAllAsync to include role information
+        /// Sobrescribe GetAllAsync para incluir información de rol
         /// </summary>
         public override async Task<List<Usuario>> GetAllAsync()
         {

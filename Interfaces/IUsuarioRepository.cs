@@ -3,28 +3,28 @@ using ReactVentas.Models;
 namespace ReactVentas.Interfaces
 {
     /// <summary>
-    /// Repository interface for Usuario entity operations
+    /// Interfaz del repositorio para operaciones de la entidad Usuario
     /// </summary>
     public interface IUsuarioRepository : IBaseRepository<Usuario>
     {
         /// <summary>
-        /// Gets users with their role information
+        /// Obtiene usuarios con su información de rol
         /// </summary>
-        /// <returns>List of users with role data</returns>
+        /// <returns>Lista de usuarios con datos de rol</returns>
         Task<List<Usuario>> GetUsersWithRoleAsync();
 
         /// <summary>
-        /// Gets user by email
+        /// Obtiene usuario por email
         /// </summary>
-        /// <param name="email">User email</param>
-        /// <returns>User if found, null otherwise</returns>
+        /// <param name="email">Email del usuario</param>
+        /// <returns>Usuario si se encuentra, null en caso contrario</returns>
         Task<Usuario?> GetByEmailAsync(string email);
 
         /// <summary>
-        /// Gets users by role
+        /// Obtiene usuarios por rol
         /// </summary>
-        /// <param name="rolId">Role identifier</param>
-        /// <returns>List of users with the specified role</returns>
+        /// <param name="rolId">Identificador del rol</param>
+        /// <returns>Lista de usuarios con el rol especificado</returns>
         Task<List<Usuario>> GetUsersByRoleAsync(int rolId);
     }
 }
