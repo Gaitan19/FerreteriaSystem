@@ -10,10 +10,12 @@ namespace ReactVentas.Controllers
     public class ProveedorController : ControllerBase
     {
         private readonly IProveedorRepository _proveedorRepository;
+        private readonly ISignalRNotificationService _signalRService;
 
-        public ProveedorController(IProveedorRepository proveedorRepository)
+        public ProveedorController(IProveedorRepository proveedorRepository, ISignalRNotificationService signalRService)
         {
             _proveedorRepository = proveedorRepository;
+            _signalRService = signalRService;
         }
 
         [HttpGet]
@@ -43,6 +45,9 @@ namespace ReactVentas.Controllers
                 await _proveedorRepository.AddAsync(request);
                 await _proveedorRepository.SaveChangesAsync();
                 
+                // Notify all clients about the new supplier
+                await _signalRService.NotifyEntityCreatedAsync("Proveedor", request);
+                
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +67,9 @@ namespace ReactVentas.Controllers
             {
                 await _proveedorRepository.UpdateAsync(request);
                 await _proveedorRepository.SaveChangesAsync();
+                
+                // Notify all clients about the updated supplier
+                await _signalRService.NotifyEntityUpdatedAsync("Proveedor", request);
                 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +92,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _proveedorRepository.SaveChangesAsync();
+                    
+                    // Notify all clients about the deleted supplier
+                    await _signalRService.NotifyEntityDeletedAsync("Proveedor", id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

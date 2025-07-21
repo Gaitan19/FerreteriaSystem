@@ -10,10 +10,12 @@ namespace ReactVentas.Controllers
     public class CategoriaController : ControllerBase
     {
         private readonly ICategoriaRepository _categoriaRepository;
+        private readonly ISignalRNotificationService _signalRService;
 
-        public CategoriaController(ICategoriaRepository categoriaRepository)
+        public CategoriaController(ICategoriaRepository categoriaRepository, ISignalRNotificationService signalRService)
         {
             _categoriaRepository = categoriaRepository;
+            _signalRService = signalRService;
         }
 
         [HttpGet]
@@ -43,6 +45,9 @@ namespace ReactVentas.Controllers
                 await _categoriaRepository.AddAsync(request);
                 await _categoriaRepository.SaveChangesAsync();
 
+                // Notify all clients about the new category
+                await _signalRService.NotifyEntityCreatedAsync("Categoria", request);
+
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +67,9 @@ namespace ReactVentas.Controllers
             {
                 await _categoriaRepository.UpdateAsync(request);
                 await _categoriaRepository.SaveChangesAsync();
+
+                // Notify all clients about the updated category
+                await _signalRService.NotifyEntityUpdatedAsync("Categoria", request);
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +92,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _categoriaRepository.SaveChangesAsync();
+                    
+                    // Notify all clients about the deleted category
+                    await _signalRService.NotifyEntityDeletedAsync("Categoria", id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

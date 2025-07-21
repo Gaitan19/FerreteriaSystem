@@ -13,11 +13,13 @@ namespace ReactVentas.Controllers
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordService _passwordService;
+        private readonly ISignalRNotificationService _signalRService;
 
-        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService)
+        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService, ISignalRNotificationService signalRService)
         {
             _usuarioRepository = usuarioRepository;
             _passwordService = passwordService;
+            _signalRService = signalRService;
         }
 
         [HttpGet]
@@ -49,6 +51,17 @@ namespace ReactVentas.Controllers
                 // Add a new user to the database and save changes.
                 await _usuarioRepository.AddAsync(request);
                 await _usuarioRepository.SaveChangesAsync();
+
+                // Notify all clients about the new user (excluding password)
+                var userNotification = new { 
+                    IdUsuario = request.IdUsuario,
+                    Nombre = request.Nombre,
+                    Correo = request.Correo,
+                    Telefono = request.Telefono,
+                    IdRol = request.IdRol,
+                    EsActivo = request.EsActivo
+                };
+                await _signalRService.NotifyEntityCreatedAsync("Usuario", userNotification);
 
                 // Return a 200 OK status indicating success.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -90,6 +103,17 @@ namespace ReactVentas.Controllers
                 await _usuarioRepository.UpdateAsync(usuario);
                 await _usuarioRepository.SaveChangesAsync();
 
+                // Notify all clients about the updated user (excluding password)
+                var userNotification = new { 
+                    IdUsuario = usuario.IdUsuario,
+                    Nombre = usuario.Nombre,
+                    Correo = usuario.Correo,
+                    Telefono = usuario.Telefono,
+                    IdRol = usuario.IdRol,
+                    EsActivo = usuario.EsActivo
+                };
+                await _signalRService.NotifyEntityUpdatedAsync("Usuario", userNotification);
+
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
             catch (Exception ex)
@@ -109,6 +133,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _usuarioRepository.SaveChangesAsync();
+                    
+                    // Notify all clients about the deleted user
+                    await _signalRService.NotifyEntityDeletedAsync("Usuario", id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

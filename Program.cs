@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using ReactVentas.Services;
 using ReactVentas.Interfaces;
 using ReactVentas.Repositories;
+using ReactVentas.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +15,7 @@ builder.Services.AddDbContext<DBREACT_VENTAContext>(options => {
     options.UseSqlServer(builder.Configuration.GetConnectionString("cadenaSQL"));
 });
 
-// Configuraci�n CORS para permitir acceso desde dispositivos m�viles  
+// Configuraci�n CORS para permitir acceso desde dispositivos m�viles y SignalR  
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -22,6 +23,9 @@ builder.Services.AddCors(options =>
                           .AllowAnyMethod()
                           .AllowAnyHeader());
 });
+
+// Agregar SignalR
+builder.Services.AddSignalR();
 
 // Agregar compresi�n de respuesta para mejorar rendimiento en conexiones m�viles  
 builder.Services.AddResponseCompression(options =>
@@ -32,6 +36,9 @@ builder.Services.AddResponseCompression(options =>
 
 // Registrar servicio de contrase�as
 builder.Services.AddScoped<IPasswordService, PasswordService>();
+
+// Registrar servicio de notificaciones SignalR
+builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
 
 // Registrar repositorios
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
@@ -74,6 +81,9 @@ app.UseRouting();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action=Index}/{id?}");
+
+// Configurar el hub de SignalR
+app.MapHub<DataSyncHub>("/dataSyncHub");
 
 app.MapFallbackToFile("index.html");
 
