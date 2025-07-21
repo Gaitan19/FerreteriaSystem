@@ -105,7 +105,7 @@ const Proveedor = () => {
           <Button
             color="danger"
             size="sm"
-            onClick={() => eliminarProveedor(row)}
+            onClick={() => eliminarProveedor(row.idProveedor)}
           >
             <i className="fas fa-trash-alt"></i>
           </Button>
@@ -189,7 +189,7 @@ const Proveedor = () => {
     }
   };
 
-  const eliminarProveedor = async (proveedorDelete) => {
+  const eliminarProveedor = async (id) => {
     Swal.fire({
       title: "¿Está seguro?",
       text: "Desea eliminar el proveedor",
@@ -202,7 +202,7 @@ const Proveedor = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         let response = await fetch(
-          `api/proveedor/Eliminar/${proveedorDelete.idProveedor}`,
+          `api/proveedor/Eliminar/${id}`,
           {
             method: "DELETE",
           }
