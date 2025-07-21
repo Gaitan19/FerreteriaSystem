@@ -17,6 +17,7 @@ const context = [
   "/api/utilidad",
   "/api/session",
   "/api/proveedor",
+  "/dataSyncHub",
 ];
 
 module.exports = function (app) {
