@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR Test</title>
+    <script src="https://unpkg.com/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+</head>
+<body>
+    <h2>SignalR Connection Test</h2>
+    <div id="status">Disconnected</div>
+    <div id="messages"></div>
+
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/dataSyncHub")
+            .build();
+
+        connection.start().then(() => {
+            document.getElementById("status").innerText = "Connected";
+            console.log("SignalR connected");
+        }).catch(err => {
+            document.getElementById("status").innerText = "Failed to connect: " + err;
+            console.error("SignalR connection error:", err);
+        });
+
+        connection.on("EntityChanged", (notification) => {
+            const messages = document.getElementById("messages");
+            const messageDiv = document.createElement("div");
+            messageDiv.innerHTML = `
+                <strong>${notification.EntityType}</strong> - ${notification.Action}<br>
+                ID: ${notification.EntityId}<br>
+                Time: ${new Date(notification.Timestamp).toLocaleString()}<br>
+                <hr>
+            `;
+            messages.insertBefore(messageDiv, messages.firstChild);
+            console.log("Entity changed:", notification);
+        });
+    </script>
+</body>
+</html>

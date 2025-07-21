@@ -54,8 +54,8 @@ const Producto = () => {
     }
   };
 
-  // Setup SignalR connection for multiple entities
-  const { isConnected } = useSignalR('productos', handleEntityChange);
+  // Setup SignalR connection for multiple entities using wildcard subscription
+  const { isConnected } = useSignalR('*', handleEntityChange);
 
   const handleChange = (e) => {
     let value;

@@ -111,8 +111,9 @@ class SignalRService {
     // Notify all listeners for a specific entity type
     notifyListeners(notification) {
         const { EntityType, Action, EntityData, EntityId } = notification;
-        const entityListeners = this.listeners.get(EntityType);
         
+        // Notify specific entity type listeners
+        const entityListeners = this.listeners.get(EntityType);
         if (entityListeners) {
             entityListeners.forEach(callback => {
                 try {
@@ -125,6 +126,24 @@ class SignalRService {
                     });
                 } catch (error) {
                     console.error('Error in SignalR listener callback:', error);
+                }
+            });
+        }
+        
+        // Notify wildcard listeners (listeners subscribed to all entity types)
+        const wildcardListeners = this.listeners.get('*');
+        if (wildcardListeners) {
+            wildcardListeners.forEach(callback => {
+                try {
+                    callback({
+                        action: Action,
+                        data: EntityData,
+                        id: EntityId,
+                        entityType: EntityType,
+                        timestamp: notification.Timestamp
+                    });
+                } catch (error) {
+                    console.error('Error in SignalR wildcard listener callback:', error);
                 }
             });
         }
