@@ -22,10 +22,10 @@ namespace ReactVentas.Controllers
         }
 
         /// <summary>
-        /// Searches for products based on the search string.
+        /// Busca productos basado en el texto de búsqueda.
         /// </summary>
-        /// <param name="busqueda">The search string to filter products.</param>
-        /// <returns>A list of products matching the search criteria.</returns>
+        /// <param name="busqueda">El texto de búsqueda para filtrar productos.</param>
+        /// <returns>Una lista de productos que coinciden con los criterios de búsqueda.</returns>
         [HttpGet]
         [Route("Productos/{busqueda}")]
         public async Task<IActionResult> Productos(string busqueda)
@@ -34,7 +34,7 @@ namespace ReactVentas.Controllers
             try
             {
                 lista = await _context.Productos
-                .Where(p => string.Concat(p.Codigo.ToLower(), p.Marca.ToLower(), p.Descripcion.ToLower()).Contains(busqueda.ToLower()))
+                .Where(p => p.EsActivo == true && string.Concat(p.Codigo.ToLower(), p.Marca.ToLower(), p.Descripcion.ToLower()).Contains(busqueda.ToLower()))
                 .Select(p => new DtoProducto()
                 {
                     IdProducto = p.IdProducto,
@@ -48,16 +48,16 @@ namespace ReactVentas.Controllers
             }
             catch (Exception ex)
             {
-                // Log exception details here if necessary
+                // Registra los detalles de excepción aquí si es necesario
                 return StatusCode(StatusCodes.Status500InternalServerError, lista);
             }
         }
 
         /// <summary>
-        /// Registers a new sale.
+        /// Registra una nueva venta.
         /// </summary>
-        /// <param name="request">The sale data to register.</param>
-        /// <returns>The document number of the registered sale.</returns>
+        /// <param name="request">Los datos de la venta a registrar.</param>
+        /// <returns>El número de documento de la venta registrada.</returns>
         [HttpPost]
         [Route("Registrar")]
         public IActionResult Registrar([FromBody] DtoVenta request)
@@ -67,7 +67,7 @@ namespace ReactVentas.Controllers
                 string numeroDocumento = "";
                 XElement productos = new XElement("Productos");
 
-                // Construct XML from the product list
+                // Construye XML desde la lista de productos
                 foreach (DtoProducto item in request.listaProductos)
                 {
                     productos.Add(new XElement("Item",
@@ -102,15 +102,15 @@ namespace ReactVentas.Controllers
             }
             catch (Exception ex)
             {
-                // Log exception details here if necessary
+                // Registra los detalles de excepción aquí si es necesario
                 return StatusCode(StatusCodes.Status500InternalServerError, new { numeroDocumento = "" });
             }
         }
 
         /// <summary>
-        /// Lists sales based on filter criteria.
+        /// Lista ventas basado en criterios de filtro.
         /// </summary>
-        /// <returns>A list of sales matching the filter criteria.</returns>
+        /// <returns>Una lista de ventas que coinciden con los criterios de filtro.</returns>
         [HttpGet]
         [Route("Listar")]
         public async Task<IActionResult> Listar()
@@ -128,7 +128,7 @@ namespace ReactVentas.Controllers
             {
                 if (buscarPor == "fecha")
                 {
-                    // Filter sales by date range
+                    // Filtra ventas por rango de fechas
                     lista_venta = await _context.Venta
                         .Include(u => u.IdUsuarioNavigation)
                         .Include(d => d.DetalleVenta)
@@ -157,7 +157,7 @@ namespace ReactVentas.Controllers
                 }
                 else
                 {
-                    // Filter sales by document number
+                    // Filtra ventas por número de documento
                     lista_venta = await _context.Venta
                         .Include(u => u.IdUsuarioNavigation)
                         .Include(d => d.DetalleVenta)
@@ -188,15 +188,15 @@ namespace ReactVentas.Controllers
             }
             catch (Exception ex)
             {
-                // Log exception details here if necessary
+                // Registra los detalles de excepción aquí si es necesario
                 return StatusCode(StatusCodes.Status500InternalServerError, lista_venta);
             }
         }
 
         /// <summary>
-        /// Generates a sales report for a specified date range.
+        /// Genera un reporte de ventas para un rango de fechas especificado.
         /// </summary>
-        /// <returns>A report of sales within the specified date range.</returns>
+        /// <returns>Un reporte de ventas dentro del rango de fechas especificado.</returns>
         [HttpGet]
         [Route("Reporte")]
         public async Task<IActionResult> Reporte()
@@ -234,7 +234,7 @@ namespace ReactVentas.Controllers
             }
             catch (Exception ex)
             {
-                // Log exception details here if necessary
+                // Registra los detalles de excepción aquí si es necesario
                 return StatusCode(StatusCodes.Status500InternalServerError, lista_venta);
             }
         }

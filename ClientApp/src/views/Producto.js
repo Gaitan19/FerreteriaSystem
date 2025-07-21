@@ -144,7 +144,7 @@ const Producto = () => {
           <Button
             color="danger"
             size="sm"
-            onClick={() => eliminarProducto(row)}
+            onClick={() => eliminarProducto(row.idProducto)}
           >
             <i className="fas fa-trash-alt"></i>
           </Button>

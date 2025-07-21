@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
 using Microsoft.AspNetCore.ResponseCompression;
 using ReactVentas.Services;
+using ReactVentas.Interfaces;
+using ReactVentas.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +14,7 @@ builder.Services.AddDbContext<DBREACT_VENTAContext>(options => {
     options.UseSqlServer(builder.Configuration.GetConnectionString("cadenaSQL"));
 });
 
-// Configuración CORS para permitir acceso desde dispositivos móviles  
+// Configuraciï¿½n CORS para permitir acceso desde dispositivos mï¿½viles  
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -21,15 +23,22 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader());
 });
 
-// Agregar compresión de respuesta para mejorar rendimiento en conexiones móviles  
+// Agregar compresiï¿½n de respuesta para mejorar rendimiento en conexiones mï¿½viles  
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
     options.Providers.Add<GzipCompressionProvider>();
 });
 
-// Registrar servicio de contraseñas
+// Registrar servicio de contraseï¿½as
 builder.Services.AddScoped<IPasswordService, PasswordService>();
+
+// Registrar repositorios
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IProveedorRepository, ProveedorRepository>();
+builder.Services.AddScoped<IRolRepository, RolRepository>();
 
 builder.Services.AddControllers().AddJsonOptions(option =>
 {
@@ -41,24 +50,24 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.  
 if (!app.Environment.IsDevelopment())
 {
-    // En producción, puedes agregar manejo de errores específico  
+    // En producciï¿½n, puedes agregar manejo de errores especï¿½fico  
     app.UseExceptionHandler("/Error");
     app.UseHsts(); // Habilitar HSTS para conexiones seguras  
 }
 
-// Habilitar compresión de respuesta  
+// Habilitar compresiï¿½n de respuesta  
 app.UseResponseCompression();
 
 // Habilitar CORS  
 app.UseCors("AllowAll");
 
-// Habilitar HTTPS Redirection para seguridad en dispositivos móviles  
+// Habilitar HTTPS Redirection para seguridad en dispositivos mï¿½viles  
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseRouting();
 
-// Agregar autenticación y autorización si es necesario  
+// Agregar autenticaciï¿½n y autorizaciï¿½n si es necesario  
 // app.UseAuthentication();  
 // app.UseAuthorization();  
 

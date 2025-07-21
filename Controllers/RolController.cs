@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
+using ReactVentas.Interfaces;
 
 namespace ReactVentas.Controllers
 {
@@ -9,22 +9,21 @@ namespace ReactVentas.Controllers
     [ApiController]
     public class RolController : ControllerBase
     {
-        private readonly DBREACT_VENTAContext _context;
+        private readonly IRolRepository _rolRepository;
 
-        public RolController(DBREACT_VENTAContext context)
+        public RolController(IRolRepository rolRepository)
         {
-            _context = context;
+            _rolRepository = rolRepository;
         }
 
         [HttpGet]
         [Route("Lista")]
         public async Task<IActionResult> Lista() 
         {
-            // Retrieves a list of roles from the database.
-            List<Rol> lista = new List<Rol>();
+            // Retrieves a list of active roles from the database.
             try 
             {
-                lista = await _context.Rols.ToListAsync();
+                var lista = await _rolRepository.GetAllAsync();
                 
                 // Returns a 200 OK status along with the list of roles.
                 return StatusCode(StatusCodes.Status200OK, lista);
@@ -32,7 +31,7 @@ namespace ReactVentas.Controllers
             catch 
             {
                 // Returns a 500 Internal Server Error status if an exception occurs.
-                return StatusCode(StatusCodes.Status500InternalServerError, lista);
+                return StatusCode(StatusCodes.Status500InternalServerError, new List<Rol>());
             }
         }
     }
