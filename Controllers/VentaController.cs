@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
 using ReactVentas.Models.DTO;
+using ReactVentas.Interfaces;
 using System.Data;
 using System.Globalization;
 using System.Xml.Linq;
@@ -15,10 +16,12 @@ namespace ReactVentas.Controllers
     public class VentaController : ControllerBase
     {
         private readonly DBREACT_VENTAContext _context;
+        private readonly ISignalRNotificationService _signalRService;
 
-        public VentaController(DBREACT_VENTAContext context)
+        public VentaController(DBREACT_VENTAContext context, ISignalRNotificationService signalRService)
         {
             _context = context;
+            _signalRService = signalRService;
         }
 
         /// <summary>
@@ -60,7 +63,7 @@ namespace ReactVentas.Controllers
         /// <returns>El número de documento de la venta registrada.</returns>
         [HttpPost]
         [Route("Registrar")]
-        public IActionResult Registrar([FromBody] DtoVenta request)
+        public async Task<IActionResult> Registrar([FromBody] DtoVenta request)
         {
             try
             {
@@ -97,6 +100,15 @@ namespace ReactVentas.Controllers
                     cmd.ExecuteNonQuery();
                     numeroDocumento = cmd.Parameters["nroDocumento"].Value.ToString();
                 }
+
+                // Notify all clients about the new sale
+                await _signalRService.NotifyEntityCreatedAsync("Venta", new { 
+                    NumeroDocumento = numeroDocumento,
+                    DocumentoCliente = request.documentoCliente,
+                    NombreCliente = request.nombreCliente,
+                    Total = request.total,
+                    FechaRegistro = DateTime.Now
+                });
 
                 return StatusCode(StatusCodes.Status200OK, new { numeroDocumento = numeroDocumento });
             }

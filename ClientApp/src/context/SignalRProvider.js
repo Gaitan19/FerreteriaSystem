@@ -109,11 +109,22 @@ export const useEntitySubscription = (entityType, onEntityChange) => {
  */
 export const useRealTimeData = (entityType, initialData = []) => {
     const [data, setData] = useState(initialData);
+    const [initialized, setInitialized] = useState(false);
     const { subscribe } = useSignalR();
 
+    // Update data when initialData changes, but only if not yet initialized or if initial data is being reset
     useEffect(() => {
-        setData(initialData);
-    }, [initialData]);
+        if (!initialized && initialData.length > 0) {
+            setData(initialData);
+            setInitialized(true);
+        } else if (initialized && initialData.length === 0) {
+            // Reset case - when component reinitializes
+            setData(initialData);
+            setInitialized(false);
+        } else if (!initialized) {
+            setData(initialData);
+        }
+    }, [initialData, initialized]);
 
     useEffect(() => {
         if (!entityType) return;
@@ -123,15 +134,20 @@ export const useRealTimeData = (entityType, initialData = []) => {
             
             if (EntityType !== entityType) return;
 
-            // Helper function to get entity ID, handling both PascalCase and camelCase
+            console.log(`SignalR received ${eventType} for ${EntityType}:`, eventData);
+
+            // Helper function to get entity ID, handling both PascalCase and camelCase for all entity types
             const getEntityId = (item) => {
                 return item.IdProducto || item.idProducto ||
                        item.IdCategoria || item.idCategoria ||
                        item.IdProveedor || item.idProveedor ||
-                       item.IdUsuario || item.idUsuario;
+                       item.IdUsuario || item.idUsuario ||
+                       item.IdVenta || item.idVenta ||
+                       item.Id || item.id;
             };
 
             setData(currentData => {
+                let newData;
                 switch (eventType) {
                     case 'EntityCreated':
                         // Add new entity if not already present
@@ -139,24 +155,31 @@ export const useRealTimeData = (entityType, initialData = []) => {
                         const existsInCreate = currentData.some(item => 
                             getEntityId(item) === newEntityId
                         );
-                        return existsInCreate ? currentData : [...currentData, Data];
+                        newData = existsInCreate ? [...currentData] : [...currentData, Data];
+                        console.log(`SignalR: ${entityType} created`, { newEntityId, exists: existsInCreate, currentCount: currentData.length, newCount: newData.length });
+                        return newData;
 
                     case 'EntityUpdated':
                         // Update existing entity
                         const updateEntityId = getEntityId(Data);
-                        return currentData.map(item => {
+                        newData = currentData.map(item => {
                             const itemId = getEntityId(item);
                             return itemId === updateEntityId ? { ...item, ...Data } : item;
                         });
+                        console.log(`SignalR: ${entityType} updated`, { updateEntityId, updated: newData.length });
+                        return newData;
 
                     case 'EntityDeleted':
                         // Remove deleted entity (soft delete - could also update EsActivo flag)
-                        return currentData.filter(item => {
+                        newData = currentData.filter(item => {
                             const itemId = getEntityId(item);
                             return itemId !== Id;
                         });
+                        console.log(`SignalR: ${entityType} deleted`, { deletedId: Id, currentCount: currentData.length, newCount: newData.length });
+                        return newData;
 
                     default:
+                        console.log(`SignalR: Unknown event type ${eventType} for ${entityType}`);
                         return currentData;
                 }
             });

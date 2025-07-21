@@ -18,6 +18,7 @@ import { useContext, useEffect, useState } from 'react';
 import './css/Venta.css';
 import { UserContext } from '../context/UserProvider';
 import { generateCode } from '../utils/generateCode';
+import { useSignalR } from '../context/SignalRProvider';
 
 const modelo = {
   nombre: '',
@@ -30,6 +31,7 @@ const modelo = {
 
 const Venta = () => {
   const { user } = useContext(UserContext);
+  const { isConnected } = useSignalR();
 
   const [a_Productos, setA_Productos] = useState([]);
   const [a_Busqueda, setA_Busqueda] = useState('');
@@ -302,7 +304,18 @@ const Venta = () => {
               <CardHeader
                 style={{ backgroundColor: '#4e73df', color: 'white' }}
               >
-                Cliente
+                <div className="d-flex justify-content-between align-items-center">
+                  <span>Cliente</span>
+                  <div className="d-flex align-items-center">
+                    <small className="me-2">
+                      {isConnected ? (
+                        <span className="text-success">🟢 Tiempo Real Activo</span>
+                      ) : (
+                        <span className="text-warning">🟡 Conectando...</span>
+                      )}
+                    </small>
+                  </div>
+                </div>
               </CardHeader>
               <CardBody>
                 <Row>

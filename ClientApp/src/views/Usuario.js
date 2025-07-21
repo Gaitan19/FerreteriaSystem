@@ -17,6 +17,7 @@ import {
 } from "reactstrap";
 import Swal from "sweetalert2";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
+import { useRealTimeData, useEntitySubscription, useSignalR } from "../context/SignalRProvider";
 
 const modeloUsuario = {
   idUsuario: 0,
@@ -38,6 +39,60 @@ const Usuario = () => {
   const [verModal, setVerModal] = useState(false);
   const [visiblePassword, setVisiblePassword] = useState(false);
   const [cambiandoClave, setCambiandoClave] = useState(false); // Estado para controlar cambio de clave
+  
+  // Use SignalR for real-time updates
+  const { isConnected } = useSignalR();
+  
+  // Set up real-time data subscription for users
+  const usuariosRealTime = useRealTimeData("Usuario", usuarios);
+  
+  // Update local state when real-time data changes
+  useEffect(() => {
+    setUsuarios(usuariosRealTime);
+  }, [usuariosRealTime]);
+  
+  // Subscribe to real-time notifications
+  useEntitySubscription("Usuario", (eventType, data) => {
+    switch (eventType) {
+      case 'EntityCreated':
+        Swal.fire({
+          icon: 'info',
+          title: 'Nuevo Usuario',
+          text: `Se agregó un nuevo usuario: ${data.Data?.nombre || 'Sin nombre'}`,
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        break;
+      case 'EntityUpdated':
+        if (data.Data?.nombre) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Usuario Actualizado',
+            text: `Se actualizó el usuario: ${data.Data.nombre}`,
+            timer: 3000,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+          });
+        }
+        break;
+      case 'EntityDeleted':
+        Swal.fire({
+          icon: 'warning',
+          title: 'Usuario Eliminado',
+          text: 'Un usuario fue eliminado',
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        break;
+      default:
+        break;
+    }
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -218,7 +273,8 @@ const Usuario = () => {
       });
 
       if (response.ok) {
-        await obtenerUsuarios();
+        // Remove manual refresh - SignalR will handle real-time updates
+        // await obtenerUsuarios();  // Commented out for real-time updates
         cerrarModal();
         Swal.fire("Éxito", "Operación realizada correctamente", "success");
       } else {
@@ -247,7 +303,8 @@ const Usuario = () => {
         })
         .then(response => {
           if (response.ok) {
-            obtenerUsuarios();
+            // Remove manual refresh - SignalR will handle real-time updates
+            // obtenerUsuarios();  // Commented out for real-time updates
             Swal.fire("Eliminado!", "El usuario fue eliminado.", "success");
           } else {
             return response.text().then(error => {
@@ -279,7 +336,16 @@ const Usuario = () => {
           style={{ backgroundColor: "#4e73df", color: "white" }}
         >
           <div className="d-flex justify-content-between align-items-center">
-            <h6 className="m-0 font-weight-bold">Lista de Usuarios</h6>
+            <div className="d-flex align-items-center">
+              <h6 className="m-0 font-weight-bold">Lista de Usuarios</h6>
+              <small className="ms-3">
+                {isConnected ? (
+                  <span className="text-success">🟢 Tiempo Real Activo</span>
+                ) : (
+                  <span className="text-warning">🟡 Conectando...</span>
+                )}
+              </small>
+            </div>
             <Button
               color="success"
               size="sm"

@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useRealTimeData, useEntitySubscription, useSignalR } from "../context/SignalRProvider";
 
 const modeloProveedor = {
   idProveedor: 0,
@@ -31,6 +32,60 @@ const Proveedor = () => {
   const [pendiente, setPendiente] = useState(true);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  
+  // Use SignalR for real-time updates
+  const { isConnected } = useSignalR();
+  
+  // Set up real-time data subscription for providers
+  const proveedoresRealTime = useRealTimeData("Proveedor", proveedores);
+  
+  // Update local state when real-time data changes
+  useEffect(() => {
+    setProveedores(proveedoresRealTime);
+  }, [proveedoresRealTime]);
+  
+  // Subscribe to real-time notifications
+  useEntitySubscription("Proveedor", (eventType, data) => {
+    switch (eventType) {
+      case 'EntityCreated':
+        Swal.fire({
+          icon: 'info',
+          title: 'Nuevo Proveedor',
+          text: `Se agregó un nuevo proveedor: ${data.Data?.nombre || 'Sin nombre'}`,
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        break;
+      case 'EntityUpdated':
+        if (data.Data?.nombre) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Proveedor Actualizado',
+            text: `Se actualizó el proveedor: ${data.Data.nombre}`,
+            timer: 3000,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+          });
+        }
+        break;
+      case 'EntityDeleted':
+        Swal.fire({
+          icon: 'warning',
+          title: 'Proveedor Eliminado',
+          text: 'Un proveedor fue eliminado',
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        break;
+      default:
+        break;
+    }
+  });
 
   const handleChange = (e) => {
     let value;
@@ -173,6 +228,11 @@ const Proveedor = () => {
     }
 
     if (response.ok) {
+      // Remove manual refresh - SignalR will handle real-time updates
+      // await obtenerProveedores();  // Commented out for real-time updates
+      setProveedor(modeloProveedor);
+      setVerModal(!verModal);
+
       Swal.fire(
         `${proveedor.idProveedor === 0 ? "Guardado" : "Actualizado"}`,
         `El proveedor fue ${
@@ -180,10 +240,6 @@ const Proveedor = () => {
         }`,
         "success"
       );
-
-      await obtenerProveedores();
-      setProveedor(modeloProveedor);
-      setVerModal(!verModal);
     } else {
       alert("Error al guardar");
     }
@@ -209,7 +265,8 @@ const Proveedor = () => {
         );
 
         if (response.ok) {
-          obtenerProveedores();
+          // Remove manual refresh - SignalR will handle real-time updates
+          // obtenerProveedores();  // Commented out for real-time updates
 
           Swal.fire("Eliminado!", "El proveedor fue eliminado.", "success");
         }
@@ -226,7 +283,18 @@ const Proveedor = () => {
     <>
       <Card>
         <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
-          Lista de Proveedores
+          <div className="d-flex justify-content-between align-items-center">
+            <span>Lista de Proveedores</span>
+            <div className="d-flex align-items-center">
+              <small className="me-2">
+                {isConnected ? (
+                  <span className="text-success">🟢 Tiempo Real Activo</span>
+                ) : (
+                  <span className="text-warning">🟡 Conectando...</span>
+                )}
+              </small>
+            </div>
+          </div>
         </CardHeader>
         <CardBody>
           <Button

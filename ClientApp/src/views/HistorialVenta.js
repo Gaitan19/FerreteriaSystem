@@ -357,9 +357,10 @@ import {
 } from "reactstrap";
 import DatePicker from "react-datepicker";
 import Swal from "sweetalert2";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Ticket from "../componentes/Ticket";
 import printJS from "print-js";
+import { useRealTimeData, useEntitySubscription, useSignalR } from "../context/SignalRProvider";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -372,6 +373,32 @@ const HistorialVenta = () => {
   const [verModal, setVerModal] = useState(false);
   const [detalleVenta, setDetalleVenta] = useState({});
   const [ventas, setVentas] = useState([]);
+  
+  // Use SignalR for real-time updates
+  const { isConnected } = useSignalR();
+  
+  // Set up real-time data subscription for sales - we'll update when new sales are created
+  useEntitySubscription("Venta", (eventType, data) => {
+    switch (eventType) {
+      case 'EntityCreated':
+        Swal.fire({
+          icon: 'info',
+          title: 'Nueva Venta',
+          text: `Se registró una nueva venta: ${data.Data?.NumeroDocumento || 'Sin número'}`,
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        // Auto-refresh search results when a new sale is created
+        if (ventas.length > 0) {
+          buscarVenta();
+        }
+        break;
+      default:
+        break;
+    }
+  });
 
   // Función para buscar ventas
   const buscarVenta = () => {
@@ -525,7 +552,18 @@ const HistorialVenta = () => {
         <Col sm={12}>
           <Card>
             <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
-              Historial de ventas
+              <div className="d-flex justify-content-between align-items-center">
+                <span>Historial de ventas</span>
+                <div className="d-flex align-items-center">
+                  <small className="me-2">
+                    {isConnected ? (
+                      <span className="text-success">🟢 Tiempo Real Activo</span>
+                    ) : (
+                      <span className="text-warning">🟡 Conectando...</span>
+                    )}
+                  </small>
+                </div>
+              </div>
             </CardHeader>
             <CardBody>
               <Row className="align-items-end">
