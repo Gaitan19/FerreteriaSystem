@@ -123,30 +123,36 @@ export const useRealTimeData = (entityType, initialData = []) => {
             
             if (EntityType !== entityType) return;
 
+            // Helper function to get entity ID, handling both PascalCase and camelCase
+            const getEntityId = (item) => {
+                return item.IdProducto || item.idProducto ||
+                       item.IdCategoria || item.idCategoria ||
+                       item.IdProveedor || item.idProveedor ||
+                       item.IdUsuario || item.idUsuario;
+            };
+
             setData(currentData => {
                 switch (eventType) {
                     case 'EntityCreated':
                         // Add new entity if not already present
+                        const newEntityId = getEntityId(Data);
                         const existsInCreate = currentData.some(item => 
-                            item.IdProducto === Data.IdProducto ||
-                            item.IdCategoria === Data.IdCategoria ||
-                            item.IdProveedor === Data.IdProveedor ||
-                            item.IdUsuario === Data.IdUsuario
+                            getEntityId(item) === newEntityId
                         );
                         return existsInCreate ? currentData : [...currentData, Data];
 
                     case 'EntityUpdated':
                         // Update existing entity
+                        const updateEntityId = getEntityId(Data);
                         return currentData.map(item => {
-                            const itemId = item.IdProducto || item.IdCategoria || item.IdProveedor || item.IdUsuario;
-                            const dataId = Data.IdProducto || Data.IdCategoria || Data.IdProveedor || Data.IdUsuario;
-                            return itemId === dataId ? { ...item, ...Data } : item;
+                            const itemId = getEntityId(item);
+                            return itemId === updateEntityId ? { ...item, ...Data } : item;
                         });
 
                     case 'EntityDeleted':
                         // Remove deleted entity (soft delete - could also update EsActivo flag)
                         return currentData.filter(item => {
-                            const itemId = item.IdProducto || item.IdCategoria || item.IdProveedor || item.IdUsuario;
+                            const itemId = getEntityId(item);
                             return itemId !== Id;
                         });
 
