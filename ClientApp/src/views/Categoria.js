@@ -91,7 +91,7 @@ const Categoria = () => {
           <Button
             color="danger"
             size="sm"
-            onClick={() => eliminarCategoria(row)}
+            onClick={() => eliminarCategoria(row.idCategoria)}
           >
             <i className="fas fa-trash-alt"></i>
           </Button>

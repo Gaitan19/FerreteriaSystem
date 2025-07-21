@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
 using ReactVentas.Models.DTO;
 using ReactVentas.Services;
+using ReactVentas.Interfaces;
 
 namespace ReactVentas.Controllers
 {
@@ -11,12 +11,12 @@ namespace ReactVentas.Controllers
     [ApiController]
     public class UsuarioController : ControllerBase
     {
-        private readonly DBREACT_VENTAContext _context;
+        private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordService _passwordService;
 
-        public UsuarioController(DBREACT_VENTAContext context, IPasswordService passwordService)
+        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService)
         {
-            _context = context;
+            _usuarioRepository = usuarioRepository;
             _passwordService = passwordService;
         }
 
@@ -24,22 +24,16 @@ namespace ReactVentas.Controllers
         [Route("Lista")]
         public async Task<IActionResult> Lista()
         {
-            // Initialize a list to store users.
-            List<Usuario> lista = new List<Usuario>();
+            // Retrieve the list of active users from the database, including role information.
             try
             {
-                // Retrieve the list of users from the database, including role information, 
-                // and order them by user ID in descending order.
-                lista = await _context.Usuarios.Include(r => r.IdRolNavigation)
-                    .OrderByDescending(c => c.IdUsuario).ToListAsync();
-
-                // Return the list with a 200 OK status.
+                var lista = await _usuarioRepository.GetUsersWithRoleAsync();
                 return StatusCode(StatusCodes.Status200OK, lista);
             }
             catch (Exception ex)
             {
                 // Return a 500 Internal Server Error status if an exception occurs.
-                return StatusCode(StatusCodes.Status500InternalServerError, lista);
+                return StatusCode(StatusCodes.Status500InternalServerError, new List<Usuario>());
             }
         }
 
@@ -53,8 +47,8 @@ namespace ReactVentas.Controllers
                 request.Clave = _passwordService.HashPassword(request.Clave);
 
                 // Add a new user to the database and save changes.
-                await _context.Usuarios.AddAsync(request);
-                await _context.SaveChangesAsync();
+                await _usuarioRepository.AddAsync(request);
+                await _usuarioRepository.SaveChangesAsync();
 
                 // Return a 200 OK status indicating success.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -72,7 +66,7 @@ namespace ReactVentas.Controllers
         {
             try
             {
-                var usuario = await _context.Usuarios.FindAsync(request.IdUsuario);
+                var usuario = await _usuarioRepository.GetByIdAsync(request.IdUsuario);
                 if (usuario == null)
                     return StatusCode(StatusCodes.Status404NotFound, "Usuario no encontrado");
 
@@ -93,8 +87,8 @@ namespace ReactVentas.Controllers
                     usuario.Clave = _passwordService.HashPassword(request.ClaveNueva);
                 }
 
-                _context.Usuarios.Update(usuario);
-                await _context.SaveChangesAsync();
+                await _usuarioRepository.UpdateAsync(usuario);
+                await _usuarioRepository.SaveChangesAsync();
 
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -108,15 +102,19 @@ namespace ReactVentas.Controllers
         [Route("Eliminar/{id:int}")]
         public async Task<IActionResult> Eliminar(int id)
         {
+            // Performs soft delete by setting EsActivo to false instead of removing the record.
             try
             {
-                // Find the user by ID and remove them from the database.
-                Usuario usuario = _context.Usuarios.Find(id);
-                _context.Usuarios.Remove(usuario);
-                await _context.SaveChangesAsync();
-
-                // Return a 200 OK status indicating success.
-                return StatusCode(StatusCodes.Status200OK, "ok");
+                var result = await _usuarioRepository.SoftDeleteAsync(id);
+                if (result)
+                {
+                    await _usuarioRepository.SaveChangesAsync();
+                    return StatusCode(StatusCodes.Status200OK, "ok");
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Usuario not found");
+                }
             }
             catch (Exception ex)
             {
