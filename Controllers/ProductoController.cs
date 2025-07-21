@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
+using ReactVentas.Interfaces;
 
 namespace ReactVentas.Controllers
 {
@@ -9,33 +9,27 @@ namespace ReactVentas.Controllers
     [ApiController]
     public class ProductoController : ControllerBase
     {
-        private readonly DBREACT_VENTAContext _context;
+        private readonly IProductoRepository _productoRepository;
 
-        public ProductoController(DBREACT_VENTAContext context)
+        public ProductoController(IProductoRepository productoRepository)
         {
-            _context = context;
+            _productoRepository = productoRepository;
         }
 
         [HttpGet]
         [Route("Lista")]
         public async Task<IActionResult> Lista()
         {
-            // Retrieves a list of products including their category information, ordered by product ID in descending order.
-            List<Producto> lista = new List<Producto>();
+            // Retrieves a list of active products including their category and supplier information, ordered by product ID in descending order.
             try
             {
-                lista = await _context.Productos
-                    .Include(c => c.IdCategoriaNavigation)
-                    .Include(p => p.IdProveedorNavigation)
-                    .OrderByDescending(c => c.IdProducto)
-                    .ToListAsync();
-
+                var lista = await _productoRepository.GetProductsWithRelatedDataAsync();
                 return StatusCode(StatusCodes.Status200OK, lista);
             }
             catch (Exception ex)
             {
                 // Returns a 500 Internal Server Error status if an exception occurs.
-                return StatusCode(StatusCodes.Status500InternalServerError, lista);
+                return StatusCode(StatusCodes.Status500InternalServerError, new List<Producto>());
             }
         }
 
@@ -46,8 +40,8 @@ namespace ReactVentas.Controllers
             // Adds a new product to the database.
             try
             {
-                await _context.Productos.AddAsync(request);
-                await _context.SaveChangesAsync();
+                await _productoRepository.AddAsync(request);
+                await _productoRepository.SaveChangesAsync();
 
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -66,8 +60,8 @@ namespace ReactVentas.Controllers
             // Updates an existing product in the database.
             try
             {
-                _context.Productos.Update(request);
-                await _context.SaveChangesAsync();
+                await _productoRepository.UpdateAsync(request);
+                await _productoRepository.SaveChangesAsync();
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -83,15 +77,19 @@ namespace ReactVentas.Controllers
         [Route("Eliminar/{id:int}")]
         public async Task<IActionResult> Eliminar(int id)
         {
-            // Deletes a product by its ID.
+            // Performs soft delete by setting EsActivo to false instead of removing the record.
             try
             {
-                Producto producto = _context.Productos.Find(id);
-                _context.Productos.Remove(producto);
-                await _context.SaveChangesAsync();
-
-                // Returns a 200 OK status on successful deletion.
-                return StatusCode(StatusCodes.Status200OK, "ok");
+                var result = await _productoRepository.SoftDeleteAsync(id);
+                if (result)
+                {
+                    await _productoRepository.SaveChangesAsync();
+                    return StatusCode(StatusCodes.Status200OK, "ok");
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Producto not found");
+                }
             }
             catch (Exception ex)
             {
