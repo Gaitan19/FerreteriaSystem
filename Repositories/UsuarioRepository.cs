@@ -14,9 +14,20 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets users with their role information
+        /// Gets users with their role information (all records)
         /// </summary>
         public async Task<List<Usuario>> GetUsersWithRoleAsync()
+        {
+            return await _dbSet
+                .Include(u => u.IdRolNavigation)
+                .OrderByDescending(u => u.IdUsuario)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets active users with their role information
+        /// </summary>
+        public async Task<List<Usuario>> GetActiveUsersWithRoleAsync()
         {
             return await _dbSet
                 .Include(u => u.IdRolNavigation)

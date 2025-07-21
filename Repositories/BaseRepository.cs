@@ -22,9 +22,18 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets all active entities (where EsActivo = true)
+        /// Gets all entities (both active and inactive)
         /// </summary>
         public virtual async Task<List<T>> GetAllAsync()
+        {
+            // Return all entities regardless of EsActivo status to maintain original API behavior
+            return await _dbSet.OrderByDescending(GetIdProperty()).ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets only active entities (where EsActivo = true)
+        /// </summary>
+        public virtual async Task<List<T>> GetActiveAsync()
         {
             // Check if entity has EsActivo property for soft delete filtering
             var esActivoProperty = typeof(T).GetProperty("EsActivo");

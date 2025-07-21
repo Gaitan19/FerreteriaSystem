@@ -35,9 +35,19 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Override GetAllAsync to order by IdProveedor descending
+        /// Override GetAllAsync to order by IdProveedor descending and include all records
         /// </summary>
         public override async Task<List<Proveedor>> GetAllAsync()
+        {
+            return await _dbSet
+                .OrderByDescending(p => p.IdProveedor)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets only active suppliers
+        /// </summary>
+        public override async Task<List<Proveedor>> GetActiveAsync()
         {
             return await _dbSet
                 .Where(p => p.EsActivo == true)

@@ -26,9 +26,19 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Override GetAllAsync to order by IdRol descending
+        /// Override GetAllAsync to order by IdRol descending and include all records
         /// </summary>
         public override async Task<List<Rol>> GetAllAsync()
+        {
+            return await _dbSet
+                .OrderByDescending(r => r.IdRol)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets only active roles
+        /// </summary>
+        public override async Task<List<Rol>> GetActiveAsync()
         {
             return await _dbSet
                 .Where(r => r.EsActivo == true)

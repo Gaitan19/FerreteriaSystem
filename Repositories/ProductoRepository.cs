@@ -14,9 +14,21 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Gets products with their category and supplier information
+        /// Gets products with their category and supplier information (all records)
         /// </summary>
         public async Task<List<Producto>> GetProductsWithRelatedDataAsync()
+        {
+            return await _dbSet
+                .Include(p => p.IdCategoriaNavigation)
+                .Include(p => p.IdProveedorNavigation)
+                .OrderByDescending(p => p.IdProducto)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets active products with their category and supplier information
+        /// </summary>
+        public async Task<List<Producto>> GetActiveProductsWithRelatedDataAsync()
         {
             return await _dbSet
                 .Include(p => p.IdCategoriaNavigation)

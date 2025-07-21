@@ -26,9 +26,19 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Override GetAllAsync to order by IdCategoria descending
+        /// Override GetAllAsync to order by IdCategoria descending and include all records
         /// </summary>
         public override async Task<List<Categoria>> GetAllAsync()
+        {
+            return await _dbSet
+                .OrderByDescending(c => c.IdCategoria)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets only active categories
+        /// </summary>
+        public override async Task<List<Categoria>> GetActiveAsync()
         {
             return await _dbSet
                 .Where(c => c.EsActivo == true)

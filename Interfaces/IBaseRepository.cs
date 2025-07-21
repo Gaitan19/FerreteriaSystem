@@ -9,10 +9,16 @@ namespace ReactVentas.Interfaces
     public interface IBaseRepository<T> where T : class
     {
         /// <summary>
-        /// Gets all active entities
+        /// Gets all entities (both active and inactive)
+        /// </summary>
+        /// <returns>List of all entities</returns>
+        Task<List<T>> GetAllAsync();
+
+        /// <summary>
+        /// Gets only active entities (where EsActivo = true)
         /// </summary>
         /// <returns>List of active entities</returns>
-        Task<List<T>> GetAllAsync();
+        Task<List<T>> GetActiveAsync();
 
         /// <summary>
         /// Gets entity by id
