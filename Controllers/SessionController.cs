@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
 using ReactVentas.Models.DTO;
 using ReactVentas.Services;
+using ReactVentas.Interfaces;
 
 namespace ReactVentas.Controllers
 {
@@ -11,12 +11,12 @@ namespace ReactVentas.Controllers
     [ApiController]
     public class SessionController : ControllerBase
     {
-        private readonly DBREACT_VENTAContext _context;
+        private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordService _passwordService;
 
-        public SessionController(DBREACT_VENTAContext context, IPasswordService passwordService)
+        public SessionController(IUsuarioRepository usuarioRepository, IPasswordService passwordService)
         {
-            _context = context;
+            _usuarioRepository = usuarioRepository;
             _passwordService = passwordService;
         }
 
@@ -27,9 +27,7 @@ namespace ReactVentas.Controllers
             Usuario usuario = new Usuario();
             try
             {
-                usuario = await _context.Usuarios
-                    .Include(u => u.IdRolNavigation)
-                    .FirstOrDefaultAsync(u => u.Correo == request.correo);
+                usuario = await _usuarioRepository.GetByEmailAsync(request.correo);
 
                 if (usuario == null ||
                     !_passwordService.VerifyPassword(request.clave, usuario.Clave))

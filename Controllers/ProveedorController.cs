@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
+using ReactVentas.Interfaces;
 
 namespace ReactVentas.Controllers
 {
@@ -9,28 +9,27 @@ namespace ReactVentas.Controllers
     [ApiController]
     public class ProveedorController : ControllerBase
     {
-        private readonly DBREACT_VENTAContext _context;
+        private readonly IProveedorRepository _proveedorRepository;
 
-        public ProveedorController(DBREACT_VENTAContext context)
+        public ProveedorController(IProveedorRepository proveedorRepository)
         {
-            _context = context;
+            _proveedorRepository = proveedorRepository;
         }
 
         [HttpGet]
         [Route("Lista")]
         public async Task<IActionResult> Lista()
         {
-            // Retrieves a list of suppliers ordered by supplier ID in descending order.
-            List<Proveedor> lista = new List<Proveedor>();
+            // Retrieves a list of active suppliers ordered by supplier ID in descending order.
             try
             {
-                lista = await _context.Proveedores.OrderByDescending(p => p.IdProveedor).ToListAsync();
+                var lista = await _proveedorRepository.GetAllAsync();
                 return StatusCode(StatusCodes.Status200OK, lista);
             }
             catch (Exception ex)
             {
                 // Returns a 500 Internal Server Error status if an exception occurs.
-                return StatusCode(StatusCodes.Status500InternalServerError, lista);
+                return StatusCode(StatusCodes.Status500InternalServerError, new List<Proveedor>());
             }
         }
 
@@ -41,8 +40,8 @@ namespace ReactVentas.Controllers
             // Adds a new supplier to the database.
             try
             {
-                await _context.Proveedores.AddAsync(request);
-                await _context.SaveChangesAsync();
+                await _proveedorRepository.AddAsync(request);
+                await _proveedorRepository.SaveChangesAsync();
                 
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -61,8 +60,8 @@ namespace ReactVentas.Controllers
             // Updates an existing supplier in the database.
             try
             {
-                _context.Proveedores.Update(request);
-                await _context.SaveChangesAsync();
+                await _proveedorRepository.UpdateAsync(request);
+                await _proveedorRepository.SaveChangesAsync();
                 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -78,15 +77,19 @@ namespace ReactVentas.Controllers
         [Route("Eliminar/{id:int}")]
         public async Task<IActionResult> Eliminar(int id)
         {
-            // Deletes a supplier by its ID.
+            // Performs soft delete by setting EsActivo to false instead of removing the record.
             try
             {
-                Proveedor proveedor = _context.Proveedores.Find(id);
-                _context.Proveedores.Remove(proveedor);
-                await _context.SaveChangesAsync();
-                
-                // Returns a 200 OK status on successful deletion.
-                return StatusCode(StatusCodes.Status200OK, "ok");
+                var result = await _proveedorRepository.SoftDeleteAsync(id);
+                if (result)
+                {
+                    await _proveedorRepository.SaveChangesAsync();
+                    return StatusCode(StatusCodes.Status200OK, "ok");
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Proveedor not found");
+                }
             }
             catch (Exception ex)
             {
