@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ReactVentas.Models;
 using ReactVentas.Models.DTO;
+using ReactVentas.Interfaces;
 using System.Data;
 using System.Globalization;
 using System.Xml.Linq;
@@ -15,10 +16,12 @@ namespace ReactVentas.Controllers
     public class VentaController : ControllerBase
     {
         private readonly DBREACT_VENTAContext _context;
+        private readonly IHubService _hubService;
 
-        public VentaController(DBREACT_VENTAContext context)
+        public VentaController(DBREACT_VENTAContext context, IHubService hubService)
         {
             _context = context;
+            _hubService = hubService;
         }
 
         /// <summary>
@@ -97,6 +100,11 @@ namespace ReactVentas.Controllers
                     cmd.ExecuteNonQuery();
                     numeroDocumento = cmd.Parameters["nroDocumento"].Value.ToString();
                 }
+
+                // Notify clients about new sale
+                _ = Task.Run(async () => {
+                    await _hubService.NotifyEntityChanged("ventas", "created", new { numeroDocumento = numeroDocumento, total = request.total }, null);
+                });
 
                 return StatusCode(StatusCodes.Status200OK, new { numeroDocumento = numeroDocumento });
             }

@@ -18,6 +18,7 @@ import { useContext, useEffect, useState } from 'react';
 import './css/Venta.css';
 import { UserContext } from '../context/UserProvider';
 import { generateCode } from '../utils/generateCode';
+import useSignalR from "../utils/useSignalR";
 
 const modelo = {
   nombre: '',
@@ -30,6 +31,9 @@ const modelo = {
 
 const Venta = () => {
   const { user } = useContext(UserContext);
+
+  // Setup SignalR connection (we don't need to listen for changes, just show connection status)
+  const { isConnected } = useSignalR(null, null);
 
   const [a_Productos, setA_Productos] = useState([]);
   const [a_Busqueda, setA_Busqueda] = useState('');
@@ -302,7 +306,12 @@ const Venta = () => {
               <CardHeader
                 style={{ backgroundColor: '#4e73df', color: 'white' }}
               >
-                Cliente
+                <div className="d-flex justify-content-between align-items-center">
+                  <span>Cliente</span>
+                  <small className={`badge ${isConnected ? 'badge-success' : 'badge-warning'}`}>
+                    {isConnected ? 'En línea' : 'Desconectado'}
+                  </small>
+                </div>
               </CardHeader>
               <CardBody>
                 <Row>

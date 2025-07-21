@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using ReactVentas.Services;
 using ReactVentas.Interfaces;
 using ReactVentas.Repositories;
+using ReactVentas.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,10 +19,14 @@ builder.Services.AddDbContext<DBREACT_VENTAContext>(options => {
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-        builder => builder.AllowAnyOrigin()
+        builder => builder.SetIsOriginAllowed(origin => true)
                           .AllowAnyMethod()
-                          .AllowAnyHeader());
+                          .AllowAnyHeader()
+                          .AllowCredentials());
 });
+
+// Configure SignalR
+builder.Services.AddSignalR();
 
 // Agregar compresi�n de respuesta para mejorar rendimiento en conexiones m�viles  
 builder.Services.AddResponseCompression(options =>
@@ -32,6 +37,9 @@ builder.Services.AddResponseCompression(options =>
 
 // Registrar servicio de contrase�as
 builder.Services.AddScoped<IPasswordService, PasswordService>();
+
+// Registrar servicio de SignalR Hub
+builder.Services.AddScoped<IHubService, HubService>();
 
 // Registrar repositorios
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
@@ -74,6 +82,9 @@ app.UseRouting();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action=Index}/{id?}");
+
+// Map SignalR Hub
+app.MapHub<DataSyncHub>("/dataSyncHub");
 
 app.MapFallbackToFile("index.html");
 

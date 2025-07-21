@@ -14,6 +14,7 @@ import {
   ModalFooter,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import useSignalR from "../utils/useSignalR";
 
 const modeloCategoria = {
   idCategoria: 0,
@@ -26,6 +27,31 @@ const Categoria = () => {
   const [pendiente, setPendiente] = useState(true);
   const [categorias, setCategorias] = useState([]);
   const [verModal, setVerModal] = useState(false);
+
+  // Handle real-time updates via SignalR
+  const handleEntityChange = (notification) => {
+    const { action, entityType, id } = notification;
+    
+    if (entityType === 'categorias') {
+      console.log(`Categoria ${action}:`, notification);
+      
+      // Refresh the list when any category change occurs
+      obtenerCategorias();
+      
+      // Show notification based on action
+      if (action === 'created') {
+        // Optional: Show a toast notification for new categories
+        console.log('Nueva categoria agregada');
+      } else if (action === 'updated') {
+        console.log('Categoria actualizada');
+      } else if (action === 'deleted') {
+        console.log('Categoria eliminada');
+      }
+    }
+  };
+
+  // Setup SignalR connection
+  const { isConnected } = useSignalR('categorias', handleEntityChange);
 
   const handleChange = (e) => {
     let value =
@@ -152,7 +178,7 @@ const Categoria = () => {
     }
 
     if (response.ok) {
-      await obtenerCategorias();
+      // Don't manually refresh - SignalR will handle the update
       setCategoria(modeloCategoria);
       setVerModal(!verModal);
       Swal.fire(
@@ -184,8 +210,7 @@ const Categoria = () => {
           method: "DELETE",
         }).then((response) => {
           if (response.ok) {
-            obtenerCategorias();
-
+            // Don't manually refresh - SignalR will handle the update
             Swal.fire("Eliminado!", "La categoria fue eliminada.", "success");
           }
         });
@@ -202,7 +227,12 @@ const Categoria = () => {
     <>
       <Card>
         <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
-          Lista de Categorias
+          <div className="d-flex justify-content-between align-items-center">
+            <span>Lista de Categorias</span>
+            <small className={`badge ${isConnected ? 'badge-success' : 'badge-warning'}`}>
+              {isConnected ? 'En línea' : 'Desconectado'}
+            </small>
+          </div>
         </CardHeader>
         <CardBody>
           <Button

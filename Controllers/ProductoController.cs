@@ -10,10 +10,12 @@ namespace ReactVentas.Controllers
     public class ProductoController : ControllerBase
     {
         private readonly IProductoRepository _productoRepository;
+        private readonly IHubService _hubService;
 
-        public ProductoController(IProductoRepository productoRepository)
+        public ProductoController(IProductoRepository productoRepository, IHubService hubService)
         {
             _productoRepository = productoRepository;
+            _hubService = hubService;
         }
 
         [HttpGet]
@@ -43,6 +45,9 @@ namespace ReactVentas.Controllers
                 await _productoRepository.AddAsync(request);
                 await _productoRepository.SaveChangesAsync();
 
+                // Notify clients about new product
+                await _hubService.NotifyEntityChanged("productos", "created", request, request.IdProducto);
+
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +67,9 @@ namespace ReactVentas.Controllers
             {
                 await _productoRepository.UpdateAsync(request);
                 await _productoRepository.SaveChangesAsync();
+
+                // Notify clients about updated product
+                await _hubService.NotifyEntityChanged("productos", "updated", request, request.IdProducto);
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +92,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _productoRepository.SaveChangesAsync();
+
+                    // Notify clients about deleted product
+                    await _hubService.NotifyEntityChanged("productos", "deleted", null, id);
+
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

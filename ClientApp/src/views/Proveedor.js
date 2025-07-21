@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import useSignalR from "../utils/useSignalR";
 
 const modeloProveedor = {
   idProveedor: 0,
@@ -31,6 +32,19 @@ const Proveedor = () => {
   const [pendiente, setPendiente] = useState(true);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
+
+  // Handle real-time updates via SignalR
+  const handleEntityChange = (notification) => {
+    const { action, entityType } = notification;
+    
+    if (entityType === 'proveedores') {
+      console.log(`Proveedor ${action}:`, notification);
+      obtenerProveedores();
+    }
+  };
+
+  // Setup SignalR connection
+  const { isConnected } = useSignalR('proveedores', handleEntityChange);
 
   const handleChange = (e) => {
     let value;
@@ -181,7 +195,7 @@ const Proveedor = () => {
         "success"
       );
 
-      await obtenerProveedores();
+      // Don't manually refresh - SignalR will handle the update
       setProveedor(modeloProveedor);
       setVerModal(!verModal);
     } else {
@@ -209,8 +223,7 @@ const Proveedor = () => {
         );
 
         if (response.ok) {
-          obtenerProveedores();
-
+          // Don't manually refresh - SignalR will handle the update
           Swal.fire("Eliminado!", "El proveedor fue eliminado.", "success");
         }
       }
@@ -226,7 +239,12 @@ const Proveedor = () => {
     <>
       <Card>
         <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
-          Lista de Proveedores
+          <div className="d-flex justify-content-between align-items-center">
+            <span>Lista de Proveedores</span>
+            <small className={`badge ${isConnected ? 'badge-success' : 'badge-warning'}`}>
+              {isConnected ? 'En línea' : 'Desconectado'}
+            </small>
+          </div>
         </CardHeader>
         <CardBody>
           <Button

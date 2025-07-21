@@ -10,10 +10,12 @@ namespace ReactVentas.Controllers
     public class CategoriaController : ControllerBase
     {
         private readonly ICategoriaRepository _categoriaRepository;
+        private readonly IHubService _hubService;
 
-        public CategoriaController(ICategoriaRepository categoriaRepository)
+        public CategoriaController(ICategoriaRepository categoriaRepository, IHubService hubService)
         {
             _categoriaRepository = categoriaRepository;
+            _hubService = hubService;
         }
 
         [HttpGet]
@@ -43,6 +45,9 @@ namespace ReactVentas.Controllers
                 await _categoriaRepository.AddAsync(request);
                 await _categoriaRepository.SaveChangesAsync();
 
+                // Notify clients about new category
+                await _hubService.NotifyEntityChanged("categorias", "created", request, request.IdCategoria);
+
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +67,9 @@ namespace ReactVentas.Controllers
             {
                 await _categoriaRepository.UpdateAsync(request);
                 await _categoriaRepository.SaveChangesAsync();
+
+                // Notify clients about updated category
+                await _hubService.NotifyEntityChanged("categorias", "updated", request, request.IdCategoria);
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +92,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _categoriaRepository.SaveChangesAsync();
+
+                    // Notify clients about deleted category
+                    await _hubService.NotifyEntityChanged("categorias", "deleted", null, id);
+
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

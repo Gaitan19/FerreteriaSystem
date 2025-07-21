@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import useSignalR from "../utils/useSignalR";
 
 const modeloProducto = {
   idProducto: 0,
@@ -36,6 +37,25 @@ const Producto = () => {
   const [categorias, setCategorias] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
+
+  // Handle real-time updates via SignalR
+  const handleEntityChange = (notification) => {
+    const { action, entityType } = notification;
+    
+    if (entityType === 'productos') {
+      console.log(`Producto ${action}:`, notification);
+      obtenerProductos();
+    } else if (entityType === 'categorias') {
+      // Refresh categories when they change
+      obtenerCategorias();
+    } else if (entityType === 'proveedores') {
+      // Refresh suppliers when they change
+      obtenerProveedores();
+    }
+  };
+
+  // Setup SignalR connection for multiple entities
+  const { isConnected } = useSignalR('productos', handleEntityChange);
 
   const handleChange = (e) => {
     let value;
@@ -208,7 +228,7 @@ const Producto = () => {
     }
 
     if (response.ok) {
-      await obtenerProductos();
+      // Don't manually refresh - SignalR will handle the update
       setProducto(modeloProducto);
       setVerModal(!verModal);
 
@@ -241,8 +261,7 @@ const Producto = () => {
           method: "DELETE",
         }).then((response) => {
           if (response.ok) {
-            obtenerProductos();
-
+            // Don't manually refresh - SignalR will handle the update
             Swal.fire("Eliminado!", "El producto fue eliminado.", "success");
           }
         });
@@ -261,7 +280,12 @@ const Producto = () => {
     <>
       <Card>
         <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
-          Lista de Productos
+          <div className="d-flex justify-content-between align-items-center">
+            <span>Lista de Productos</span>
+            <small className={`badge ${isConnected ? 'badge-success' : 'badge-warning'}`}>
+              {isConnected ? 'En línea' : 'Desconectado'}
+            </small>
+          </div>
         </CardHeader>
         <CardBody>
           <Button

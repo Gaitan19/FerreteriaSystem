@@ -10,10 +10,12 @@ namespace ReactVentas.Controllers
     public class ProveedorController : ControllerBase
     {
         private readonly IProveedorRepository _proveedorRepository;
+        private readonly IHubService _hubService;
 
-        public ProveedorController(IProveedorRepository proveedorRepository)
+        public ProveedorController(IProveedorRepository proveedorRepository, IHubService hubService)
         {
             _proveedorRepository = proveedorRepository;
+            _hubService = hubService;
         }
 
         [HttpGet]
@@ -42,6 +44,9 @@ namespace ReactVentas.Controllers
             {
                 await _proveedorRepository.AddAsync(request);
                 await _proveedorRepository.SaveChangesAsync();
+
+                // Notify clients about new supplier
+                await _hubService.NotifyEntityChanged("proveedores", "created", request, request.IdProveedor);
                 
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -62,6 +67,9 @@ namespace ReactVentas.Controllers
             {
                 await _proveedorRepository.UpdateAsync(request);
                 await _proveedorRepository.SaveChangesAsync();
+
+                // Notify clients about updated supplier
+                await _hubService.NotifyEntityChanged("proveedores", "updated", request, request.IdProveedor);
                 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +92,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _proveedorRepository.SaveChangesAsync();
+
+                    // Notify clients about deleted supplier
+                    await _hubService.NotifyEntityChanged("proveedores", "deleted", null, id);
+
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else
