@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useRealTimeData, useEntitySubscription, useSignalR } from "../context/SignalRProvider";
 
 const modeloProducto = {
   idProducto: 0,
@@ -36,6 +37,60 @@ const Producto = () => {
   const [categorias, setCategorias] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  
+  // Use SignalR for real-time updates
+  const { isConnected } = useSignalR();
+  
+  // Set up real-time data subscription for products
+  const productosRealTime = useRealTimeData("Producto", productos);
+  
+  // Update local state when real-time data changes
+  useEffect(() => {
+    setProductos(productosRealTime);
+  }, [productosRealTime]);
+  
+  // Subscribe to real-time notifications for better user feedback
+  useEntitySubscription("Producto", (eventType, data) => {
+    switch (eventType) {
+      case 'EntityCreated':
+        Swal.fire({
+          icon: 'info',
+          title: 'Nuevo Producto',
+          text: `Se agregó un nuevo producto: ${data.Data?.descripcion || 'Sin descripción'}`,
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        break;
+      case 'EntityUpdated':
+        if (data.Data?.descripcion) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Producto Actualizado',
+            text: `Se actualizó el producto: ${data.Data.descripcion}`,
+            timer: 3000,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+          });
+        }
+        break;
+      case 'EntityDeleted':
+        Swal.fire({
+          icon: 'warning',
+          title: 'Producto Eliminado',
+          text: 'Un producto fue eliminado',
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        break;
+      default:
+        break;
+    }
+  });
 
   const handleChange = (e) => {
     let value;
@@ -208,7 +263,8 @@ const Producto = () => {
     }
 
     if (response.ok) {
-      await obtenerProductos();
+      // Remove manual refresh - SignalR will handle real-time updates
+      // await obtenerProductos();  // Commented out for real-time updates
       setProducto(modeloProducto);
       setVerModal(!verModal);
 
@@ -241,7 +297,8 @@ const Producto = () => {
           method: "DELETE",
         }).then((response) => {
           if (response.ok) {
-            obtenerProductos();
+            // Remove manual refresh - SignalR will handle real-time updates
+            // obtenerProductos();  // Commented out for real-time updates
 
             Swal.fire("Eliminado!", "El producto fue eliminado.", "success");
           }
@@ -261,7 +318,18 @@ const Producto = () => {
     <>
       <Card>
         <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
-          Lista de Productos
+          <div className="d-flex justify-content-between align-items-center">
+            <span>Lista de Productos</span>
+            <div className="d-flex align-items-center">
+              <small className="me-2">
+                {isConnected ? (
+                  <span className="text-success">🟢 Tiempo Real Activo</span>
+                ) : (
+                  <span className="text-warning">🟡 Conectando...</span>
+                )}
+              </small>
+            </div>
+          </div>
         </CardHeader>
         <CardBody>
           <Button

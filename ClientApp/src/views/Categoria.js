@@ -14,6 +14,7 @@ import {
   ModalFooter,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useRealTimeData, useEntitySubscription, useSignalR } from "../context/SignalRProvider";
 
 const modeloCategoria = {
   idCategoria: 0,
@@ -26,6 +27,60 @@ const Categoria = () => {
   const [pendiente, setPendiente] = useState(true);
   const [categorias, setCategorias] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  
+  // Use SignalR for real-time updates
+  const { isConnected } = useSignalR();
+  
+  // Set up real-time data subscription for categories
+  const categoriasRealTime = useRealTimeData("Categoria", categorias);
+  
+  // Update local state when real-time data changes
+  useEffect(() => {
+    setCategorias(categoriasRealTime);
+  }, [categoriasRealTime]);
+  
+  // Subscribe to real-time notifications
+  useEntitySubscription("Categoria", (eventType, data) => {
+    switch (eventType) {
+      case 'EntityCreated':
+        Swal.fire({
+          icon: 'info',
+          title: 'Nueva Categoría',
+          text: `Se agregó una nueva categoría: ${data.Data?.descripcion || 'Sin descripción'}`,
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        break;
+      case 'EntityUpdated':
+        if (data.Data?.descripcion) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Categoría Actualizada',
+            text: `Se actualizó la categoría: ${data.Data.descripcion}`,
+            timer: 3000,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+          });
+        }
+        break;
+      case 'EntityDeleted':
+        Swal.fire({
+          icon: 'warning',
+          title: 'Categoría Eliminada',
+          text: 'Una categoría fue eliminada',
+          timer: 3000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+        break;
+      default:
+        break;
+    }
+  });
 
   const handleChange = (e) => {
     let value =
