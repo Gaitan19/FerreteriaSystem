@@ -39,8 +39,8 @@ class SignalRService {
             this.notifyListeners('categoriaUpdated', categoria);
         });
 
-        this.connection.on('CategoriaDeleted', (id) => {
-            this.notifyListeners('categoriaDeleted', id);
+        this.connection.on('CategoriaDeleted', (categoria) => {
+            this.notifyListeners('categoriaDeleted', categoria);
         });
 
         // Product events
@@ -52,8 +52,8 @@ class SignalRService {
             this.notifyListeners('productoUpdated', producto);
         });
 
-        this.connection.on('ProductoDeleted', (id) => {
-            this.notifyListeners('productoDeleted', id);
+        this.connection.on('ProductoDeleted', (producto) => {
+            this.notifyListeners('productoDeleted', producto);
         });
 
         // User events
@@ -65,8 +65,8 @@ class SignalRService {
             this.notifyListeners('usuarioUpdated', usuario);
         });
 
-        this.connection.on('UsuarioDeleted', (id) => {
-            this.notifyListeners('usuarioDeleted', id);
+        this.connection.on('UsuarioDeleted', (usuario) => {
+            this.notifyListeners('usuarioDeleted', usuario);
         });
 
         // Supplier events
@@ -78,8 +78,8 @@ class SignalRService {
             this.notifyListeners('proveedorUpdated', proveedor);
         });
 
-        this.connection.on('ProveedorDeleted', (id) => {
-            this.notifyListeners('proveedorDeleted', id);
+        this.connection.on('ProveedorDeleted', (proveedor) => {
+            this.notifyListeners('proveedorDeleted', proveedor);
         });
 
         // Sale events
