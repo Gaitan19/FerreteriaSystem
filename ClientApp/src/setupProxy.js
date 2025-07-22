@@ -17,12 +17,14 @@ const context = [
   "/api/utilidad",
   "/api/session",
   "/api/proveedor",
+  "/notificationHub",
 ];
 
 module.exports = function (app) {
   const appProxy = createProxyMiddleware(context, {
     target: target,
     secure: false,
+    ws: true, // Enable WebSocket proxying for SignalR
   });
 
   app.use(appProxy);
