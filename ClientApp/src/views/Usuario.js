@@ -26,8 +26,8 @@ const modeloUsuario = {
   idRol: 0,
   clave: "",
   esActivo: true,
-  claveActual: "",  // Nuevo campo para validación
-  claveNueva: ""   // Nuevo campo para cambio
+  claveActual: "", // Nuevo campo para validación
+  claveNueva: "", // Nuevo campo para cambio
 };
 
 const Usuario = () => {
@@ -43,7 +43,7 @@ const Usuario = () => {
     const { name, value } = e.target;
     setUsuario({
       ...usuario,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -104,8 +104,8 @@ const Usuario = () => {
       selector: (row) => row.esActivo,
       sortable: true,
       cell: (row) => {
-        let clase = row.esActivo 
-          ? "badge badge-info p-2" 
+        let clase = row.esActivo
+          ? "badge badge-info p-2"
           : "badge badge-danger p-2";
         return (
           <span className={clase}>{row.esActivo ? "Activo" : "No Activo"}</span>
@@ -124,9 +124,9 @@ const Usuario = () => {
           >
             <i className="fas fa-pen-alt"></i>
           </Button>
-          <Button 
-            color="danger" 
-            size="sm" 
+          <Button
+            color="danger"
+            size="sm"
             onClick={() => eliminarUsuario(row.idUsuario)}
           >
             <i className="fas fa-trash-alt"></i>
@@ -158,11 +158,12 @@ const Usuario = () => {
   };
 
   const abrirEditarModal = (data) => {
+    console.log(data);
     setUsuario({
       ...data,
       clave: "",
       claveActual: "",
-      claveNueva: ""
+      claveNueva: "",
     });
     setCambiandoClave(false);
     setVerModal(true);
@@ -196,15 +197,16 @@ const Usuario = () => {
       } else {
         // Edición existente
         payload = {
-          IdUsuario: usuario.idUsuario,
-          Nombre: usuario.nombre,
-          Correo: usuario.correo,
-          Telefono: usuario.telefono,
-          IdRol: usuario.idRol,
-          EsActivo: usuario.esActivo,
-          ClaveActual: cambiandoClave ? usuario.claveActual : "",
-          ClaveNueva: cambiandoClave ? usuario.claveNueva : ""
+          idUsuario: usuario.idUsuario,
+          nombre: usuario.nombre,
+          correo: usuario.correo,
+          telefono: usuario.telefono,
+          idRol: usuario.idRol,
+          esActivo: usuario.esActivo === "true" || usuario.esActivo === true,
+          claveActual: cambiandoClave ? usuario.claveActual : "",
+          claveNueva: cambiandoClave ? usuario.claveNueva : "",
         };
+
         url = "api/usuario/Editar";
         method = "PATCH";
       }
@@ -222,6 +224,7 @@ const Usuario = () => {
         cerrarModal();
         Swal.fire("Éxito", "Operación realizada correctamente", "success");
       } else {
+        console.log(await response.text());
         const error = await response.text();
         Swal.fire("Error", error, "error");
       }
@@ -245,19 +248,19 @@ const Usuario = () => {
         fetch(`api/usuario/Eliminar/${id}`, {
           method: "DELETE",
         })
-        .then(response => {
-          if (response.ok) {
-            obtenerUsuarios();
-            Swal.fire("Eliminado!", "El usuario fue eliminado.", "success");
-          } else {
-            return response.text().then(error => {
-              Swal.fire("Error", error, "error");
-            });
-          }
-        })
-        .catch(error => {
-          Swal.fire("Error", "Error al conectar con el servidor", "error");
-        });
+          .then((response) => {
+            if (response.ok) {
+              obtenerUsuarios();
+              Swal.fire("Eliminado!", "El usuario fue eliminado.", "success");
+            } else {
+              return response.text().then((error) => {
+                Swal.fire("Error", error, "error");
+              });
+            }
+          })
+          .catch((error) => {
+            Swal.fire("Error", "Error al conectar con el servidor", "error");
+          });
       }
     });
   };
@@ -274,17 +277,13 @@ const Usuario = () => {
   return (
     <>
       <Card className="shadow mb-4">
-        <CardHeader 
-          className="py-3" 
+        <CardHeader
+          className="py-3"
           style={{ backgroundColor: "#4e73df", color: "white" }}
         >
           <div className="d-flex justify-content-between align-items-center">
             <h6 className="m-0 font-weight-bold">Lista de Usuarios</h6>
-            <Button
-              color="success"
-              size="sm"
-              onClick={abrirNuevoModal}
-            >
+            <Button color="success" size="sm" onClick={abrirNuevoModal}>
               <i className="fas fa-plus mr-1"></i> Nuevo Usuario
             </Button>
           </div>
@@ -335,7 +334,7 @@ const Usuario = () => {
                 </FormGroup>
               </Col>
             </Row>
-            
+
             <Row>
               <Col sm={6}>
                 <FormGroup>
@@ -369,7 +368,7 @@ const Usuario = () => {
                 </FormGroup>
               </Col>
             </Row>
-            
+
             {/* Contraseña para nuevo usuario */}
             {usuario.idUsuario === 0 && (
               <Row>
@@ -414,7 +413,7 @@ const Usuario = () => {
                 </Col>
               </Row>
             )}
-            
+
             {/* Campos para edición de usuario existente */}
             {usuario.idUsuario !== 0 && (
               <>
@@ -450,7 +449,7 @@ const Usuario = () => {
                     </FormGroup>
                   </Col>
                 </Row>
-                
+
                 {cambiandoClave && (
                   <Row>
                     <Col sm="6">
@@ -484,20 +483,12 @@ const Usuario = () => {
               </>
             )}
           </ModalBody>
-          
+
           <ModalFooter className="d-flex justify-content-between">
-            <Button 
-              color="secondary" 
-              size="sm" 
-              onClick={cerrarModal}
-            >
+            <Button color="secondary" size="sm" onClick={cerrarModal}>
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              color="primary" 
-              size="sm"
-            >
+            <Button type="submit" color="primary" size="sm">
               {usuario.idUsuario === 0 ? "Crear Usuario" : "Guardar Cambios"}
             </Button>
           </ModalFooter>

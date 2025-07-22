@@ -63,12 +63,12 @@ namespace ReactVentas.Repositories
             if (entity == null) return null;
 
             // Verifica si la entidad está activa
-            var esActivoProperty = typeof(T).GetProperty("EsActivo");
-            if (esActivoProperty != null)
-            {
-                var isActive = (bool?)esActivoProperty.GetValue(entity);
-                if (isActive != true) return null;
-            }
+            //var esActivoProperty = typeof(T).GetProperty("EsActivo");
+            //if (esActivoProperty != null)
+            //{
+            //    var isActive = (bool?)esActivoProperty.GetValue(entity);
+            //    if (isActive != true) return null;
+            //}
 
             return entity;
         }
