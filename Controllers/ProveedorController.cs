@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ReactVentas.Models;
 using ReactVentas.Interfaces;
+using ReactVentas.Services;
 
 namespace ReactVentas.Controllers
 {
@@ -10,10 +11,12 @@ namespace ReactVentas.Controllers
     public class ProveedorController : ControllerBase
     {
         private readonly IProveedorRepository _proveedorRepository;
+        private readonly INotificationService _notificationService;
 
-        public ProveedorController(IProveedorRepository proveedorRepository)
+        public ProveedorController(IProveedorRepository proveedorRepository, INotificationService notificationService)
         {
             _proveedorRepository = proveedorRepository;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -43,6 +46,9 @@ namespace ReactVentas.Controllers
                 await _proveedorRepository.AddAsync(request);
                 await _proveedorRepository.SaveChangesAsync();
                 
+                // Notify clients about the new supplier
+                await _notificationService.NotifyProveedorCreated(request);
+                
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +68,9 @@ namespace ReactVentas.Controllers
             {
                 await _proveedorRepository.UpdateAsync(request);
                 await _proveedorRepository.SaveChangesAsync();
+                
+                // Notify clients about the updated supplier
+                await _notificationService.NotifyProveedorUpdated(request);
                 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +93,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _proveedorRepository.SaveChangesAsync();
+                    
+                    // Notify clients about the deleted supplier
+                    await _notificationService.NotifyProveedorDeleted(id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

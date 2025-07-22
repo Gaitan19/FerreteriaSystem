@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ReactVentas.Models;
 using ReactVentas.Interfaces;
+using ReactVentas.Services;
 
 namespace ReactVentas.Controllers
 {
@@ -10,10 +11,12 @@ namespace ReactVentas.Controllers
     public class CategoriaController : ControllerBase
     {
         private readonly ICategoriaRepository _categoriaRepository;
+        private readonly INotificationService _notificationService;
 
-        public CategoriaController(ICategoriaRepository categoriaRepository)
+        public CategoriaController(ICategoriaRepository categoriaRepository, INotificationService notificationService)
         {
             _categoriaRepository = categoriaRepository;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -43,6 +46,9 @@ namespace ReactVentas.Controllers
                 await _categoriaRepository.AddAsync(request);
                 await _categoriaRepository.SaveChangesAsync();
 
+                // Notify clients about the new category
+                await _notificationService.NotifyCategoriaCreated(request);
+
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +68,9 @@ namespace ReactVentas.Controllers
             {
                 await _categoriaRepository.UpdateAsync(request);
                 await _categoriaRepository.SaveChangesAsync();
+
+                // Notify clients about the updated category
+                await _notificationService.NotifyCategoriaUpdated(request);
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +93,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _categoriaRepository.SaveChangesAsync();
+                    
+                    // Notify clients about the deleted category
+                    await _notificationService.NotifyCategoriaDeleted(id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

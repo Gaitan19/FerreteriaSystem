@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ReactVentas.Models;
 using ReactVentas.Interfaces;
+using ReactVentas.Services;
 
 namespace ReactVentas.Controllers
 {
@@ -10,10 +11,12 @@ namespace ReactVentas.Controllers
     public class ProductoController : ControllerBase
     {
         private readonly IProductoRepository _productoRepository;
+        private readonly INotificationService _notificationService;
 
-        public ProductoController(IProductoRepository productoRepository)
+        public ProductoController(IProductoRepository productoRepository, INotificationService notificationService)
         {
             _productoRepository = productoRepository;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -43,6 +46,9 @@ namespace ReactVentas.Controllers
                 await _productoRepository.AddAsync(request);
                 await _productoRepository.SaveChangesAsync();
 
+                // Notify clients about the new product
+                await _notificationService.NotifyProductoCreated(request);
+
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +68,9 @@ namespace ReactVentas.Controllers
             {
                 await _productoRepository.UpdateAsync(request);
                 await _productoRepository.SaveChangesAsync();
+
+                // Notify clients about the updated product
+                await _notificationService.NotifyProductoUpdated(request);
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +93,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _productoRepository.SaveChangesAsync();
+                    
+                    // Notify clients about the deleted product
+                    await _notificationService.NotifyProductoDeleted(id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

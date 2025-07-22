@@ -13,11 +13,13 @@ namespace ReactVentas.Controllers
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordService _passwordService;
+        private readonly INotificationService _notificationService;
 
-        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService)
+        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService, INotificationService notificationService)
         {
             _usuarioRepository = usuarioRepository;
             _passwordService = passwordService;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -49,6 +51,9 @@ namespace ReactVentas.Controllers
                 // Add a new user to the database and save changes.
                 await _usuarioRepository.AddAsync(request);
                 await _usuarioRepository.SaveChangesAsync();
+
+                // Notify clients about the new user
+                await _notificationService.NotifyUsuarioCreated(request);
 
                 // Return a 200 OK status indicating success.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -90,6 +95,9 @@ namespace ReactVentas.Controllers
                 await _usuarioRepository.UpdateAsync(usuario);
                 await _usuarioRepository.SaveChangesAsync();
 
+                // Notify clients about the updated user
+                await _notificationService.NotifyUsuarioUpdated(usuario);
+
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
             catch (Exception ex)
@@ -109,6 +117,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _usuarioRepository.SaveChangesAsync();
+                    
+                    // Notify clients about the deleted user
+                    await _notificationService.NotifyUsuarioDeleted(id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else
