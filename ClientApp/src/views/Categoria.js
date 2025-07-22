@@ -14,6 +14,7 @@ import {
   ModalFooter,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useSignalR } from "../context/SignalRContext";
 
 const modeloCategoria = {
   idCategoria: 0,
@@ -26,6 +27,7 @@ const Categoria = () => {
   const [pendiente, setPendiente] = useState(true);
   const [categorias, setCategorias] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  const { subscribe } = useSignalR();
 
   const handleChange = (e) => {
     let value =
@@ -53,7 +55,64 @@ const Categoria = () => {
 
   useEffect(() => {
     obtenerCategorias();
-  }, []);
+
+    // Setup SignalR event listeners for real-time updates
+    const unsubscribeCreated = subscribe('categoriaCreated', (newCategoria) => {
+      console.log('Categoria creada:', newCategoria);
+      setCategorias(prev => [...prev, newCategoria]);
+      // Show a notification
+      Swal.fire({
+        title: 'Nueva categoría',
+        text: `Se ha agregado la categoría: ${newCategoria.descripcion}`,
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    const unsubscribeUpdated = subscribe('categoriaUpdated', (updatedCategoria) => {
+      console.log('Categoria actualizada:', updatedCategoria);
+      setCategorias(prev => 
+        prev.map(cat => 
+          cat.idCategoria === updatedCategoria.idCategoria ? updatedCategoria : cat
+        )
+      );
+      // Show a notification
+      Swal.fire({
+        title: 'Categoría actualizada',
+        text: `Se ha actualizado la categoría: ${updatedCategoria.descripcion}`,
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    const unsubscribeDeleted = subscribe('categoriaDeleted', (deletedId) => {
+      console.log('Categoria eliminada:', deletedId);
+      setCategorias(prev => prev.filter(cat => cat.idCategoria !== deletedId));
+      // Show a notification
+      Swal.fire({
+        title: 'Categoría eliminada',
+        text: 'Se ha eliminado una categoría',
+        icon: 'warning',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribeCreated();
+      unsubscribeUpdated();
+      unsubscribeDeleted();
+    };
+  }, [subscribe]);
 
   const columns = [
     {

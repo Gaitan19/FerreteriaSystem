@@ -17,6 +17,7 @@ import {
 } from "reactstrap";
 import Swal from "sweetalert2";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
+import { useSignalR } from "../context/SignalRContext";
 
 const modeloUsuario = {
   idUsuario: 0,
@@ -38,6 +39,7 @@ const Usuario = () => {
   const [verModal, setVerModal] = useState(false);
   const [visiblePassword, setVisiblePassword] = useState(false);
   const [cambiandoClave, setCambiandoClave] = useState(false); // Estado para controlar cambio de clave
+  const { subscribe } = useSignalR();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,7 +77,64 @@ const Usuario = () => {
   useEffect(() => {
     obtenerRoles();
     obtenerUsuarios();
-  }, []);
+
+    // Setup SignalR event listeners for real-time updates
+    const unsubscribeCreated = subscribe('usuarioCreated', (newUsuario) => {
+      console.log('Usuario creado:', newUsuario);
+      setUsuarios(prev => [...prev, newUsuario]);
+      // Show a notification
+      Swal.fire({
+        title: 'Nuevo usuario',
+        text: `Se ha agregado el usuario: ${newUsuario.nombre}`,
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    const unsubscribeUpdated = subscribe('usuarioUpdated', (updatedUsuario) => {
+      console.log('Usuario actualizado:', updatedUsuario);
+      setUsuarios(prev => 
+        prev.map(user => 
+          user.idUsuario === updatedUsuario.idUsuario ? updatedUsuario : user
+        )
+      );
+      // Show a notification
+      Swal.fire({
+        title: 'Usuario actualizado',
+        text: `Se ha actualizado el usuario: ${updatedUsuario.nombre}`,
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    const unsubscribeDeleted = subscribe('usuarioDeleted', (deletedId) => {
+      console.log('Usuario eliminado:', deletedId);
+      setUsuarios(prev => prev.filter(user => user.idUsuario !== deletedId));
+      // Show a notification
+      Swal.fire({
+        title: 'Usuario eliminado',
+        text: 'Se ha eliminado un usuario',
+        icon: 'warning',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribeCreated();
+      unsubscribeUpdated();
+      unsubscribeDeleted();
+    };
+  }, [subscribe]);
 
   const columns = [
     {

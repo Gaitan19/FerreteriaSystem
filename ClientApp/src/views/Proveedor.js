@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useSignalR } from "../context/SignalRContext";
 
 const modeloProveedor = {
   idProveedor: 0,
@@ -31,6 +32,7 @@ const Proveedor = () => {
   const [pendiente, setPendiente] = useState(true);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  const { subscribe } = useSignalR();
 
   const handleChange = (e) => {
     let value;
@@ -57,7 +59,64 @@ const Proveedor = () => {
 
   useEffect(() => {
     obtenerProveedores();
-  }, []);
+
+    // Setup SignalR event listeners for real-time updates
+    const unsubscribeCreated = subscribe('proveedorCreated', (newProveedor) => {
+      console.log('Proveedor creado:', newProveedor);
+      setProveedores(prev => [...prev, newProveedor]);
+      // Show a notification
+      Swal.fire({
+        title: 'Nuevo proveedor',
+        text: `Se ha agregado el proveedor: ${newProveedor.nombre}`,
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    const unsubscribeUpdated = subscribe('proveedorUpdated', (updatedProveedor) => {
+      console.log('Proveedor actualizado:', updatedProveedor);
+      setProveedores(prev => 
+        prev.map(prov => 
+          prov.idProveedor === updatedProveedor.idProveedor ? updatedProveedor : prov
+        )
+      );
+      // Show a notification
+      Swal.fire({
+        title: 'Proveedor actualizado',
+        text: `Se ha actualizado el proveedor: ${updatedProveedor.nombre}`,
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    const unsubscribeDeleted = subscribe('proveedorDeleted', (deletedId) => {
+      console.log('Proveedor eliminado:', deletedId);
+      setProveedores(prev => prev.filter(prov => prov.idProveedor !== deletedId));
+      // Show a notification
+      Swal.fire({
+        title: 'Proveedor eliminado',
+        text: 'Se ha eliminado un proveedor',
+        icon: 'warning',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribeCreated();
+      unsubscribeUpdated();
+      unsubscribeDeleted();
+    };
+  }, [subscribe]);
 
   const columns = [
     {

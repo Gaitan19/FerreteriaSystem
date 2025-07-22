@@ -3,20 +3,12 @@ import { Navigate, Outlet } from 'react-router-dom'
 import NavBar from './componentes/NavBar'
 import { Link } from 'react-router-dom';
 import { UserContext } from './context/UserProvider';
+import { useSignalR } from './context/SignalRContext';
 import Swal from 'sweetalert2'
-import { useState } from 'react';
-
-const modelo = {
-    nombre: "",
-    correo: "",
-    idRolNavigation: {
-        idRol: 0,
-        descripcion: ""
-    }
-}
 
 const App = () => {
     const { user, cerrarSession } = useContext(UserContext)
+    const { isConnected } = useSignalR()
 
     if (user == null) {
         return <Navigate to="/Login" />
@@ -63,14 +55,22 @@ const App = () => {
                     {/* Topbar Navbar */}
                     <ul className="navbar-nav ml-auto">
 
+                        {/* SignalR Connection Status */}
+                        <li className="nav-item no-arrow">
+                            <span className={`badge badge-${isConnected ? 'success' : 'secondary'} mr-3`}>
+                                <i className={`fas ${isConnected ? 'fa-wifi' : 'fa-wifi'} mr-1`}></i>
+                                {isConnected ? 'Conectado' : 'Desconectado'}
+                            </span>
+                        </li>
+
                         <div className="topbar-divider d-none d-sm-block"></div>
 
                         {/* Nav Item - User Information */}
                         <li className="nav-item dropdown no-arrow">
-                            <a className="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            <a className="nav-link dropdown-toggle" href="/" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <span className="mr-2 d-none d-lg-inline text-gray-600 small">{ JSON.parse(user).correo }</span>
-                                    <img className="img-profile rounded-circle"
+                                    <img className="img-profile rounded-circle" alt="Profile"
                                         src={"./imagen/Foto003.jpg"} />
                             </a>
                             {/* Dropdown - User Information */}

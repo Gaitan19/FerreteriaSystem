@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useSignalR } from "../context/SignalRContext";
 
 const modeloProducto = {
   idProducto: 0,
@@ -36,6 +37,7 @@ const Producto = () => {
   const [categorias, setCategorias] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  const { subscribe } = useSignalR();
 
   const handleChange = (e) => {
     let value;
@@ -84,7 +86,64 @@ const Producto = () => {
     obtenerCategorias();
     obtenerProductos();
     obtenerProveedores();
-  }, []);
+
+    // Setup SignalR event listeners for real-time updates
+    const unsubscribeCreated = subscribe('productoCreated', (newProducto) => {
+      console.log('Producto creado:', newProducto);
+      setProductos(prev => [...prev, newProducto]);
+      // Show a notification
+      Swal.fire({
+        title: 'Nuevo producto',
+        text: `Se ha agregado el producto: ${newProducto.descripcion}`,
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    const unsubscribeUpdated = subscribe('productoUpdated', (updatedProducto) => {
+      console.log('Producto actualizado:', updatedProducto);
+      setProductos(prev => 
+        prev.map(prod => 
+          prod.idProducto === updatedProducto.idProducto ? updatedProducto : prod
+        )
+      );
+      // Show a notification
+      Swal.fire({
+        title: 'Producto actualizado',
+        text: `Se ha actualizado el producto: ${updatedProducto.descripcion}`,
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    const unsubscribeDeleted = subscribe('productoDeleted', (deletedId) => {
+      console.log('Producto eliminado:', deletedId);
+      setProductos(prev => prev.filter(prod => prod.idProducto !== deletedId));
+      // Show a notification
+      Swal.fire({
+        title: 'Producto eliminado',
+        text: 'Se ha eliminado un producto',
+        icon: 'warning',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribeCreated();
+      unsubscribeUpdated();
+      unsubscribeDeleted();
+    };
+  }, [subscribe]);
 
   const columns = [
     {
