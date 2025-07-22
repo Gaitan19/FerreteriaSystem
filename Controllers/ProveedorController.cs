@@ -94,8 +94,13 @@ namespace ReactVentas.Controllers
                 {
                     await _proveedorRepository.SaveChangesAsync();
                     
-                    // Notify clients about the deleted supplier
-                    await _notificationService.NotifyProveedorDeleted(id);
+                    // Get the complete supplier for SignalR notification
+                    var deletedProveedor = await _proveedorRepository.GetByIdAsync(id);
+                    if (deletedProveedor != null)
+                    {
+                        // Notify clients about the updated supplier (soft deleted)
+                        await _notificationService.NotifyProveedorDeleted(deletedProveedor);
+                    }
                     
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }

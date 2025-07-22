@@ -94,8 +94,13 @@ namespace ReactVentas.Controllers
                 {
                     await _categoriaRepository.SaveChangesAsync();
                     
-                    // Notify clients about the deleted category
-                    await _notificationService.NotifyCategoriaDeleted(id);
+                    // Get the complete category for SignalR notification
+                    var deletedCategoria = await _categoriaRepository.GetByIdAsync(id);
+                    if (deletedCategoria != null)
+                    {
+                        // Notify clients about the updated category (soft deleted)
+                        await _notificationService.NotifyCategoriaDeleted(deletedCategoria);
+                    }
                     
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }

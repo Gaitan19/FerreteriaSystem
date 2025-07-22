@@ -4,6 +4,7 @@ using ReactVentas.Models;
 using ReactVentas.Models.DTO;
 using ReactVentas.Services;
 using ReactVentas.Interfaces;
+using System.Linq;
 
 namespace ReactVentas.Controllers
 {
@@ -83,6 +84,17 @@ namespace ReactVentas.Controllers
         {
             try
             {
+                // Validate model state
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                    return StatusCode(StatusCodes.Status400BadRequest, string.Join(", ", errors));
+                }
+
+                // Validate required fields
+                if (request.IdUsuario <= 0)
+                    return StatusCode(StatusCodes.Status400BadRequest, "ID de usuario requerido");
+
                 var usuario = await _usuarioRepository.GetByIdAsync(request.IdUsuario);
                 if (usuario == null)
                     return StatusCode(StatusCodes.Status404NotFound, "Usuario no encontrado");
@@ -140,8 +152,18 @@ namespace ReactVentas.Controllers
                 {
                     await _usuarioRepository.SaveChangesAsync();
                     
-                    // Notify clients about the deleted user
-                    await _notificationService.NotifyUsuarioDeleted(id);
+                    // Get the complete user with navigation properties for SignalR notification
+                    var deletedUser = await _usuarioRepository.GetByIdAsync(id);
+                    if (deletedUser != null)
+                    {
+                        // Load navigation properties
+                        await _context.Entry(deletedUser)
+                            .Reference(u => u.IdRolNavigation)
+                            .LoadAsync();
+                        
+                        // Notify clients about the updated user (soft deleted)
+                        await _notificationService.NotifyUsuarioDeleted(deletedUser);
+                    }
                     
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }

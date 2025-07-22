@@ -122,8 +122,21 @@ namespace ReactVentas.Controllers
                 {
                     await _productoRepository.SaveChangesAsync();
                     
-                    // Notify clients about the deleted product
-                    await _notificationService.NotifyProductoDeleted(id);
+                    // Get the complete product with navigation properties for SignalR notification
+                    var deletedProduct = await _productoRepository.GetByIdAsync(id);
+                    if (deletedProduct != null)
+                    {
+                        // Load navigation properties
+                        await _context.Entry(deletedProduct)
+                            .Reference(p => p.IdCategoriaNavigation)
+                            .LoadAsync();
+                        await _context.Entry(deletedProduct)
+                            .Reference(p => p.IdProveedorNavigation)
+                            .LoadAsync();
+                        
+                        // Notify clients about the updated product (soft deleted)
+                        await _notificationService.NotifyProductoDeleted(deletedProduct);
+                    }
                     
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }

@@ -91,13 +91,17 @@ const Categoria = () => {
       });
     });
 
-    const unsubscribeDeleted = subscribe('categoriaDeleted', (deletedId) => {
-      console.log('Categoria eliminada:', deletedId);
-      setCategorias(prev => prev.filter(cat => cat.idCategoria !== deletedId));
+    const unsubscribeDeleted = subscribe('categoriaDeleted', (deletedCategoria) => {
+      console.log('Categoria eliminada:', deletedCategoria.idCategoria);
+      setCategorias(prev => 
+        prev.map(cat => 
+          cat.idCategoria === deletedCategoria.idCategoria ? deletedCategoria : cat
+        )
+      );
       // Show a notification
       Swal.fire({
         title: 'Categoría eliminada',
-        text: 'Se ha eliminado una categoría',
+        text: `Se ha eliminado la categoría: ${deletedCategoria.descripcion}`,
         icon: 'warning',
         timer: 3000,
         showConfirmButton: false,

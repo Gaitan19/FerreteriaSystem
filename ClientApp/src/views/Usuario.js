@@ -113,13 +113,17 @@ const Usuario = () => {
       });
     });
 
-    const unsubscribeDeleted = subscribe('usuarioDeleted', (deletedId) => {
-      console.log('Usuario eliminado:', deletedId);
-      setUsuarios(prev => prev.filter(user => user.idUsuario !== deletedId));
+    const unsubscribeDeleted = subscribe('usuarioDeleted', (deletedUsuario) => {
+      console.log('Usuario eliminado:', deletedUsuario.idUsuario);
+      setUsuarios(prev => 
+        prev.map(user => 
+          user.idUsuario === deletedUsuario.idUsuario ? deletedUsuario : user
+        )
+      );
       // Show a notification
       Swal.fire({
         title: 'Usuario eliminado',
-        text: 'Se ha eliminado un usuario',
+        text: `Se ha eliminado el usuario: ${deletedUsuario.nombre}`,
         icon: 'warning',
         timer: 3000,
         showConfirmButton: false,

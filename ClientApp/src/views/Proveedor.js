@@ -95,13 +95,17 @@ const Proveedor = () => {
       });
     });
 
-    const unsubscribeDeleted = subscribe('proveedorDeleted', (deletedId) => {
-      console.log('Proveedor eliminado:', deletedId);
-      setProveedores(prev => prev.filter(prov => prov.idProveedor !== deletedId));
+    const unsubscribeDeleted = subscribe('proveedorDeleted', (deletedProveedor) => {
+      console.log('Proveedor eliminado:', deletedProveedor.idProveedor);
+      setProveedores(prev => 
+        prev.map(prov => 
+          prov.idProveedor === deletedProveedor.idProveedor ? deletedProveedor : prov
+        )
+      );
       // Show a notification
       Swal.fire({
         title: 'Proveedor eliminado',
-        text: 'Se ha eliminado un proveedor',
+        text: `Se ha eliminado el proveedor: ${deletedProveedor.nombre}`,
         icon: 'warning',
         timer: 3000,
         showConfirmButton: false,

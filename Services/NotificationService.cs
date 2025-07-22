@@ -7,19 +7,19 @@ namespace ReactVentas.Services
     {
         Task NotifyCategoriaCreated(object categoria);
         Task NotifyCategoriaUpdated(object categoria);
-        Task NotifyCategoriaDeleted(int id);
+        Task NotifyCategoriaDeleted(object categoria);
         
         Task NotifyProductoCreated(object producto);
         Task NotifyProductoUpdated(object producto);
-        Task NotifyProductoDeleted(int id);
+        Task NotifyProductoDeleted(object producto);
         
         Task NotifyUsuarioCreated(object usuario);
         Task NotifyUsuarioUpdated(object usuario);
-        Task NotifyUsuarioDeleted(int id);
+        Task NotifyUsuarioDeleted(object usuario);
         
         Task NotifyProveedorCreated(object proveedor);
         Task NotifyProveedorUpdated(object proveedor);
-        Task NotifyProveedorDeleted(int id);
+        Task NotifyProveedorDeleted(object proveedor);
         
         Task NotifyVentaCreated(object venta);
         Task NotifyVentaUpdated(object venta);
@@ -45,9 +45,9 @@ namespace ReactVentas.Services
             await _hubContext.Clients.Group("NotificationGroup").SendAsync("CategoriaUpdated", categoria);
         }
 
-        public async Task NotifyCategoriaDeleted(int id)
+        public async Task NotifyCategoriaDeleted(object categoria)
         {
-            await _hubContext.Clients.Group("NotificationGroup").SendAsync("CategoriaDeleted", id);
+            await _hubContext.Clients.Group("NotificationGroup").SendAsync("CategoriaDeleted", categoria);
         }
 
         public async Task NotifyProductoCreated(object producto)
@@ -60,9 +60,9 @@ namespace ReactVentas.Services
             await _hubContext.Clients.Group("NotificationGroup").SendAsync("ProductoUpdated", producto);
         }
 
-        public async Task NotifyProductoDeleted(int id)
+        public async Task NotifyProductoDeleted(object producto)
         {
-            await _hubContext.Clients.Group("NotificationGroup").SendAsync("ProductoDeleted", id);
+            await _hubContext.Clients.Group("NotificationGroup").SendAsync("ProductoDeleted", producto);
         }
 
         public async Task NotifyUsuarioCreated(object usuario)
@@ -75,9 +75,9 @@ namespace ReactVentas.Services
             await _hubContext.Clients.Group("NotificationGroup").SendAsync("UsuarioUpdated", usuario);
         }
 
-        public async Task NotifyUsuarioDeleted(int id)
+        public async Task NotifyUsuarioDeleted(object usuario)
         {
-            await _hubContext.Clients.Group("NotificationGroup").SendAsync("UsuarioDeleted", id);
+            await _hubContext.Clients.Group("NotificationGroup").SendAsync("UsuarioDeleted", usuario);
         }
 
         public async Task NotifyProveedorCreated(object proveedor)
@@ -90,9 +90,9 @@ namespace ReactVentas.Services
             await _hubContext.Clients.Group("NotificationGroup").SendAsync("ProveedorUpdated", proveedor);
         }
 
-        public async Task NotifyProveedorDeleted(int id)
+        public async Task NotifyProveedorDeleted(object proveedor)
         {
-            await _hubContext.Clients.Group("NotificationGroup").SendAsync("ProveedorDeleted", id);
+            await _hubContext.Clients.Group("NotificationGroup").SendAsync("ProveedorDeleted", proveedor);
         }
 
         public async Task NotifyVentaCreated(object venta)

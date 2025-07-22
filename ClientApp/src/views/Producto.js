@@ -122,13 +122,17 @@ const Producto = () => {
       });
     });
 
-    const unsubscribeDeleted = subscribe('productoDeleted', (deletedId) => {
-      console.log('Producto eliminado:', deletedId);
-      setProductos(prev => prev.filter(prod => prod.idProducto !== deletedId));
+    const unsubscribeDeleted = subscribe('productoDeleted', (deletedProducto) => {
+      console.log('Producto eliminado:', deletedProducto.idProducto);
+      setProductos(prev => 
+        prev.map(prod => 
+          prod.idProducto === deletedProducto.idProducto ? deletedProducto : prod
+        )
+      );
       // Show a notification
       Swal.fire({
         title: 'Producto eliminado',
-        text: 'Se ha eliminado un producto',
+        text: `Se ha eliminado el producto: ${deletedProducto.nombre}`,
         icon: 'warning',
         timer: 3000,
         showConfirmButton: false,
