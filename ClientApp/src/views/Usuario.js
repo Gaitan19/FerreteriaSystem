@@ -158,7 +158,6 @@ const Usuario = () => {
   };
 
   const abrirEditarModal = (data) => {
-    console.log(data);
     setUsuario({
       ...data,
       clave: "",
@@ -224,7 +223,6 @@ const Usuario = () => {
         cerrarModal();
         Swal.fire("Éxito", "Operación realizada correctamente", "success");
       } else {
-        console.log(await response.text());
         const error = await response.text();
         Swal.fire("Error", error, "error");
       }
