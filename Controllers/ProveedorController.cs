@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using ReactVentas.Models;
 using ReactVentas.Interfaces;
+using Microsoft.AspNetCore.SignalR;
+using ReactVentas.Hubs;
 
 namespace ReactVentas.Controllers
 {
@@ -10,10 +12,12 @@ namespace ReactVentas.Controllers
     public class ProveedorController : ControllerBase
     {
         private readonly IProveedorRepository _proveedorRepository;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public ProveedorController(IProveedorRepository proveedorRepository)
+        public ProveedorController(IProveedorRepository proveedorRepository, IHubContext<NotificationHub> hubContext)
         {
             _proveedorRepository = proveedorRepository;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -43,6 +47,9 @@ namespace ReactVentas.Controllers
                 await _proveedorRepository.AddAsync(request);
                 await _proveedorRepository.SaveChangesAsync();
                 
+                // Notify all clients about the new supplier
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProveedorCreated", request);
+                
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +69,9 @@ namespace ReactVentas.Controllers
             {
                 await _proveedorRepository.UpdateAsync(request);
                 await _proveedorRepository.SaveChangesAsync();
+                
+                // Notify all clients about the updated supplier
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProveedorUpdated", request);
                 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +94,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _proveedorRepository.SaveChangesAsync();
+                    
+                    // Notify all clients about the deleted supplier
+                    await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProveedorDeleted", id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

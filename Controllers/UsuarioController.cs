@@ -4,6 +4,8 @@ using ReactVentas.Models;
 using ReactVentas.Models.DTO;
 using ReactVentas.Services;
 using ReactVentas.Interfaces;
+using Microsoft.AspNetCore.SignalR;
+using ReactVentas.Hubs;
 
 namespace ReactVentas.Controllers
 {
@@ -13,11 +15,13 @@ namespace ReactVentas.Controllers
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordService _passwordService;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService)
+        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService, IHubContext<NotificationHub> hubContext)
         {
             _usuarioRepository = usuarioRepository;
             _passwordService = passwordService;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -49,6 +53,10 @@ namespace ReactVentas.Controllers
                 // Add a new user to the database and save changes.
                 await _usuarioRepository.AddAsync(request);
                 await _usuarioRepository.SaveChangesAsync();
+
+                // Notify all clients about the new user (without password)
+                var userWithoutPassword = new { request.IdUsuario, request.Nombre, request.Correo, request.IdRol, request.EsActivo };
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("UsuarioCreated", userWithoutPassword);
 
                 // Return a 200 OK status indicating success.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -90,6 +98,10 @@ namespace ReactVentas.Controllers
                 await _usuarioRepository.UpdateAsync(usuario);
                 await _usuarioRepository.SaveChangesAsync();
 
+                // Notify all clients about the updated user (without password)
+                var userWithoutPassword = new { usuario.IdUsuario, usuario.Nombre, usuario.Correo, usuario.IdRol, usuario.EsActivo };
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("UsuarioUpdated", userWithoutPassword);
+
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
             catch (Exception ex)
@@ -109,6 +121,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _usuarioRepository.SaveChangesAsync();
+                    
+                    // Notify all clients about the deleted user
+                    await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("UsuarioDeleted", id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

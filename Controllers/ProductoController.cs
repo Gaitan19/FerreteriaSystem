@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using ReactVentas.Models;
 using ReactVentas.Interfaces;
+using Microsoft.AspNetCore.SignalR;
+using ReactVentas.Hubs;
 
 namespace ReactVentas.Controllers
 {
@@ -10,10 +12,12 @@ namespace ReactVentas.Controllers
     public class ProductoController : ControllerBase
     {
         private readonly IProductoRepository _productoRepository;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public ProductoController(IProductoRepository productoRepository)
+        public ProductoController(IProductoRepository productoRepository, IHubContext<NotificationHub> hubContext)
         {
             _productoRepository = productoRepository;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -43,6 +47,9 @@ namespace ReactVentas.Controllers
                 await _productoRepository.AddAsync(request);
                 await _productoRepository.SaveChangesAsync();
 
+                // Notify all clients about the new product
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProductoCreated", request);
+
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
@@ -62,6 +69,9 @@ namespace ReactVentas.Controllers
             {
                 await _productoRepository.UpdateAsync(request);
                 await _productoRepository.SaveChangesAsync();
+
+                // Notify all clients about the updated product
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProductoUpdated", request);
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +94,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _productoRepository.SaveChangesAsync();
+                    
+                    // Notify all clients about the deleted product
+                    await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProductoDeleted", id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

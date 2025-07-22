@@ -15,6 +15,7 @@ import Venta from './views/Venta';
 import Login from './views/Login';
 
 import UserProvider from './context/UserProvider';
+import SignalRProvider from './context/SignalRProvider';
 import VerificarUsuario from './componentes/VerificarUsuario';
 import Proveedor from './views/Proveedor';
 
@@ -23,7 +24,8 @@ const root = ReactDOM.createRoot(document.getElementById('wrapper'));
 root.render(
   <BrowserRouter>
     <UserProvider>
-      <Routes>
+      <SignalRProvider>
+        <Routes>
         {/*ACONTINUACION ESTABLECEMOS LAS RUTAS DE NUESTRO SISTEMA*/}
 
         {/*ruta individual sin usar una como base*/}
@@ -107,6 +109,7 @@ root.render(
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </SignalRProvider>
     </UserProvider>
   </BrowserRouter>
 );
