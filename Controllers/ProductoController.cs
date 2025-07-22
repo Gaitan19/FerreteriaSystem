@@ -12,11 +12,13 @@ namespace ReactVentas.Controllers
     {
         private readonly IProductoRepository _productoRepository;
         private readonly INotificationService _notificationService;
+        private readonly DBREACT_VENTAContext _context;
 
-        public ProductoController(IProductoRepository productoRepository, INotificationService notificationService)
+        public ProductoController(IProductoRepository productoRepository, INotificationService notificationService, DBREACT_VENTAContext context)
         {
             _productoRepository = productoRepository;
             _notificationService = notificationService;
+            _context = context;
         }
 
         [HttpGet]
@@ -46,8 +48,21 @@ namespace ReactVentas.Controllers
                 await _productoRepository.AddAsync(request);
                 await _productoRepository.SaveChangesAsync();
 
+                // Get the complete product with navigation properties for SignalR notification
+                var completeProduct = await _productoRepository.GetByIdAsync(request.IdProducto);
+                if (completeProduct != null)
+                {
+                    // Load navigation properties
+                    await _context.Entry(completeProduct)
+                        .Reference(p => p.IdCategoriaNavigation)
+                        .LoadAsync();
+                    await _context.Entry(completeProduct)
+                        .Reference(p => p.IdProveedorNavigation)
+                        .LoadAsync();
+                }
+
                 // Notify clients about the new product
-                await _notificationService.NotifyProductoCreated(request);
+                await _notificationService.NotifyProductoCreated(completeProduct ?? request);
 
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -69,8 +84,21 @@ namespace ReactVentas.Controllers
                 await _productoRepository.UpdateAsync(request);
                 await _productoRepository.SaveChangesAsync();
 
+                // Get the complete product with navigation properties for SignalR notification
+                var completeProduct = await _productoRepository.GetByIdAsync(request.IdProducto);
+                if (completeProduct != null)
+                {
+                    // Load navigation properties
+                    await _context.Entry(completeProduct)
+                        .Reference(p => p.IdCategoriaNavigation)
+                        .LoadAsync();
+                    await _context.Entry(completeProduct)
+                        .Reference(p => p.IdProveedorNavigation)
+                        .LoadAsync();
+                }
+
                 // Notify clients about the updated product
-                await _notificationService.NotifyProductoUpdated(request);
+                await _notificationService.NotifyProductoUpdated(completeProduct ?? request);
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");

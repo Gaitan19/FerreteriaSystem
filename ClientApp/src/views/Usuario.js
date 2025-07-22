@@ -261,8 +261,8 @@ const Usuario = () => {
           Telefono: usuario.telefono,
           IdRol: usuario.idRol,
           EsActivo: usuario.esActivo,
-          ClaveActual: cambiandoClave ? usuario.claveActual : "",
-          ClaveNueva: cambiandoClave ? usuario.claveNueva : ""
+          ClaveActual: cambiandoClave && usuario.claveActual ? usuario.claveActual : null,
+          ClaveNueva: cambiandoClave && usuario.claveNueva ? usuario.claveNueva : null
         };
         url = "api/usuario/Editar";
         method = "PATCH";

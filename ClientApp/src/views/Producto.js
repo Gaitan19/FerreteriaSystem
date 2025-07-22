@@ -165,7 +165,7 @@ const Producto = () => {
       name: "Categoria",
       selector: (row) => row.idCategoriaNavigation,
       sortable: true,
-      cell: (row) => row.idCategoriaNavigation.descripcion,
+      cell: (row) => row.idCategoriaNavigation?.descripcion || "Sin categoría",
     },
     {
       name: "Proveedor",

@@ -14,12 +14,14 @@ namespace ReactVentas.Controllers
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordService _passwordService;
         private readonly INotificationService _notificationService;
+        private readonly DBREACT_VENTAContext _context;
 
-        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService, INotificationService notificationService)
+        public UsuarioController(IUsuarioRepository usuarioRepository, IPasswordService passwordService, INotificationService notificationService, DBREACT_VENTAContext context)
         {
             _usuarioRepository = usuarioRepository;
             _passwordService = passwordService;
             _notificationService = notificationService;
+            _context = context;
         }
 
         [HttpGet]
@@ -52,8 +54,18 @@ namespace ReactVentas.Controllers
                 await _usuarioRepository.AddAsync(request);
                 await _usuarioRepository.SaveChangesAsync();
 
+                // Get the complete user with navigation properties for SignalR notification
+                var completeUser = await _usuarioRepository.GetByIdAsync(request.IdUsuario);
+                if (completeUser != null)
+                {
+                    // Load navigation properties
+                    await _context.Entry(completeUser)
+                        .Reference(u => u.IdRolNavigation)
+                        .LoadAsync();
+                }
+
                 // Notify clients about the new user
-                await _notificationService.NotifyUsuarioCreated(request);
+                await _notificationService.NotifyUsuarioCreated(completeUser ?? request);
 
                 // Return a 200 OK status indicating success.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -95,8 +107,18 @@ namespace ReactVentas.Controllers
                 await _usuarioRepository.UpdateAsync(usuario);
                 await _usuarioRepository.SaveChangesAsync();
 
+                // Get the complete user with navigation properties for SignalR notification
+                var completeUser = await _usuarioRepository.GetByIdAsync(usuario.IdUsuario);
+                if (completeUser != null)
+                {
+                    // Load navigation properties
+                    await _context.Entry(completeUser)
+                        .Reference(u => u.IdRolNavigation)
+                        .LoadAsync();
+                }
+
                 // Notify clients about the updated user
-                await _notificationService.NotifyUsuarioUpdated(usuario);
+                await _notificationService.NotifyUsuarioUpdated(completeUser ?? usuario);
 
                 return StatusCode(StatusCodes.Status200OK, "ok");
             }
