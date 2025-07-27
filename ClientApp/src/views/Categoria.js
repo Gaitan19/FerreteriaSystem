@@ -58,7 +58,7 @@ const Categoria = () => {
 
     // Set up SignalR listeners for real-time updates
     const unsubscribeCreated = subscribe('CategoriaCreated', (nuevaCategoria) => {
-      setCategorias(prev => [...prev, nuevaCategoria]);
+      setCategorias(prev => [nuevaCategoria, ...prev ]);
       Swal.fire({
         position: 'top-end',
         icon: 'info',
@@ -90,7 +90,13 @@ const Categoria = () => {
     });
 
     const unsubscribeDeleted = subscribe('CategoriaDeleted', (id) => {
-      setCategorias(prev => prev.filter(cat => cat.idCategoria !== id));
+      
+      
+      setCategorias(prev => prev.map(cat => 
+        cat.idCategoria === id ? { ...cat, esActivo: false } : cat
+      ));
+
+
       Swal.fire({
         position: 'top-end',
         icon: 'info',
