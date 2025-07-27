@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloProducto = {
   idProducto: 0,
@@ -36,6 +37,7 @@ const Producto = () => {
   const [categorias, setCategorias] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  const { subscribe } = useSignalR(); // Obtiene la función subscribe del contexto
 
   const handleChange = (e) => {
     let value;
@@ -55,36 +57,112 @@ const Producto = () => {
   };
 
   const obtenerCategorias = async () => {
-    let response = await fetch("api/categoria/Lista");
-    if (response.ok) {
-      let data = await response.json();
-      setCategorias(() => data.filter((item) => item.esActivo));
+    try {
+      let response = await fetch("api/categoria/Lista");
+      if (response.ok) {
+        let data = await response.json();
+        setCategorias(() => data.filter((item) => item.esActivo));
+      }
+    } catch (error) {
+      console.error("Error obteniendo categorías:", error);
     }
   };
 
   const obtenerProveedores = async () => {
-    let response = await fetch("api/proveedor/Lista");
-    if (response.ok) {
-      let data = await response.json();
-      setProveedores(() => data.filter((item) => item.esActivo));
+    try {
+      let response = await fetch("api/proveedor/Lista");
+      if (response.ok) {
+        let data = await response.json();
+        setProveedores(() => data.filter((item) => item.esActivo));
+      }
+    } catch (error) {
+      console.error("Error obteniendo proveedores:", error);
     }
   };
 
   const obtenerProductos = async () => {
-    let response = await fetch("api/producto/Lista");
-
-    if (response.ok) {
-      let data = await response.json();
-      setProductos(() => data);
+    try {
+      let response = await fetch("api/producto/Lista");
+      if (response.ok) {
+        let data = await response.json();
+        setProductos(() => data);
+        setPendiente(false);
+      }
+    } catch (error) {
+      console.error("Error obteniendo productos:", error);
       setPendiente(false);
     }
   };
 
   useEffect(() => {
     obtenerCategorias();
-    obtenerProductos();
     obtenerProveedores();
-  }, []);
+    obtenerProductos();
+
+    // Configurar suscripciones a eventos de SignalR
+    const unsubscribeCreated = subscribe('ProductoCreated', (nuevoProducto) => {
+      // Agrega el nuevo producto al inicio de la lista
+      setProductos(prev => [nuevoProducto, ...prev]);
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Nuevo producto agregado',
+        text: `Se agregó: ${nuevoProducto.descripcion}`,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    const unsubscribeUpdated = subscribe('ProductoUpdated', (productoActualizado) => {
+      // Actualiza el producto en la lista
+      setProductos(prev => 
+        prev.map(prod => 
+          prod.idProducto === productoActualizado.idProducto 
+            ? productoActualizado 
+            : prod
+        )
+      );
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Producto actualizado',
+        text: `Se actualizó: ${productoActualizado.descripcion}`,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    const unsubscribeDeleted = subscribe('ProductoDeleted', (id) => {
+      // Marca el producto como inactivo
+      setProductos(prev => prev.map(prod => 
+        prod.idProducto === id ? { ...prod, esActivo: false } : prod
+      ));
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Producto eliminado',
+        text: 'Un producto fue eliminado',
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    // Limpieza de suscripciones al desmontar el componente
+    return () => {
+      unsubscribeCreated();
+      unsubscribeUpdated();
+      unsubscribeDeleted();
+    };
+  }, [subscribe]); // Dependencia: subscribe
 
   const columns = [
     {
@@ -185,66 +263,79 @@ const Producto = () => {
   };
 
   const guardarCambios = async () => {
-    delete producto.idCategoriaNavigation;
-    delete producto.idProveedorNavigation;
+    try {
+      // Eliminar propiedades de navegación para evitar problemas en la serialización
+      const productoParaEnviar = { ...producto };
+      delete productoParaEnviar.idCategoriaNavigation;
+      delete productoParaEnviar.idProveedorNavigation;
 
-    let response;
-    if (producto.idProducto === 0) {
-      response = await fetch("api/producto/Guardar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json;charset=utf-8",
-        },
-        body: JSON.stringify(producto),
-      });
-    } else {
-      response = await fetch("api/producto/Editar", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json;charset=utf-8",
-        },
-        body: JSON.stringify(producto),
-      });
-    }
+      let response;
+      if (productoParaEnviar.idProducto === 0) {
+        response = await fetch("api/producto/Guardar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json;charset=utf-8",
+          },
+          body: JSON.stringify(productoParaEnviar),
+        });
+      } else {
+        response = await fetch("api/producto/Editar", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json;charset=utf-8",
+          },
+          body: JSON.stringify(productoParaEnviar),
+        });
+      }
 
-    if (response.ok) {
-      await obtenerProductos();
-      setProducto(modeloProducto);
-      setVerModal(!verModal);
+      if (response.ok) {
+        // No necesitamos obtenerProductos porque SignalR actualizará en tiempo real
+        setProducto(modeloProducto);
+        setVerModal(!verModal);
 
-      Swal.fire(
-        `${producto.idProducto === 0 ? "Guardado" : "Actualizado"}`,
-        `El producto fue ${
-          producto.idProducto === 0 ? "Agregado" : "Actualizado"
-        }`,
-        "success"
-      );
-    } else {
-      Swal.fire("Opp!", "No se pudo guardar.", "warning");
+        Swal.fire(
+          `${productoParaEnviar.idProducto === 0 ? "Guardado" : "Actualizado"}`,
+          `El producto fue ${
+            productoParaEnviar.idProducto === 0 ? "Agregado" : "Actualizado"
+          }`,
+          "success"
+        );
+      } else {
+        const errorText = await response.text();
+        Swal.fire("Opp!", `No se pudo guardar: ${errorText}`, "warning");
+      }
+    } catch (error) {
+      console.error("Error al guardar el producto:", error);
+      Swal.fire("Error", "Ocurrió un error inesperado", "error");
     }
   };
 
   const eliminarProducto = async (id) => {
     Swal.fire({
-      title: "Esta seguro?",
+      title: "¿Está seguro?",
       text: "Desea eliminar el producto",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Si, continuar",
+      confirmButtonText: "Sí, continuar",
       cancelButtonText: "No, volver",
     }).then((result) => {
       if (result.isConfirmed) {
-        // eslint-disable-next-line no-unused-vars
-        const response = fetch("api/producto/Eliminar/" + id, {
+        fetch("api/producto/Eliminar/" + id, {
           method: "DELETE",
         }).then((response) => {
           if (response.ok) {
-            obtenerProductos();
-
+            // No es necesario obtenerProductos porque SignalR actualizará
             Swal.fire("Eliminado!", "El producto fue eliminado.", "success");
+          } else {
+            response.text().then(errorText => {
+              Swal.fire("Error", `Error al eliminar: ${errorText}`, "error");
+            });
           }
+        }).catch(error => {
+          console.error("Error eliminando producto:", error);
+          Swal.fire("Error", "Ocurrió un error inesperado", "error");
         });
       }
     });
@@ -254,8 +345,6 @@ const Producto = () => {
     event.preventDefault();
     guardarCambios();
   };
-
-  console.log(productos);
 
   return (
     <>
@@ -283,14 +372,14 @@ const Producto = () => {
         </CardBody>
       </Card>
 
-      <Modal isOpen={verModal}>
+      <Modal isOpen={verModal} size="lg">
         <ModalHeader>Detalle Producto</ModalHeader>
-        <ModalBody>
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
+          <ModalBody>
             <Row>
               <Col sm={6}>
                 <FormGroup>
-                  <Label>Codigo</Label>
+                  <Label>Código</Label>
                   <Input
                     bsSize="sm"
                     name="codigo"
@@ -315,7 +404,7 @@ const Producto = () => {
             <Row>
               <Col sm={6}>
                 <FormGroup>
-                  <Label>Descripcion</Label>
+                  <Label>Descripción</Label>
                   <Input
                     bsSize="sm"
                     name="descripcion"
@@ -327,7 +416,7 @@ const Producto = () => {
               </Col>
               <Col sm={6}>
                 <FormGroup>
-                  <Label>Categoria</Label>
+                  <Label>Categoría</Label>
                   <Input
                     bsSize="sm"
                     type={"select"}
@@ -337,15 +426,11 @@ const Producto = () => {
                     required
                   >
                     <option value={0}>Seleccionar</option>
-                    {categorias.map((item) =>
-                      item.esActivo ? (
-                        <option key={item.idCategoria} value={item.idCategoria}>
-                          {item.descripcion}
-                        </option>
-                      ) : (
-                        <></>
-                      )
-                    )}
+                    {categorias.map((item) => (
+                      <option key={item.idCategoria} value={item.idCategoria}>
+                        {item.descripcion}
+                      </option>
+                    ))}
                   </Input>
                 </FormGroup>
               </Col>
@@ -370,7 +455,7 @@ const Producto = () => {
                   </Input>
                 </FormGroup>
               </Col>
-              <Col sm={6}>
+              <Col sm={3}>
                 <FormGroup>
                   <Label>Stock</Label>
                   <Input
@@ -384,7 +469,7 @@ const Producto = () => {
                   />
                 </FormGroup>
               </Col>
-              <Col sm={6}>
+              <Col sm={3}>
                 <FormGroup>
                   <Label>Precio</Label>
                   <Input
@@ -393,15 +478,15 @@ const Producto = () => {
                     onChange={handleChange}
                     value={producto.precio}
                     type="number"
-                    min={1}
+                    min={0.01}
+                    step="0.01"
                     required
                   />
                 </FormGroup>
               </Col>
             </Row>
-            <Row></Row>
             <Row>
-              <Col sm="6">
+              <Col sm={3}>
                 <FormGroup>
                   <Label>Estado</Label>
                   <Input
@@ -412,22 +497,21 @@ const Producto = () => {
                     value={producto.esActivo}
                   >
                     <option value={true}>Activo</option>
-                    <option value={false}>No Activo</option>
+                    <option value={false}>Inactivo</option>
                   </Input>
                 </FormGroup>
               </Col>
             </Row>
-            <div className="Container-modal-buttons">
-              <Button type="submit" size="sm" color="primary">
-                Guardar
-              </Button>
-              <Button size="sm" color="danger" onClick={cerrarModal}>
-                Cerrar
-              </Button>
-            </div>
-          </form>
-        </ModalBody>
-        <ModalFooter></ModalFooter>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="submit" size="sm" color="primary">
+              Guardar
+            </Button>
+            <Button size="sm" color="danger" onClick={cerrarModal}>
+              Cerrar
+            </Button>
+          </ModalFooter>
+        </form>
       </Modal>
     </>
   );

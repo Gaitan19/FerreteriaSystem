@@ -4,33 +4,72 @@ using Microsoft.AspNetCore.ResponseCompression;
 using ReactVentas.Services;
 using ReactVentas.Interfaces;
 using ReactVentas.Repositories;
+using ReactVentas.Hubs;
+using Microsoft.AspNetCore.Http.Connections;
+using System.IO.Compression;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.  
-
+// Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<DBREACT_VENTAContext>(options => {
     options.UseSqlServer(builder.Configuration.GetConnectionString("cadenaSQL"));
 });
 
-// Configuraci�n CORS para permitir acceso desde dispositivos m�viles  
+// Configuración CORS mejorada
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder => builder.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader());
+    options.AddPolicy("SignalRPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials()
+              .SetIsOriginAllowed(_ => true);
+    });
 });
 
-// Agregar compresi�n de respuesta para mejorar rendimiento en conexiones m�viles  
+// Configuración avanzada de SignalR - CORREGIDO
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options => {
+        options.PayloadSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    })
+    .AddHubOptions<NotificationHub>(hubOptions =>
+    {
+        hubOptions.EnableDetailedErrors = builder.Environment.IsDevelopment();
+        hubOptions.KeepAliveInterval = TimeSpan.FromSeconds(15);
+        hubOptions.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
+        hubOptions.HandshakeTimeout = TimeSpan.FromSeconds(15);
+    });
+
+// Configuración mejorada de compresión de respuesta
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
     options.Providers.Add<GzipCompressionProvider>();
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] {
+            "application/octet-stream",  // Para SignalR
+            "text/plain",
+            "text/css",
+            "application/javascript",
+            "text/html",
+            "application/xml",
+            "text/xml",
+            "application/json",
+            "text/json"
+        });
 });
 
-// Registrar servicio de contrase�as
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Optimal;
+});
+
+// Registrar servicio de contraseñas
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 
 // Registrar repositorios
@@ -47,33 +86,42 @@ builder.Services.AddControllers().AddJsonOptions(option =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.  
-if (!app.Environment.IsDevelopment())
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    // En producci�n, puedes agregar manejo de errores espec�fico  
+    app.UseDeveloperExceptionPage();
+}
+else
+{
     app.UseExceptionHandler("/Error");
-    app.UseHsts(); // Habilitar HSTS para conexiones seguras  
+    app.UseHsts();
 }
 
-// Habilitar compresi�n de respuesta  
+// Habilitar compresión de respuesta
 app.UseResponseCompression();
 
-// Habilitar CORS  
-app.UseCors("AllowAll");
-
-// Habilitar HTTPS Redirection para seguridad en dispositivos m�viles  
+// Habilitar HTTPS Redirection
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseRouting();
 
-// Agregar autenticaci�n y autorizaci�n si es necesario  
-// app.UseAuthentication();  
-// app.UseAuthorization();  
+// Aplicar política CORS
+app.UseCors("SignalRPolicy");
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller}/{action=Index}/{id?}");
+// Configuración de endpoints
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+
+    // Configurar hub con transporte explícito
+    endpoints.MapHub<NotificationHub>("/notificationHub", options =>
+    {
+        options.Transports =
+            HttpTransportType.WebSockets |
+            HttpTransportType.LongPolling;
+    });
+});
 
 app.MapFallbackToFile("index.html");
 

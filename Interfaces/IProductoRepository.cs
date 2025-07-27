@@ -26,5 +26,12 @@ namespace ReactVentas.Interfaces
         /// <param name="proveedorId">Identificador del proveedor</param>
         /// <returns>Lista de productos del proveedor especificado</returns>
         Task<List<Producto>> GetProductsBySupplierAsync(int proveedorId);
+
+        /// <summary>
+        /// Obtiene un producto con su información de categoría y proveedor por su identificador
+        /// </summary>
+        /// <param name="id">Identificador del producto</param>
+        /// <returns>Producto con datos relacionados</returns>
+        Task<Producto> GetProductWithRelatedDataByIdAsync(int id);
     }
 }
