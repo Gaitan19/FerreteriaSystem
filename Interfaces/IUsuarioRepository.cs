@@ -26,5 +26,11 @@ namespace ReactVentas.Interfaces
         /// <param name="rolId">Identificador del rol</param>
         /// <returns>Lista de usuarios con el rol especificado</returns>
         Task<List<Usuario>> GetUsersByRoleAsync(int rolId);
+
+        /// <summary>
+        /// 
+
+        Task<Usuario> GetUserWithRelatedDataByIdAsync(int id);
+
     }
 }

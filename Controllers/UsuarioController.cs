@@ -51,12 +51,14 @@ namespace ReactVentas.Controllers
                 request.Clave = _passwordService.HashPassword(request.Clave);
 
                 // Add a new user to the database and save changes.
-                await _usuarioRepository.AddAsync(request);
+                var newUser = await _usuarioRepository.AddAsync(request);
                 await _usuarioRepository.SaveChangesAsync();
 
                 // Notify all clients about the new user (without password)
-                var userWithoutPassword = new { request.IdUsuario, request.Nombre, request.Correo, request.IdRol, request.EsActivo };
-                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("UsuarioCreated", userWithoutPassword);
+               
+                var usuarioConRelaciones = await _usuarioRepository.GetUserWithRelatedDataByIdAsync(newUser.IdUsuario);
+
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("UsuarioCreated", usuarioConRelaciones);
 
                 // Return a 200 OK status indicating success.
                 return StatusCode(StatusCodes.Status200OK, "ok");

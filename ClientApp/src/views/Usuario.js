@@ -17,6 +17,7 @@ import {
 } from "reactstrap";
 import Swal from "sweetalert2";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
+import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloUsuario = {
   idUsuario: 0,
@@ -26,8 +27,8 @@ const modeloUsuario = {
   idRol: 0,
   clave: "",
   esActivo: true,
-  claveActual: "", // Nuevo campo para validación
-  claveNueva: "", // Nuevo campo para cambio
+  claveActual: "",
+  claveNueva: "",
 };
 
 const Usuario = () => {
@@ -37,7 +38,8 @@ const Usuario = () => {
   const [roles, setRoles] = useState([]);
   const [verModal, setVerModal] = useState(false);
   const [visiblePassword, setVisiblePassword] = useState(false);
-  const [cambiandoClave, setCambiandoClave] = useState(false); // Estado para controlar cambio de clave
+  const [cambiandoClave, setCambiandoClave] = useState(false);
+  const { subscribe } = useSignalR(); // Obtiene la función subscribe del contexto
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,7 +77,71 @@ const Usuario = () => {
   useEffect(() => {
     obtenerRoles();
     obtenerUsuarios();
-  }, []);
+
+    // Configurar suscripciones a eventos de SignalR
+    const unsubscribeCreated = subscribe('UsuarioCreated', (nuevoUsuario) => {
+      // Agrega el nuevo usuario al inicio de la lista
+      setUsuarios(prev => [nuevoUsuario, ...prev]);
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Nuevo usuario agregado',
+        text: `Se agregó: ${nuevoUsuario.nombre}`,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    const unsubscribeUpdated = subscribe('UsuarioUpdated', (usuarioActualizado) => {
+      // Actualiza el usuario en la lista
+      setUsuarios(prev => 
+        prev.map(usr => 
+          usr.idUsuario === usuarioActualizado.idUsuario 
+            ? { ...usr, ...usuarioActualizado } 
+            : usr
+        )
+      );
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Usuario actualizado',
+        text: `Se actualizó: ${usuarioActualizado.nombre}`,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    const unsubscribeDeleted = subscribe('UsuarioDeleted', (id) => {
+      // Marca el usuario como inactivo
+      setUsuarios(prev => prev.map(usr => 
+        usr.idUsuario === id ? { ...usr, esActivo: false } : usr
+      ));
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Usuario eliminado',
+        text: 'Un usuario fue eliminado',
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    // Limpieza de suscripciones al desmontar el componente
+    return () => {
+      unsubscribeCreated();
+      unsubscribeUpdated();
+      unsubscribeDeleted();
+    };
+  }, [subscribe]); // Dependencia: subscribe
 
   const columns = [
     {
@@ -97,7 +163,7 @@ const Usuario = () => {
       name: "Rol",
       selector: (row) => row.idRolNavigation,
       sortable: true,
-      cell: (row) => row.idRolNavigation.descripcion,
+      cell: (row) => row.idRolNavigation?.descripcion || "Sin rol", // Manejo de nulos
     },
     {
       name: "Estado",
@@ -219,9 +285,15 @@ const Usuario = () => {
       });
 
       if (response.ok) {
-        await obtenerUsuarios();
+        // No es necesario obtenerUsuarios porque SignalR actualizará
         cerrarModal();
-        Swal.fire("Éxito", "Operación realizada correctamente", "success");
+        Swal.fire(
+          `${usuario.idUsuario === 0 ? "Creado" : "Actualizado"}`,
+          `El usuario fue ${
+            usuario.idUsuario === 0 ? "agregado" : "actualizado"
+          }`,
+          "success"
+        );
       } else {
         const error = await response.text();
         Swal.fire("Error", error, "error");
@@ -248,7 +320,7 @@ const Usuario = () => {
         })
           .then((response) => {
             if (response.ok) {
-              obtenerUsuarios();
+              // No es necesario obtenerUsuarios porque SignalR actualizará
               Swal.fire("Eliminado!", "El usuario fue eliminado.", "success");
             } else {
               return response.text().then((error) => {
