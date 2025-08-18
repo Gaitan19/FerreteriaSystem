@@ -66,12 +66,66 @@ El Sistema de Ferretería "La Unión" es una aplicación web completa diseñada 
 
 ### Frontend (React)
 ```
+ClientApp/
+├── public/             # Archivos estáticos
 ├── src/
-│   ├── components/      # Componentes reutilizables
+│   ├── componentes/    # Componentes reutilizables
+│   │   ├── NavBar.js   # Barra de navegación
+│   │   ├── ConnectionStatus.js # Estado de SignalR
+│   │   └── VerificarUsuario.js # Verificación de permisos
 │   ├── views/          # Páginas principales
+│   │   ├── Login.js    # Pantalla de inicio de sesión
+│   │   ├── DashBoard.js # Panel de control
+│   │   ├── Inicio.js   # Página de inicio
+│   │   ├── Usuario.js  # Gestión de usuarios
+│   │   ├── Producto.js # Gestión de productos
+│   │   ├── Categoria.js # Gestión de categorías
+│   │   ├── Proveedor.js # Gestión de proveedores
+│   │   ├── Venta.js    # Nueva venta
+│   │   ├── HistorialVenta.js # Historial de ventas
+│   │   ├── ReporteVenta.js   # Reportes
+│   │   └── NotFound.js # Página de error 404
 │   ├── context/        # Context API (estado global)
+│   │   ├── UserProvider.js   # Contexto de usuario
+│   │   └── SignalRProvider.js # Contexto de SignalR
 │   ├── services/       # Servicios de API
 │   └── utils/          # Utilidades
+├── package.json        # Dependencias de Node.js
+└── package-lock.json   # Lock file de dependencias
+```
+
+### Estructura Completa del Proyecto:
+```
+FerreteriaSystem/
+├── Controllers/        # Controladores de API REST
+│   ├── CategoriaController.cs
+│   ├── ProductoController.cs
+│   ├── ProveedorController.cs
+│   ├── UsuarioController.cs
+│   ├── VentaController.cs
+│   ├── SessionController.cs
+│   └── UtilidadController.cs
+├── Models/            # Modelos de datos
+│   ├── DTO/          # Data Transfer Objects
+│   ├── Usuario.cs
+│   ├── Producto.cs
+│   ├── Categoria.cs
+│   ├── Proveedor.cs
+│   ├── Venta.cs
+│   ├── DetalleVenta.cs
+│   └── DBREACT_VENTAContext.cs # Contexto de Entity Framework
+├── Services/          # Servicios de negocio
+├── Repositories/      # Repositorios de acceso a datos
+├── Interfaces/        # Contratos e interfaces
+├── Hubs/             # SignalR Hubs para tiempo real
+├── ClientApp/        # Aplicación React (frontend)
+├── consultas/        # Scripts de base de datos
+│   └── database.sql  # Script de creación de BD
+├── Properties/       # Configuración del proyecto
+├── wwwroot/         # Archivos estáticos del servidor
+├── appsettings.json # Configuración de la aplicación
+├── Program.cs       # Punto de entrada de la aplicación
+└── ReactVentas.csproj # Archivo de proyecto .NET
 ```
 
 ## 🗃️ Base de Datos
@@ -173,6 +227,44 @@ El sistema utiliza SQL Server con la siguiente estructura:
 - Firefox 88+
 - Safari 14+
 - Edge 90+
+
+## 🚀 Inicio Rápido
+
+¿Quieres probar el sistema rápidamente? Sigue estos pasos:
+
+### Opción 1: Usar el Sistema en Línea (Recomendado)
+1. Visita: [Sistema en Somee](http://ferreteriasystem.somee.com)
+2. Usa las credenciales de prueba:
+   - **Email**: `victorR@gmail.com`
+   - **Contraseña**: `123`
+3. ¡Explora todas las funcionalidades!
+
+### Opción 2: Instalación Local (5 minutos)
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/Gaitan19/FerreteriaSystem.git
+cd FerreteriaSystem
+
+# 2. Restaurar dependencias
+dotnet restore
+cd ClientApp && npm install && cd ..
+
+# 3. Configurar base de datos (opcional - usar Somee)
+# Editar appsettings.json si quieres usar BD local
+
+# 4. Ejecutar el proyecto
+dotnet run
+
+# 5. Abrir http://localhost:5145 en tu navegador
+```
+
+### Primeros Pasos en el Sistema:
+1. **Iniciar Sesión**: Usa las credenciales de prueba
+2. **Explorar Dashboard**: Revisa las métricas generales (solo Admin)
+3. **Ver Productos**: Navega a Inventario → Productos
+4. **Crear una Venta**: Ve a Ventas → Nueva Venta
+5. **Ver Historial**: Consulta Ventas → Historial Venta
+6. **Generar Reportes**: Accede a Reportes (solo Admin)
 
 ## 📦 Instalación
 
@@ -324,72 +416,67 @@ El sistema está configurado para usar hosting gratuito de Somee:
 ## 📱 Capturas de Pantalla
 
 ### Pantalla de Login
-![Login](screenshots/login_screen.png)
+![Login](screenshots/login-screen.png)
 
-*Pantalla de inicio de sesión con validación de credenciales. Permite el acceso al sistema mediante email y contraseña.*
+*Pantalla de inicio de sesión con validación de credenciales. Permite el acceso al sistema mediante email y contraseña. Incluye validación de campos y mensajes de error informativos.*
 
 ### Dashboard Principal (Administrador)
-![Dashboard](screenshots/dashboard_mock.html)
+[Ver Dashboard Completo](screenshots/dashboard_mock.html)
 
-*Panel principal que muestra métricas clave:*
-- Cantidad total de ventas
-- Ingresos generados
-- Total de productos en inventario
-- Número de categorías
-- Gráficos de ventas por período
-- Productos más vendidos
+*Panel principal que muestra métricas clave del sistema:*
+- **Cantidad total de ventas**: Número de transacciones procesadas
+- **Ingresos generados**: Total de ingresos por ventas
+- **Total de productos**: Inventario disponible
+- **Número de categorías**: Organización del inventario
+- **Gráficos interactivos**: Ventas por período y productos más vendidos
+- **Indicadores en tiempo real**: Métricas actualizadas automáticamente
 
 ### Gestión de Productos
+[Ver Módulo de Productos](screenshots/productos_screen.html)
+
 *Módulo completo para administrar el inventario:*
-- Lista de productos con filtros de búsqueda
-- Formulario de creación/edición de productos
-- Control de stock y precios
-- Asignación de categorías y proveedores
-- Estados activo/inactivo
-
-### Gestión de Categorías
-*Organización del inventario por categorías:*
-- Lista de categorías existentes
-- Creación de nuevas categorías
-- Edición de categorías existentes
-- Control de estado (activo/inactivo)
-
-### Gestión de Proveedores
-*Administración de proveedores:*
-- Registro de nuevos proveedores
-- Información de contacto completa
-- Historial de suministros
-- Estados de proveedores
+- **Lista de productos**: Tabla con todos los productos registrados
+- **Búsqueda y filtros**: Localización rápida de productos
+- **Información detallada**: Código, marca, descripción, categoría, proveedor
+- **Control de stock**: Visualización de cantidades disponibles
+- **Estados**: Productos activos/inactivos con indicadores visuales
+- **Precios**: Gestión de precios de venta
+- **Acciones**: Editar, eliminar productos con confirmaciones
 
 ### Módulo de Ventas
-*Procesamiento de ventas:*
-- Interfaz intuitiva para crear ventas
-- Búsqueda rápida de productos
-- Cálculo automático de totales
-- Captura de datos del cliente
-- Generación inmediata de facturas
+[Ver Proceso de Venta](screenshots/ventas_screen.html)
 
-### Historial de Ventas
-*Consulta y gestión de ventas anteriores:*
-- Lista completa de transacciones
-- Filtros por fecha, usuario y cliente
-- Vista detallada de cada venta
-- Opción de reimpresión de facturas
+*Procesamiento completo de ventas:*
+- **Información del cliente**: Captura de datos del comprador
+- **Búsqueda de productos**: Localización rápida por código o descripción
+- **Carrito de compras**: Productos seleccionados con cantidades
+- **Cálculos automáticos**: Subtotales, impuestos y total
+- **Tipos de documento**: Facturas o tickets según necesidad
+- **Validaciones**: Control de stock y datos requeridos
+- **Procesamiento**: Generación inmediata de comprobantes
 
-### Gestión de Usuarios (Administrador)
-*Control de acceso al sistema:*
-- Lista de usuarios registrados
-- Creación de nuevos usuarios
-- Asignación de roles y permisos
-- Activación/desactivación de cuentas
-- Cambio de contraseñas
+### Características Visuales del Sistema:
+- **Diseño responsivo**: Compatible con dispositivos móviles y tablets
+- **Interfaz intuitiva**: Navegación clara y fácil de usar
+- **Indicadores visuales**: Estados, alertas y notificaciones claras
+- **Tablas interactivas**: Ordenamiento, filtrado y paginación
+- **Formularios validados**: Entrada de datos con validación en tiempo real
+- **Gráficos dinámicos**: Visualización de datos con Chart.js
+- **Impresión optimizada**: Facturas y reportes listos para imprimir
 
-### Reportes y Análisis
-*Módulo de reportes:*
-- Reportes de ventas por período
-- Análisis de rendimiento
-- Productos más vendidos
-- Exportación de datos
+### Funcionalidades Adicionales Mostradas:
+- **Gestión de categorías**: Organización del inventario por tipos
+- **Administración de proveedores**: Información de contacto y suministros
+- **Control de usuarios**: Roles, permisos y estados de cuentas
+- **Historial de transacciones**: Consulta de ventas anteriores con detalles
+- **Reportes personalizados**: Análisis de ventas por períodos y productos
+- **Estados del sistema**: Conexión en tiempo real con SignalR
+
+### Navegación del Sistema:
+- **Sidebar responsivo**: Menú principal con iconografía clara
+- **Breadcrumbs**: Navegación contextual para ubicación
+- **Dropdown de usuario**: Perfil y opciones de sesión
+- **Notificaciones**: Alertas y confirmaciones con SweetAlert2
 
 ## 🔐 Credenciales de Prueba
 
@@ -463,6 +550,74 @@ Para contribuir al proyecto:
 - Usar el sistema de Issues de GitHub
 - Incluir pasos para reproducir el error
 - Especificar entorno y versión del navegador
+
+## 🔧 Solución de Problemas
+
+### Problemas Comunes:
+
+#### Error de Conexión a Base de Datos:
+```
+Microsoft.Data.SqlClient.SqlException: A network-related or instance-specific error occurred
+```
+**Solución**: Verificar que SQL Server esté ejecutándose y la cadena de conexión sea correcta.
+
+#### Error al Iniciar la Aplicación React:
+```
+Module not found: Error: Cannot resolve...
+```
+**Solución**: 
+```bash
+cd ClientApp
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### Error de Autenticación:
+**Problema**: No se puede iniciar sesión con credenciales válidas.
+**Solución**: Verificar que el usuario exista en la base de datos y esté activo.
+
+#### Puerto en Uso:
+**Problema**: `Error: EADDRINUSE: address already in use`
+**Solución**: Cambiar el puerto en `launchSettings.json` o detener el proceso que usa el puerto.
+
+### Comandos Útiles:
+
+```bash
+# Limpiar y reconstruir el proyecto
+dotnet clean
+dotnet build
+
+# Actualizar dependencias de React
+cd ClientApp
+npm update
+
+# Verificar estado del proyecto
+dotnet --info
+node --version
+npm --version
+
+# Ejecutar migraciones de base de datos (si se usan)
+dotnet ef database update
+```
+
+### Logs del Sistema:
+- **Backend**: Los logs se muestran en la consola al ejecutar `dotnet run`
+- **Frontend**: Los logs aparecen en la consola del navegador (F12)
+- **Base de Datos**: Revisar los logs de SQL Server
+
+## 📞 Soporte y Contacto
+
+Para obtener ayuda adicional:
+
+1. **Documentación**: Revisar este README.md
+2. **Issues**: Crear un issue en GitHub con detalles del problema
+3. **Logs**: Incluir logs relevantes al reportar problemas
+4. **Entorno**: Especificar versiones de .NET, Node.js y navegador
+
+### Información del Sistema:
+- **Plataforma**: Multiplataforma (Windows, macOS, Linux)
+- **Base de Datos**: SQL Server 2016 o superior
+- **Navegadores**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
 
 ---
 
