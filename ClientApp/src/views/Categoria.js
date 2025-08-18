@@ -14,6 +14,7 @@ import {
   ModalFooter,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useSignalR } from "../context/SignalRProvider";
 
 const modeloCategoria = {
   idCategoria: 0,
@@ -26,6 +27,7 @@ const Categoria = () => {
   const [pendiente, setPendiente] = useState(true);
   const [categorias, setCategorias] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  const { subscribe } = useSignalR();
 
   const handleChange = (e) => {
     let value =
@@ -53,7 +55,66 @@ const Categoria = () => {
 
   useEffect(() => {
     obtenerCategorias();
-  }, []);
+
+    // Set up SignalR listeners for real-time updates
+    const unsubscribeCreated = subscribe('CategoriaCreated', (nuevaCategoria) => {
+      setCategorias(prev => [nuevaCategoria, ...prev ]);
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Nueva categoría agregada',
+        text: `Se agregó: ${nuevaCategoria.descripcion}`,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    const unsubscribeUpdated = subscribe('CategoriaUpdated', (categoriaActualizada) => {
+      setCategorias(prev => 
+        prev.map(cat => 
+          cat.idCategoria === categoriaActualizada.idCategoria 
+            ? categoriaActualizada 
+            : cat
+        )
+      );
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Categoría actualizada',
+        text: `Se actualizó: ${categoriaActualizada.descripcion}`,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    const unsubscribeDeleted = subscribe('CategoriaDeleted', (id) => {
+      
+      
+      setCategorias(prev => prev.map(cat => 
+        cat.idCategoria === id ? { ...cat, esActivo: false } : cat
+      ));
+
+
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Categoría eliminada',
+        text: 'Una categoría fue eliminada',
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribeCreated();
+      unsubscribeUpdated();
+      unsubscribeDeleted();
+    };
+  }, [subscribe]);
 
   const columns = [
     {

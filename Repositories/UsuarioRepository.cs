@@ -65,5 +65,14 @@ namespace ReactVentas.Repositories
         {
             return await GetUsersWithRoleAsync();
         }
+
+        /// <summary>
+        ///     
+        public async Task<Usuario> GetUserWithRelatedDataByIdAsync(int id)
+        {
+            return await _dbSet
+                .Include(p => p.IdRolNavigation)
+                .FirstOrDefaultAsync(p => p.IdUsuario == id);
+        }
     }
 }

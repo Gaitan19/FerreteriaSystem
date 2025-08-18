@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using ReactVentas.Models;
 using ReactVentas.Interfaces;
+using Microsoft.AspNetCore.SignalR;
+using ReactVentas.Hubs;
 
 namespace ReactVentas.Controllers
 {
@@ -10,10 +12,12 @@ namespace ReactVentas.Controllers
     public class ProductoController : ControllerBase
     {
         private readonly IProductoRepository _productoRepository;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public ProductoController(IProductoRepository productoRepository)
+        public ProductoController(IProductoRepository productoRepository, IHubContext<NotificationHub> hubContext)
         {
             _productoRepository = productoRepository;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -40,8 +44,14 @@ namespace ReactVentas.Controllers
             // Adds a new product to the database.
             try
             {
-                await _productoRepository.AddAsync(request);
+               var newProduct = await _productoRepository.AddAsync(request);
                 await _productoRepository.SaveChangesAsync();
+
+                // Obtener el producto con relaciones después de guardar
+                var productoConRelaciones = await _productoRepository.GetProductWithRelatedDataByIdAsync(newProduct.IdProducto);
+
+                // Notificar con el objeto completo incluyendo relaciones
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProductoCreated", productoConRelaciones);
 
                 // Returns a 200 OK status on successful save.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -62,6 +72,12 @@ namespace ReactVentas.Controllers
             {
                 await _productoRepository.UpdateAsync(request);
                 await _productoRepository.SaveChangesAsync();
+
+                // Obtener el producto con relaciones después de actualizar
+                var productoConRelaciones = await _productoRepository.GetProductWithRelatedDataByIdAsync(request.IdProducto);
+
+                // Notificar con el objeto completo incluyendo relaciones
+                await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProductoUpdated", productoConRelaciones);
 
                 // Returns a 200 OK status on successful update.
                 return StatusCode(StatusCodes.Status200OK, "ok");
@@ -84,6 +100,10 @@ namespace ReactVentas.Controllers
                 if (result)
                 {
                     await _productoRepository.SaveChangesAsync();
+                    
+                    // Notify all clients about the deleted product
+                    await _hubContext.Clients.Group("FerreteriaSistema").SendAsync("ProductoDeleted", id);
+                    
                     return StatusCode(StatusCodes.Status200OK, "ok");
                 }
                 else

@@ -71,5 +71,15 @@ namespace ReactVentas.Repositories
         {
             return await GetProductsWithRelatedDataAsync();
         }
+
+        /// <summary>
+        ///     obtiene un producto con sus relaciones
+        public async Task<Producto> GetProductWithRelatedDataByIdAsync(int id)
+        {
+            return await _dbSet
+                .Include(p => p.IdCategoriaNavigation)
+                .Include(p => p.IdProveedorNavigation)
+                .FirstOrDefaultAsync(p => p.IdProducto == id);
+        }
     }
 }

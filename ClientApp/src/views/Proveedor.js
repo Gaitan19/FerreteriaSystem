@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloProveedor = {
   idProveedor: 0,
@@ -31,6 +32,7 @@ const Proveedor = () => {
   const [pendiente, setPendiente] = useState(true);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  const { subscribe } = useSignalR(); // Obtiene la función subscribe del contexto
 
   const handleChange = (e) => {
     let value;
@@ -47,17 +49,86 @@ const Proveedor = () => {
   };
 
   const obtenerProveedores = async () => {
-    let response = await fetch("api/proveedor/Lista");
-    if (response.ok) {
-      let data = await response.json();
-      setProveedores(data);
+    try {
+      let response = await fetch("api/proveedor/Lista");
+      if (response.ok) {
+        let data = await response.json();
+        setProveedores(data);
+        setPendiente(false);
+      }
+    } catch (error) {
+      console.error("Error obteniendo proveedores:", error);
       setPendiente(false);
     }
   };
 
   useEffect(() => {
     obtenerProveedores();
-  }, []);
+
+    // Configurar suscripciones a eventos de SignalR
+    const unsubscribeCreated = subscribe('ProveedorCreated', (nuevoProveedor) => {
+      // Agrega el nuevo proveedor al inicio de la lista
+      setProveedores(prev => [nuevoProveedor, ...prev]);
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Nuevo proveedor agregado',
+        text: `Se agregó: ${nuevoProveedor.nombre}`,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    const unsubscribeUpdated = subscribe('ProveedorUpdated', (proveedorActualizado) => {
+      // Actualiza el proveedor en la lista
+      setProveedores(prev => 
+        prev.map(prov => 
+          prov.idProveedor === proveedorActualizado.idProveedor 
+            ? proveedorActualizado 
+            : prov
+        )
+      );
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Proveedor actualizado',
+        text: `Se actualizó: ${proveedorActualizado.nombre}`,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    const unsubscribeDeleted = subscribe('ProveedorDeleted', (id) => {
+      // Marca el proveedor como inactivo
+      setProveedores(prev => prev.map(prov => 
+        prov.idProveedor === id ? { ...prov, esActivo: false } : prov
+      ));
+      
+      // Muestra notificación toast
+      Swal.fire({
+        position: 'top-end',
+        icon: 'info',
+        title: 'Proveedor eliminado',
+        text: 'Un proveedor fue eliminado',
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true
+      });
+    });
+
+    // Limpieza de suscripciones al desmontar el componente
+    return () => {
+      unsubscribeCreated();
+      unsubscribeUpdated();
+      unsubscribeDeleted();
+    };
+  }, [subscribe]); // Dependencia: subscribe
 
   const columns = [
     {
@@ -146,46 +217,51 @@ const Proveedor = () => {
   };
 
   const guardarCambios = async () => {
-    let response;
-    if (proveedor.idProveedor === 0) {
-      const newProveedor = {
-        nombre: proveedor.nombre,
-        correo: proveedor.correo,
-        telefono: proveedor.telefono,
-        esActivo: proveedor.esActivo,
-      };
+    try {
+      let response;
+      if (proveedor.idProveedor === 0) {
+        const newProveedor = {
+          nombre: proveedor.nombre,
+          correo: proveedor.correo,
+          telefono: proveedor.telefono,
+          esActivo: proveedor.esActivo,
+        };
 
-      response = await fetch("api/proveedor/Guardar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json;charset=utf-8",
-        },
-        body: JSON.stringify(newProveedor),
-      });
-    } else {
-      response = await fetch("api/proveedor/Editar", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json;charset=utf-8",
-        },
-        body: JSON.stringify(proveedor),
-      });
-    }
+        response = await fetch("api/proveedor/Guardar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json;charset=utf-8",
+          },
+          body: JSON.stringify(newProveedor),
+        });
+      } else {
+        response = await fetch("api/proveedor/Editar", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json;charset=utf-8",
+          },
+          body: JSON.stringify(proveedor),
+        });
+      }
 
-    if (response.ok) {
-      Swal.fire(
-        `${proveedor.idProveedor === 0 ? "Guardado" : "Actualizado"}`,
-        `El proveedor fue ${
-          proveedor.idProveedor === 0 ? "agregado" : "actualizado"
-        }`,
-        "success"
-      );
-
-      await obtenerProveedores();
-      setProveedor(modeloProveedor);
-      setVerModal(!verModal);
-    } else {
-      alert("Error al guardar");
+      if (response.ok) {
+        // No es necesario actualizar manualmente, SignalR se encargará
+        setProveedor(modeloProveedor);
+        setVerModal(!verModal);
+        Swal.fire(
+          `${proveedor.idProveedor === 0 ? "Guardado" : "Actualizado"}`,
+          `El proveedor fue ${
+            proveedor.idProveedor === 0 ? "agregado" : "actualizado"
+          }`,
+          "success"
+        );
+      } else {
+        const errorData = await response.json();
+        Swal.fire("Error", errorData.message || "Error al guardar", "error");
+      }
+    } catch (error) {
+      console.error("Error al guardar proveedor:", error);
+      Swal.fire("Error", "Ocurrió un error inesperado", "error");
     }
   };
 
@@ -201,17 +277,21 @@ const Proveedor = () => {
       cancelButtonText: "No, volver",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        let response = await fetch(
-          `api/proveedor/Eliminar/${id}`,
-          {
+        try {
+          let response = await fetch(`api/proveedor/Eliminar/${id}`, {
             method: "DELETE",
+          });
+
+          if (response.ok) {
+            // No es necesario actualizar manualmente, SignalR se encargará
+            Swal.fire("Eliminado!", "El proveedor fue eliminado.", "success");
+          } else {
+            const errorData = await response.json();
+            Swal.fire("Error", errorData.message || "Error al eliminar", "error");
           }
-        );
-
-        if (response.ok) {
-          obtenerProveedores();
-
-          Swal.fire("Eliminado!", "El proveedor fue eliminado.", "success");
+        } catch (error) {
+          console.error("Error eliminando proveedor:", error);
+          Swal.fire("Error", "Ocurrió un error inesperado", "error");
         }
       }
     });
