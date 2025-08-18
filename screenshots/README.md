@@ -2,83 +2,67 @@
 
 Esta carpeta contiene las capturas de pantalla del sistema para la documentación del README.md principal.
 
-## 📋 Capturas Requeridas
+## 📋 Capturas del Sistema Real
 
-Para completar la documentación, se necesitan las siguientes capturas del sistema en vivo:
+Se han integrado las capturas reales del sistema en vivo desde:
 **URL**: https://ferreteriaunion.somee.com/Login  
 **Credenciales**: victorR@gmail.com / 123
 
-### ✅ Capturas Actuales:
+### ✅ Capturas Integradas:
+- `dashboard-real.png` - Dashboard principal con métricas reales ✅
+- `usuarios-real.png` - Gestión de usuarios con roles ✅
+- `productos-real.png` - Inventario de productos completo ✅
+- `ventas-real.png` - Módulo de ventas en acción ✅
+- `historial-ventas-real.png` - Historial de transacciones ✅
+- `categorias-real.png` - Gestión de categorías ✅
+- `proveedores-real.png` - Administración de proveedores ✅
 - `login-screen.png` - Pantalla de login ✅
 
-### 📝 Capturas Pendientes:
-- `dashboard-main.png` - Dashboard principal del administrador
-- `productos-main.png` - Gestión de productos (lista principal)
-- `ventas-main.png` - Módulo de ventas (pantalla principal)
-- `categorias-main.png` - Gestión de categorías
-- `proveedores-main.png` - Administración de proveedores
-- `usuarios-main.png` - Control de usuarios
-- `reportes-main.png` - Reportes y análisis
+### 📝 URLs de las Capturas Originales:
+- Dashboard: https://github.com/user-attachments/assets/3c94de08-19c1-4c8c-89d0-17f21049c4f5
+- Usuarios: https://github.com/user-attachments/assets/e2c96c72-4e02-4814-9513-e5f25d72d689
+- Productos: https://github.com/user-attachments/assets/787ae8f6-8893-4bea-afab-14f40fcda3c9
+- Ventas: https://github.com/user-attachments/assets/9f29df9a-c2f3-492d-a73d-995eaefa3f66
+- Historial: https://github.com/user-attachments/assets/4110091f-831e-45c9-ab16-f00be811db45
+- Categorías: https://github.com/user-attachments/assets/5ab92047-9846-4eda-989b-f003d3bf5643
+- Proveedores: https://github.com/user-attachments/assets/07299118-1396-4a7b-9c9d-0c33921b9e3b
 
-## 📐 Especificaciones para las Capturas:
+## 🔄 Descarga de Imágenes Reales
 
-### Resolución y Formato:
-- **Formato**: PNG (preferido) o JPG
-- **Resolución mínima**: 1280x720px
-- **Calidad**: Alta definición, texto legible
+Para obtener las imágenes reales del sistema (reemplazar los placeholders):
 
-### Contenido de las Capturas:
-- **Pantalla completa** del navegador mostrando el módulo
-- **Datos de ejemplo** visibles (productos, ventas, etc.)
-- **Interfaz limpia** sin elementos de depuración
-- **Navegación visible** (sidebar, breadcrumbs)
+```bash
+# Ejecutar el script de descarga
+./download-screenshots.sh
+```
 
-### Nomenclatura de Archivos:
-- Usar nombres descriptivos en minúsculas
-- Separar palabras con guiones (`-`)
-- Extensión `.png` o `.jpg`
+Este script descargará todas las capturas reales desde GitHub y las colocará en la ubicación correcta.
 
-## 🚀 Pasos para Tomar las Capturas:
+## 📐 Especificaciones de las Capturas Integradas:
 
-1. **Acceder al sistema**: https://ferreteriaunion.somee.com/Login
-2. **Iniciar sesión** con: victorR@gmail.com / 123
-3. **Navegar a cada módulo** desde el menú lateral
-4. **Tomar captura** de la pantalla principal de cada módulo
-5. **Guardar** con el nombre correspondiente en esta carpeta
-6. **Verificar** que las imágenes se muestren correctamente en el README
+### Información del Dashboard:
+- **Métricas Reales**: 8 ventas, C$5900.00 ingresos, 60 productos, 11 categorías
+- **Gráficos**: Ventas de últimos 7 días y productos más vendidos
+- **Estado**: Sistema en línea con SignalR
 
-## 📱 Módulos del Sistema:
+### Gestión de Usuarios:
+- **Usuarios Activos**: admin, alexha, victor, kenley
+- **Roles**: Administrador y Empleado claramente identificados
+- **Estados**: Todos los usuarios activos
 
-### 📊 Dashboard (dashboard-main.png)
-- Mostrar métricas principales
-- Gráficos visibles
-- Estadísticas actualizadas
+### Inventario de Productos:
+- **Productos Registrados**: A1K, S1010C, S1009B, S1008A, S1007Z, etc.
+- **Categorías**: Accesorios para Hogar, Pinturas y Adhesivos, Materiales de Construcción
+- **Marcas**: kevin, Honeywell KG, 3MK, Steelpro, Caterpillar, 3M, etc.
 
-### 📦 Productos (productos-main.png)
-- Lista de productos con datos
-- Filtros y búsqueda visibles
-- Tabla completa con información
+### Módulo de Ventas:
+- **Interface Limpia**: Cliente, Productos, Detalle
+- **Funcionalidad**: Código de documento, búsqueda de productos, cálculos automáticos
 
-### 🛒 Ventas (ventas-main.png)
-- Pantalla de nueva venta
-- Formulario de cliente
-- Lista de productos disponibles
-
-### 🏷️ Categorías (categorias-main.png)
-- Lista de categorías registradas
-- Opciones de gestión visibles
-
-### 🏢 Proveedores (proveedores-main.png)
-- Información de proveedores
-- Datos de contacto visibles
-
-### 👥 Usuarios (usuarios-main.png)
-- Lista de usuarios del sistema
-- Roles y estados visibles
-
-### 📈 Reportes (reportes-main.png)
-- Pantalla de reportes
-- Gráficos y análisis visibles
+### Historial de Ventas:
+- **Transacciones Reales**: 8 ventas del 21/07/2025 al 18/08/2025
+- **Tipos de Documento**: Boletas y Facturas
+- **Rangos de Montos**: C$20.00 a C$5430.00
 
 ## ✨ Archivos Complementarios:
 
@@ -87,4 +71,4 @@ Los siguientes archivos HTML interactivos se mantienen como complemento:
 - `productos_screen.html` - Demostración del módulo de productos
 - `ventas_screen.html` - Demostración del proceso de ventas
 
-Una vez agregadas las capturas reales, el README principal mostrará tanto las capturas reales como enlaces a las versiones interactivas.
+Las capturas reales ahora proporcionan una visión exacta del sistema en funcionamiento con datos reales del entorno de producción.

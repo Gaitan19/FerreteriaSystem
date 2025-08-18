@@ -418,48 +418,66 @@ El sistema está configurado para usar hosting gratuito de Somee:
 > **🌐 Sistema en Vivo**: [https://ferreteriaunion.somee.com/Login](https://ferreteriaunion.somee.com/Login)  
 > **Credenciales de Prueba**: `victorR@gmail.com` / `123`
 
+### 🎯 Sistema Real en Funcionamiento
+
+Las siguientes capturas muestran el sistema **Ferretería "La Unión"** funcionando en el entorno de producción con datos reales. El sistema está completamente operativo y disponible para pruebas en línea.
+
+**Características mostradas en las capturas:**
+- **Datos Reales**: Productos, ventas y usuarios del sistema en producción
+- **Interface Completa**: Todos los módulos funcionales del sistema
+- **Métricas Actuales**: 8 ventas, C$5900.00 en ingresos, 60 productos activos
+- **Usuarios Activos**: 4 usuarios con diferentes roles (Administrador/Empleado)
+- **Inventario Real**: Productos de ferretería con códigos, marcas y categorías
+
 ### 🔐 Pantalla de Login
 ![Login](screenshots/login-screen.png)
 
 *Pantalla de inicio de sesión con validación de credenciales. Permite el acceso al sistema mediante email y contraseña. Incluye validación de campos y mensajes de error informativos.*
 
 ### 📊 Dashboard Principal (Administrador)
-![Dashboard Principal](screenshots/dashboard-main.png)
-> *Para ver versión interactiva*: [Ver Dashboard Completo](screenshots/dashboard_mock.html)
+![Dashboard Principal](screenshots/dashboard-real.png)
 
-*Panel principal que muestra métricas clave del sistema:*
-- **Cantidad total de ventas**: Número de transacciones procesadas
-- **Ingresos generados**: Total de ingresos por ventas
-- **Total de productos**: Inventario disponible
-- **Número de categorías**: Organización del inventario
-- **Gráficos interactivos**: Ventas por período y productos más vendidos
-- **Indicadores en tiempo real**: Métricas actualizadas automáticamente
+*Panel principal del sistema "La Unión" que muestra métricas clave en tiempo real:*
+- **Cantidad de Ventas**: 8 transacciones registradas
+- **Ingresos por Ventas**: C$5900.00 generados
+- **Total Productos**: 60 productos en inventario
+- **Total Categorías**: 11 categorías organizadas
+- **Gráfico de Ventas**: Últimos 7 días con barras interactivas mostrando el 18/08/2025
+- **Productos Más Vendidos**: Gráfico circular con distribución por productos (Martillo de acero 16oz, Protector auditivo, Clavo de acero, Desarmador estrella)
+- **Estado de Conexión**: Indicador "En línea" en tiempo real con SignalR
 
 ### 📦 Gestión de Productos
-![Gestión de Productos](screenshots/productos-main.png)
-> *Para ver versión interactiva*: [Ver Módulo de Productos](screenshots/productos_screen.html)
+![Gestión de Productos](screenshots/productos-real.png)
 
-*Módulo completo para administrar el inventario:*
-- **Lista de productos**: Tabla con todos los productos registrados
-- **Búsqueda y filtros**: Localización rápida de productos
-- **Información detallada**: Código, marca, descripción, categoría, proveedor
-- **Control de stock**: Visualización de cantidades disponibles
-- **Estados**: Productos activos/inactivos con indicadores visuales
-- **Precios**: Gestión de precios de venta
-- **Acciones**: Editar, eliminar productos con confirmaciones
+*Inventario completo del sistema:*
+- **Botón Nuevo Producto**: Acceso rápido para agregar productos (verde)
+- **Productos Registrados**: Lista completa con códigos únicos (A1K, S1010C, S1009B, etc.)
+- **Información Detallada**: 
+  - Códigos de productos (A1K, S1010C, S1009B, S1008A, S1007Z, S1006Y, E910X, E909W, E908V)
+  - Marcas (kevin, Honeywell KG, 3MK, Steelpro, Caterpillar, 3M, Schneider, Philips, Osram)
+  - Descripciones específicas (kevin-example, Traje bioseguro KK, Protector auditivo, Arnés seguridad, etc.)
+- **Categorización**: Productos organizados por categorías (Accesorios para Hogar, Pinturas y Adhesivos, Materiales de Construcción)
+- **Proveedores**: Información de proveedores (repuestosKG, Sin proveedor)
+- **Control de Estado**: Indicadores "Activo" (azul) y "No Activo" (rojo)
+- **Acciones**: Botones de editar (azul) y eliminar (rojo) para cada producto
 
 ### 🛒 Módulo de Ventas
-![Módulo de Ventas](screenshots/ventas-main.png)
-> *Para ver versión interactiva*: [Ver Proceso de Venta](screenshots/ventas_screen.html)
+![Módulo de Ventas](screenshots/ventas-real.png)
 
-*Procesamiento completo de ventas:*
-- **Información del cliente**: Captura de datos del comprador
-- **Búsqueda de productos**: Localización rápida por código o descripción
-- **Carrito de compras**: Productos seleccionados con cantidades
-- **Cálculos automáticos**: Subtotales, impuestos y total
-- **Tipos de documento**: Facturas o tickets según necesidad
-- **Validaciones**: Control de stock y datos requeridos
-- **Procesamiento**: Generación inmediata de comprobantes
+*Interface completa de procesamiento de ventas:*
+- **Información del Cliente**: 
+  - Código de Documento preconfigurado (5711LG)
+  - Campo para Nombre del cliente
+- **Sección de Productos**: 
+  - Buscador de productos con placeholder "Buscar producto"
+  - Tabla de productos seleccionados con columnas (Producto, Cantidad, Precio, Total)
+  - Estado inicial mostrando "Sin productos"
+- **Panel de Resumen (Detalle)**:
+  - Selector de Tipo de documento (Boleta seleccionada)
+  - Sub Total en C$ (inicializado en 0)
+  - Total en C$ (inicializado en 0)
+- **Acción Principal**: Botón "Terminar Venta" (verde) para procesar la transacción
+- **Diseño Limpio**: Interface organizada en secciones claramente definidas (Cliente, Productos, Detalle)
 
 ### 🏷️ Gestión de Categorías
 ![Gestión de Categorías](screenshots/categorias-main.png)
@@ -479,23 +497,55 @@ El sistema está configurado para usar hosting gratuito de Somee:
 - **Estados**: Control de proveedores activos/inactivos
 - **Búsqueda**: Localización rápida de proveedores
 
-### 👥 Control de Usuarios
-![Control de Usuarios](screenshots/usuarios-main.png)
+### 👥 Control de Usuarios (Solo Administradores)
+![Control de Usuarios](screenshots/usuarios-real.png)
 
-*Administración de usuarios del sistema:*
-- **Roles y permisos**: Asignación de roles (Administrador/Vendedor)
-- **Estados de cuenta**: Control de usuarios activos/inactivos
-- **Información personal**: Datos de contacto y credenciales
-- **Historial**: Registro de actividades por usuario
+*Administración completa del sistema de usuarios:*
+- **Lista de Usuarios**: Tabla con información completa (admin, alexha, victor, kenley)
+- **Datos de Contacto**: Nombre, correo electrónico y teléfono de cada usuario
+- **Asignación de Roles**: Administrador y Empleado claramente identificados
+- **Estados de Cuenta**: Indicadores visuales "Activo" con badges azules
+- **Acciones Disponibles**: Botones de editar (azul) y eliminar (rojo) para cada usuario
+- **Botón Nuevo Usuario**: Funcionalidad para agregar usuarios (verde)
+- **Paginación**: Control de "1-4 de 4" elementos mostrados
+- **Organización**: Tabla ordenada con headers claros (Nombre, Correo, Teléfono, Rol, Estado, Acciones)
 
-### 📈 Reportes y Análisis
-![Reportes](screenshots/reportes-main.png)
+### 🏷️ Gestión de Categorías
+![Gestión de Categorías](screenshots/categorias-real.png)
 
-*Sistema de reportes y análisis:*
-- **Reportes de ventas**: Análisis por períodos y productos
-- **Gráficos dinámicos**: Visualización de tendencias
-- **Filtros personalizados**: Consultas específicas por fecha/producto
-- **Exportación**: Opciones para imprimir y exportar datos
+*Administración de categorías de productos:*
+- **Lista de categorías**: Visualización de todas las categorías registradas
+- **Agregar categorías**: Formulario para crear nuevas categorías
+- **Editar/Eliminar**: Gestión completa de categorías existentes
+- **Estados**: Control de categorías activas/inactivas
+
+### 🏢 Administración de Proveedores
+![Administración de Proveedores](screenshots/proveedores-real.png)
+
+*Gestión de información de proveedores:*
+- **Datos de contacto**: Información completa de cada proveedor
+- **Lista de productos**: Productos suministrados por cada proveedor
+- **Estados**: Control de proveedores activos/inactivos
+- **Búsqueda**: Localización rápida de proveedores
+
+### 📈 Historial de Ventas y Reportes
+![Historial de Ventas](screenshots/historial-ventas-real.png)
+
+*Sistema completo de consulta y análisis de ventas:*
+- **Filtros de Búsqueda**:
+  - Selector por "Fechas" 
+  - Fecha Inicio: 28/04/2025
+  - Fecha Fin: 18/08/2025
+  - Botón "Buscar" (verde) para aplicar filtros
+- **Registro de Transacciones**: Lista detallada de ventas con:
+  - **Fechas de Registro**: 21/07/2025, 24/07/2025, 26/07/2025, 18/08/2025
+  - **Números de Venta**: 000001, 000002, 000003, 000004, 000005, 000006, 000007, 000008
+  - **Tipos de Documento**: Boleta y Factura
+  - **Documentos de Cliente**: 0457MD, 1105IK, 2228UJ, 3109OS, 5719TK, 9597OI, 3633YV, 2116AS
+  - **Clientes**: manuel, Marc Tower, test, est, PRUEBA 2, Luis
+  - **Montos**: Rangos desde C$20.00 hasta C$5430.00
+- **Acciones**: Botón "Ver detalle" (azul) para cada transacción
+- **Totales Variados**: C$300.00, C$1430.00, C$3000.00, C$200.00, C$350.00, C$20.00
 
 ### Características Visuales del Sistema:
 - **Diseño responsivo**: Compatible con dispositivos móviles y tablets
