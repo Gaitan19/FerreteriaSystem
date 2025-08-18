@@ -233,7 +233,7 @@ El sistema utiliza SQL Server con la siguiente estructura:
 ¿Quieres probar el sistema rápidamente? Sigue estos pasos:
 
 ### Opción 1: Usar el Sistema en Línea (Recomendado)
-1. Visita: [Sistema en Somee](http://ferreteriasystem.somee.com)
+1. Visita: [Sistema en Somee](https://ferreteriaunion.somee.com/Login)
 2. Usa las credenciales de prueba:
    - **Email**: `victorR@gmail.com`
    - **Contraseña**: `123`
@@ -343,7 +343,7 @@ El sistema está configurado para usar hosting gratuito de Somee:
    ```json
    "cadenaSQL": "workstation id=DBREACT_VENTA.mssql.somee.com;packet size=4096;user id=vhromero_SQLLogin_1;pwd=m5zmtmub73;data source=DBREACT_VENTA.mssql.somee.com;persist security info=False;initial catalog=DBREACT_VENTA;TrustServerCertificate=True"
    ```
-3. **URL del Sistema**: [Sistema en Somee](http://ferreteriasystem.somee.com)
+3. **URL del Sistema**: [Sistema en Somee](https://ferreteriaunion.somee.com/Login)
 
 ### Otros Hostings:
 - **Azure App Service**
@@ -415,13 +415,17 @@ El sistema está configurado para usar hosting gratuito de Somee:
 
 ## 📱 Capturas de Pantalla
 
-### Pantalla de Login
+> **🌐 Sistema en Vivo**: [https://ferreteriaunion.somee.com/Login](https://ferreteriaunion.somee.com/Login)  
+> **Credenciales de Prueba**: `victorR@gmail.com` / `123`
+
+### 🔐 Pantalla de Login
 ![Login](screenshots/login-screen.png)
 
 *Pantalla de inicio de sesión con validación de credenciales. Permite el acceso al sistema mediante email y contraseña. Incluye validación de campos y mensajes de error informativos.*
 
-### Dashboard Principal (Administrador)
-[Ver Dashboard Completo](screenshots/dashboard_mock.html)
+### 📊 Dashboard Principal (Administrador)
+![Dashboard Principal](screenshots/dashboard-main.png)
+> *Para ver versión interactiva*: [Ver Dashboard Completo](screenshots/dashboard_mock.html)
 
 *Panel principal que muestra métricas clave del sistema:*
 - **Cantidad total de ventas**: Número de transacciones procesadas
@@ -431,8 +435,9 @@ El sistema está configurado para usar hosting gratuito de Somee:
 - **Gráficos interactivos**: Ventas por período y productos más vendidos
 - **Indicadores en tiempo real**: Métricas actualizadas automáticamente
 
-### Gestión de Productos
-[Ver Módulo de Productos](screenshots/productos_screen.html)
+### 📦 Gestión de Productos
+![Gestión de Productos](screenshots/productos-main.png)
+> *Para ver versión interactiva*: [Ver Módulo de Productos](screenshots/productos_screen.html)
 
 *Módulo completo para administrar el inventario:*
 - **Lista de productos**: Tabla con todos los productos registrados
@@ -443,8 +448,9 @@ El sistema está configurado para usar hosting gratuito de Somee:
 - **Precios**: Gestión de precios de venta
 - **Acciones**: Editar, eliminar productos con confirmaciones
 
-### Módulo de Ventas
-[Ver Proceso de Venta](screenshots/ventas_screen.html)
+### 🛒 Módulo de Ventas
+![Módulo de Ventas](screenshots/ventas-main.png)
+> *Para ver versión interactiva*: [Ver Proceso de Venta](screenshots/ventas_screen.html)
 
 *Procesamiento completo de ventas:*
 - **Información del cliente**: Captura de datos del comprador
@@ -454,6 +460,42 @@ El sistema está configurado para usar hosting gratuito de Somee:
 - **Tipos de documento**: Facturas o tickets según necesidad
 - **Validaciones**: Control de stock y datos requeridos
 - **Procesamiento**: Generación inmediata de comprobantes
+
+### 🏷️ Gestión de Categorías
+![Gestión de Categorías](screenshots/categorias-main.png)
+
+*Administración de categorías de productos:*
+- **Lista de categorías**: Visualización de todas las categorías registradas
+- **Agregar categorías**: Formulario para crear nuevas categorías
+- **Editar/Eliminar**: Gestión completa de categorías existentes
+- **Estados**: Control de categorías activas/inactivas
+
+### 🏢 Administración de Proveedores
+![Administración de Proveedores](screenshots/proveedores-main.png)
+
+*Gestión de información de proveedores:*
+- **Datos de contacto**: Información completa de cada proveedor
+- **Lista de productos**: Productos suministrados por cada proveedor
+- **Estados**: Control de proveedores activos/inactivos
+- **Búsqueda**: Localización rápida de proveedores
+
+### 👥 Control de Usuarios
+![Control de Usuarios](screenshots/usuarios-main.png)
+
+*Administración de usuarios del sistema:*
+- **Roles y permisos**: Asignación de roles (Administrador/Vendedor)
+- **Estados de cuenta**: Control de usuarios activos/inactivos
+- **Información personal**: Datos de contacto y credenciales
+- **Historial**: Registro de actividades por usuario
+
+### 📈 Reportes y Análisis
+![Reportes](screenshots/reportes-main.png)
+
+*Sistema de reportes y análisis:*
+- **Reportes de ventas**: Análisis por períodos y productos
+- **Gráficos dinámicos**: Visualización de tendencias
+- **Filtros personalizados**: Consultas específicas por fecha/producto
+- **Exportación**: Opciones para imprimir y exportar datos
 
 ### Características Visuales del Sistema:
 - **Diseño responsivo**: Compatible con dispositivos móviles y tablets
