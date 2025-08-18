@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Productos - Ferreteria la Union</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .table th, .table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        .table th { background-color: #f2f2f2; }
+        .btn { padding: 8px 16px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .form-group { margin: 10px 0; }
+        .form-control { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .badge { padding: 4px 8px; border-radius: 12px; color: white; font-size: 12px; }
+        .badge-success { background-color: #28a745; }
+        .badge-danger { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Gestión de Productos</h1>
+    
+    <div>
+        <button class="btn btn-primary">+ Nuevo Producto</button>
+        <input type="text" class="form-control" placeholder="Buscar productos..." style="width: 300px; display: inline-block; margin-left: 20px;">
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Marca</th>
+                <th>Descripción</th>
+                <th>Categoría</th>
+                <th>Proveedor</th>
+                <th>Stock</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>P001</td>
+                <td>DeWalt</td>
+                <td>Taladro Inalámbrico 20V</td>
+                <td>Herramientas Eléctricas</td>
+                <td>Ferretería Central</td>
+                <td>15</td>
+                <td>C$4,500.00</td>
+                <td><span class="badge badge-success">Activo</span></td>
+                <td>
+                    <button class="btn btn-warning">Editar</button>
+                    <button class="btn btn-danger">Eliminar</button>
+                </td>
+            </tr>
+            <tr>
+                <td>P002</td>
+                <td>Stanley</td>
+                <td>Martillo de Carpintero 16oz</td>
+                <td>Herramientas Manuales</td>
+                <td>Distribuidor López</td>
+                <td>25</td>
+                <td>C$650.00</td>
+                <td><span class="badge badge-success">Activo</span></td>
+                <td>
+                    <button class="btn btn-warning">Editar</button>
+                    <button class="btn btn-danger">Eliminar</button>
+                </td>
+            </tr>
+            <tr>
+                <td>P003</td>
+                <td>Makita</td>
+                <td>Sierra Circular 7-1/4"</td>
+                <td>Herramientas Eléctricas</td>
+                <td>Ferretería Central</td>
+                <td>8</td>
+                <td>C$6,200.00</td>
+                <td><span class="badge badge-success">Activo</span></td>
+                <td>
+                    <button class="btn btn-warning">Editar</button>
+                    <button class="btn btn-danger">Eliminar</button>
+                </td>
+            </tr>
+            <tr>
+                <td>P004</td>
+                <td>Truper</td>
+                <td>Destornillador Set 6 Piezas</td>
+                <td>Herramientas Manuales</td>
+                <td>Distribuidor López</td>
+                <td>0</td>
+                <td>C$280.00</td>
+                <td><span class="badge badge-danger">Sin Stock</span></td>
+                <td>
+                    <button class="btn btn-warning">Editar</button>
+                    <button class="btn btn-danger">Eliminar</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
