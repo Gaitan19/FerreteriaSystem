@@ -221,28 +221,24 @@ const Venta = () => {
   };
 
   const calcularTotal = (arrayProductos) => {
-    let t = 0;
-    let st = 0;
-    let imp = 0;
+    let st = 0;  // subtotal sin IVA
+    let imp = 0; // IVA
+    let t = 0;   // total con IVA
 
     if (arrayProductos.length > 0) {
-      arrayProductos.forEach((p) => {
-        t = p.total + t;
-      });
+        arrayProductos.forEach((p) => {
+            st += p.total   // aquí p.total = precio * cantidad (sin IVA)
+        })
 
-      st = t / 1.15;
-      imp = t - st;
+        imp = st * 0.15    // IVA del 15% en Nicaragua
+        t = st + imp       // Total con IVA
     }
 
-    //Monto Base = (Monto con IGV) / (1.18)
-
-    //IGV = (Monto con IGV) – (Monto Base)
-
-    setSubTotal(t.toFixed(2));
-    setIgv(imp.toFixed(2));
-    // setTotal(ti.toFixed(2));
-    setTotal(t.toFixed(2));
-  };
+    setSubTotal(st.toFixed(2))
+    setIgv(imp.toFixed(2))
+    setTotal(t.toFixed(2))
+}
+;
 
   // Función para obtener detalles de una venta específica
   const obtenerDetalleVenta = async (numeroVenta) => {
@@ -258,6 +254,7 @@ const Venta = () => {
         const dataJson = await response.json();
         if (dataJson.length > 0) {
           setUltimaVenta(dataJson[0]);
+          console.log('Detalle de venta obtenido:', dataJson[0]);
           return dataJson[0];
         }
       }
@@ -269,116 +266,118 @@ const Venta = () => {
   };
 
   // Función para imprimir el ticket (igual que en HistorialVenta)
-  const imprimirTicket = () => {
-    printJS({
-      printable: "ticket-impresion",
-      type: "html",
-      style: `
+   const imprimirTicket = () => {
+     printJS({
+       printable: "ticket-impresion",
+       type: "html",
+       style: `
+         .ticket {
         .ticket {
-          font-family: 'Courier New', monospace;
-          font-size: 12px;
-          line-height: 1.4;
-          margin: 0 auto;
-          padding: 0;
-          text-align: left;
-          width: 80mm;
-          word-wrap: break-word;
-        }
-
-        .ticket__header,
-        .ticket__body,
-        .ticket__footer {
-          margin-bottom: 5px;
-          text-align: center;
-        }
-
-        .ticket__title {
-          font-size: 14px;
-          font-weight: bold;
-          margin-bottom: 5px;
-          text-transform: uppercase;
-        }
-
-        .ticket__address {
-          font-size: 10px;
-          margin: 3px 0;
-        }
-
-        .ticket__separator {
-          border: none;
-          border-top: 1px dashed #000;
-          margin: 3px 0;
-        }
-
-        .ticket__info {
-          font-size: 12px;
-          margin: 2px 0;
-          text-align: left;
-        }
-
-        .ticket__table {
-          border-collapse: collapse;
-          font-size: 12px;
-          margin-top: 5px;
-          width: 100%;
-        }
-
-        .ticket__table-header,
-        .ticket__table-cell {
-          padding: 0;
-        }
-
-        .ticket__table-header {
-          font-weight: bold;
-          text-align: left;
-        }
-
-        .ticket__table-cell {
-          overflow: hidden;
-          text-align: left;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .ticket__table-cell--center {
-          text-align: center;
-        }
-
-        .ticket__table-cell--right {
-          text-align: right;
-        }
-
-        .ticket__footer {
-          border-top: 1px dashed #000;
-          font-size: 10px;
-          padding-top: 5px;
-          text-align: center;
-        }
-
-        .ticket__footer-title {
-          font-size: 12px;
-          font-weight: bold;
-        }
-
-        @media print {
-          body {
-            align-items: flex-start;
-            display: flex;
-            justify-content: center;
-            margin: 0;
-            padding: 0;
-          }
-
-          .ticket {
-            font-size: 12px;
-            margin: 0;
-            page-break-inside: avoid;
-            width: 80mm;
-          }
-        }
-      `,
-    });
-  };
+     font-family: 'Courier New', monospace;
+     font-size: 12px;
+     line-height: 1.4;
+     margin: 0 auto;
+     padding: 0;
+     text-align: left;
+     width: 80mm; /* Ancho específico del ticket */
+     word-wrap: break-word;
+ }
+ 
+ .ticket__header,
+ .ticket__body,
+ .ticket__footer {
+     margin-bottom: 5px;
+     text-align: center; /* Centrado en la sección */
+ }
+ 
+ .ticket__title {
+     font-size: 14px;
+     font-weight: bold;
+     margin-bottom: 5px;
+     text-transform: uppercase;
+ }
+ 
+ .ticket__address {
+     font-size: 10px;
+     margin: 3px 0;
+ }
+ 
+ .ticket__separator {
+     border: none;
+     border-top: 1px dashed #000;
+     margin: 3px 0;
+ }
+ 
+ .ticket__info {
+     font-size: 12px;
+     margin: 2px 0;
+     text-align: left;
+ }
+ 
+ .ticket__table {
+     border-collapse: collapse;
+     font-size: 12px;
+     margin-top: 5px;
+     width: 100%;
+ }
+ 
+ .ticket__table-header,
+ .ticket__table-cell {
+     padding: 0;
+ }
+ 
+ .ticket__table-header {
+     font-weight: bold;
+     text-align: left;
+ }
+ 
+ .ticket__table-cell {
+     overflow: hidden;
+     text-align: left;
+     text-overflow: ellipsis;
+     white-space: nowrap;
+ }
+ 
+ .ticket__table-cell--center {
+     text-align: center;
+ }
+ 
+ .ticket__table-cell--right {
+     text-align: right;
+ }
+ 
+ .ticket__footer {
+     border-top: 1px dashed #000;
+     font-size: 10px;
+     padding-top: 5px;
+     text-align: center;
+ }
+ 
+ .ticket__footer-title {
+     font-size: 12px;
+     font-weight: bold;
+ }
+ 
+ @media print {
+     body {
+         align-items: flex-start;
+         display: flex;
+         justify-content: center; /* Centrar el ticket en la página */
+         margin: 0;
+         padding: 0;
+     }
+ 
+     .ticket {
+         font-size: 12px; /* Tamaño adecuado para impresión térmica */
+         margin: 0;
+         page-break-inside: avoid; /* Evitar que el ticket se parta */
+         width: 80mm; /* Mantener el tamaño exacto */
+     }
+ }
+ 
+       `,
+     });
+   };
 
   const terminarVenta = () => {
     if (productos.length < 1) {
