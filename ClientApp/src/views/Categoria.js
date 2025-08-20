@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import {
   Card,
@@ -12,8 +12,11 @@ import {
   Input,
   FormGroup,
   ModalFooter,
+  Row,
+  Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { exportToPDF, exportToExcel, applySearchFilter } from "../utils/exportHelpers";
 import { useSignalR } from "../context/SignalRProvider";
 
 const modeloCategoria = {
@@ -26,6 +29,8 @@ const Categoria = () => {
   const [categoria, setCategoria] = useState(modeloCategoria);
   const [pendiente, setPendiente] = useState(true);
   const [categorias, setCategorias] = useState([]);
+  const [filteredCategorias, setFilteredCategorias] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [verModal, setVerModal] = useState(false);
   const { subscribe } = useSignalR();
 
@@ -43,12 +48,45 @@ const Categoria = () => {
     });
   };
 
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    const searchFields = [
+      { accessor: (item) => item.descripcion },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    
+    const filtered = applySearchFilter(categorias, value, searchFields);
+    setFilteredCategorias(filtered);
+  };
+
+  const exportToPDFHandler = () => {
+    const columns = [
+      { header: 'Descripción', accessor: (row) => row.descripcion },
+      { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
+    ];
+    
+    exportToPDF(filteredCategorias, columns, 'Lista_de_Categorias');
+  };
+
+  const exportToExcelHandler = () => {
+    const excelData = filteredCategorias.map(cat => ({
+      'ID': cat.idCategoria,
+      'Descripción': cat.descripcion,
+      'Estado': cat.esActivo ? 'Activo' : 'No Activo'
+    }));
+
+    exportToExcel(excelData, 'Categorias');
+  };
+
   const obtenerCategorias = async () => {
     let response = await fetch("api/categoria/Lista");
 
     if (response.ok) {
       let data = await response.json();
       setCategorias(() => data);
+      setFilteredCategorias(() => data);
       setPendiente(false);
     }
   };
@@ -58,7 +96,17 @@ const Categoria = () => {
 
     // Set up SignalR listeners for real-time updates
     const unsubscribeCreated = subscribe('CategoriaCreated', (nuevaCategoria) => {
-      setCategorias(prev => [nuevaCategoria, ...prev ]);
+      setCategorias(prev => {
+        const newData = [nuevaCategoria, ...prev];
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredCategorias(filtered);
+        return newData;
+      });
       Swal.fire({
         position: 'top-end',
         icon: 'info',
@@ -71,13 +119,21 @@ const Categoria = () => {
     });
 
     const unsubscribeUpdated = subscribe('CategoriaUpdated', (categoriaActualizada) => {
-      setCategorias(prev => 
-        prev.map(cat => 
+      setCategorias(prev => {
+        const newData = prev.map(cat => 
           cat.idCategoria === categoriaActualizada.idCategoria 
             ? categoriaActualizada 
             : cat
-        )
-      );
+        );
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredCategorias(filtered);
+        return newData;
+      });
       Swal.fire({
         position: 'top-end',
         icon: 'info',
@@ -90,12 +146,19 @@ const Categoria = () => {
     });
 
     const unsubscribeDeleted = subscribe('CategoriaDeleted', (id) => {
-      
-      
-      setCategorias(prev => prev.map(cat => 
-        cat.idCategoria === id ? { ...cat, esActivo: false } : cat
-      ));
-
+      setCategorias(prev => {
+        const newData = prev.map(cat => 
+          cat.idCategoria === id ? { ...cat, esActivo: false } : cat
+        );
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredCategorias(filtered);
+        return newData;
+      });
 
       Swal.fire({
         position: 'top-end',
@@ -114,7 +177,18 @@ const Categoria = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscribe]); // Removed searchTerm dependency
+
+  // Separate useEffect to handle search term changes
+  useEffect(() => {
+    const searchFields = [
+      { accessor: (item) => item.descripcion },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    const filtered = applySearchFilter(categorias, searchTerm, searchFields);
+    setFilteredCategorias(filtered);
+  }, [searchTerm, categorias]);
 
   const columns = [
     {
@@ -266,21 +340,62 @@ const Categoria = () => {
           Lista de Categorias
         </CardHeader>
         <CardBody>
-          <Button
-            color="success"
-            size="sm"
-            onClick={() => setVerModal(!verModal)}
-          >
-            Nueva Categoria
-          </Button>
-          <hr></hr>
+          <Row className="mb-3">
+            <Col md="4">
+              <Button
+                color="success"
+                size="sm"
+                onClick={() => setVerModal(!verModal)}
+              >
+                Nueva Categoria
+              </Button>
+            </Col>
+            <Col md="4">
+              <div className="d-flex gap-2">
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={exportToPDFHandler}
+                  className="mr-2"
+                >
+                  <i className="fas fa-file-pdf"></i> PDF
+                </Button>
+                <Button
+                  color="info"
+                  size="sm"
+                  onClick={exportToExcelHandler}
+                >
+                  <i className="fas fa-file-excel"></i> Excel
+                </Button>
+              </div>
+            </Col>
+            <Col md="4">
+              <Input
+                type="text"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={handleSearch}
+                bsSize="sm"
+                style={{
+                  border: '2px solid #4e73df',
+                  borderRadius: '5px'
+                }}
+              />
+            </Col>
+          </Row>
           <DataTable
             columns={columns}
-            data={categorias}
+            data={filteredCategorias}
             progressPending={pendiente}
             pagination
             paginationComponentOptions={paginationComponentOptions}
             customStyles={customStyles}
+            noDataComponent={
+              <div className="text-center p-4">
+                <i className="fas fa-search fa-3x text-muted mb-3"></i>
+                <p className="text-muted">No se encontraron registros coincidentes</p>
+              </div>
+            }
           />
         </CardBody>
       </Card>

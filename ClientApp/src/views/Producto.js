@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { exportToPDF, exportToExcel, applySearchFilter } from "../utils/exportHelpers";
 import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloProducto = {
@@ -34,6 +35,8 @@ const Producto = () => {
   const [producto, setProducto] = useState(modeloProducto);
   const [pendiente, setPendiente] = useState(true);
   const [productos, setProductos] = useState([]);
+  const [filteredProductos, setFilteredProductos] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [categorias, setCategorias] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
@@ -54,6 +57,54 @@ const Producto = () => {
       ...producto,
       [e.target.name]: value,
     });
+  };
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    const searchFields = [
+      { accessor: (item) => item.codigo },
+      { accessor: (item) => item.marca },
+      { accessor: (item) => item.descripcion },
+      { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+      { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    
+    const filtered = applySearchFilter(productos, value, searchFields);
+    setFilteredProductos(filtered);
+  };
+
+  const exportToPDFHandler = () => {
+    const columns = [
+      { header: 'Código', accessor: (row) => row.codigo },
+      { header: 'Marca', accessor: (row) => row.marca },
+      { header: 'Descripción', accessor: (row) => row.descripcion },
+      { header: 'Categoría', accessor: (row) => row.idCategoriaNavigation?.descripcion || '' },
+      { header: 'Proveedor', accessor: (row) => row.idProveedorNavigation?.nombre || '' },
+      { header: 'Stock', accessor: (row) => row.stock.toString() },
+      { header: 'Precio', accessor: (row) => `$${row.precio}` },
+      { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
+    ];
+    
+    exportToPDF(filteredProductos, columns, 'Lista_de_Productos');
+  };
+
+  const exportToExcelHandler = () => {
+    const excelData = filteredProductos.map(prod => ({
+      'ID': prod.idProducto,
+      'Código': prod.codigo,
+      'Marca': prod.marca,
+      'Descripción': prod.descripcion,
+      'Categoría': prod.idCategoriaNavigation?.descripcion || '',
+      'Proveedor': prod.idProveedorNavigation?.nombre || '',
+      'Stock': prod.stock,
+      'Precio': prod.precio,
+      'Estado': prod.esActivo ? 'Activo' : 'No Activo'
+    }));
+
+    exportToExcel(excelData, 'Productos');
   };
 
   const obtenerCategorias = async () => {
@@ -86,6 +137,7 @@ const Producto = () => {
       if (response.ok) {
         let data = await response.json();
         setProductos(() => data);
+        setFilteredProductos(() => data);
         setPendiente(false);
       }
     } catch (error) {
@@ -102,7 +154,21 @@ const Producto = () => {
     // Configurar suscripciones a eventos de SignalR
     const unsubscribeCreated = subscribe('ProductoCreated', (nuevoProducto) => {
       // Agrega el nuevo producto al inicio de la lista
-      setProductos(prev => [nuevoProducto, ...prev]);
+      setProductos(prev => {
+        const newData = [nuevoProducto, ...prev];
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.codigo },
+          { accessor: (item) => item.marca },
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+          { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProductos(filtered);
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -118,13 +184,25 @@ const Producto = () => {
 
     const unsubscribeUpdated = subscribe('ProductoUpdated', (productoActualizado) => {
       // Actualiza el producto en la lista
-      setProductos(prev => 
-        prev.map(prod => 
+      setProductos(prev => {
+        const newData = prev.map(prod => 
           prod.idProducto === productoActualizado.idProducto 
             ? productoActualizado 
             : prod
-        )
-      );
+        );
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.codigo },
+          { accessor: (item) => item.marca },
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+          { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProductos(filtered);
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -140,9 +218,23 @@ const Producto = () => {
 
     const unsubscribeDeleted = subscribe('ProductoDeleted', (id) => {
       // Marca el producto como inactivo
-      setProductos(prev => prev.map(prod => 
-        prod.idProducto === id ? { ...prod, esActivo: false } : prod
-      ));
+      setProductos(prev => {
+        const newData = prev.map(prod => 
+          prod.idProducto === id ? { ...prod, esActivo: false } : prod
+        );
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.codigo },
+          { accessor: (item) => item.marca },
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+          { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProductos(filtered);
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -162,7 +254,22 @@ const Producto = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe]); // Dependencia: subscribe
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscribe]); // Removed searchTerm dependency
+
+  // Separate useEffect to handle search term changes
+  useEffect(() => {
+    const searchFields = [
+      { accessor: (item) => item.codigo },
+      { accessor: (item) => item.marca },
+      { accessor: (item) => item.descripcion },
+      { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+      { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    const filtered = applySearchFilter(productos, searchTerm, searchFields);
+    setFilteredProductos(filtered);
+  }, [searchTerm, productos]);
 
   const columns = [
     {
@@ -353,21 +460,62 @@ const Producto = () => {
           Lista de Productos
         </CardHeader>
         <CardBody>
-          <Button
-            color="success"
-            size="sm"
-            onClick={() => setVerModal(!verModal)}
-          >
-            Nuevo Producto
-          </Button>
-          <hr></hr>
+          <Row className="mb-3">
+            <Col md="4">
+              <Button
+                color="success"
+                size="sm"
+                onClick={() => setVerModal(!verModal)}
+              >
+                Nuevo Producto
+              </Button>
+            </Col>
+            <Col md="4">
+              <div className="d-flex gap-2">
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={exportToPDFHandler}
+                  className="mr-2"
+                >
+                  <i className="fas fa-file-pdf"></i> PDF
+                </Button>
+                <Button
+                  color="info"
+                  size="sm"
+                  onClick={exportToExcelHandler}
+                >
+                  <i className="fas fa-file-excel"></i> Excel
+                </Button>
+              </div>
+            </Col>
+            <Col md="4">
+              <Input
+                type="text"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={handleSearch}
+                bsSize="sm"
+                style={{
+                  border: '2px solid #4e73df',
+                  borderRadius: '5px'
+                }}
+              />
+            </Col>
+          </Row>
           <DataTable
             columns={columns}
-            data={productos}
+            data={filteredProductos}
             progressPending={pendiente}
             pagination
             paginationComponentOptions={paginationComponentOptions}
             customStyles={customStyles}
+            noDataComponent={
+              <div className="text-center p-4">
+                <i className="fas fa-search fa-3x text-muted mb-3"></i>
+                <p className="text-muted">No se encontraron registros coincidentes</p>
+              </div>
+            }
           />
         </CardBody>
       </Card>

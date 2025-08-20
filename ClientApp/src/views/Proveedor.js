@@ -16,6 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import { exportToPDF, exportToExcel, applySearchFilter } from "../utils/exportHelpers";
 import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloProveedor = {
@@ -31,6 +32,8 @@ const Proveedor = () => {
   const [proveedor, setProveedor] = useState(modeloProveedor);
   const [pendiente, setPendiente] = useState(true);
   const [proveedores, setProveedores] = useState([]);
+  const [filteredProveedores, setFilteredProveedores] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [verModal, setVerModal] = useState(false);
   const { subscribe } = useSignalR(); // Obtiene la función subscribe del contexto
 
@@ -48,12 +51,52 @@ const Proveedor = () => {
     });
   };
 
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    const searchFields = [
+      { accessor: (item) => item.nombre },
+      { accessor: (item) => item.correo },
+      { accessor: (item) => item.telefono },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    
+    const filtered = applySearchFilter(proveedores, value, searchFields);
+    setFilteredProveedores(filtered);
+  };
+
+  const exportToPDFHandler = () => {
+    const columns = [
+      { header: 'Nombre', accessor: (row) => row.nombre },
+      { header: 'Correo', accessor: (row) => row.correo },
+      { header: 'Teléfono', accessor: (row) => row.telefono },
+      { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
+    ];
+    
+    exportToPDF(filteredProveedores, columns, 'Lista_de_Proveedores');
+  };
+
+  const exportToExcelHandler = () => {
+    const excelData = filteredProveedores.map(prov => ({
+      'ID': prov.idProveedor,
+      'Nombre': prov.nombre,
+      'Correo': prov.correo,
+      'Teléfono': prov.telefono,
+      'Fecha Registro': prov.fechaRegistro,
+      'Estado': prov.esActivo ? 'Activo' : 'No Activo'
+    }));
+
+    exportToExcel(excelData, 'Proveedores');
+  };
+
   const obtenerProveedores = async () => {
     try {
       let response = await fetch("api/proveedor/Lista");
       if (response.ok) {
         let data = await response.json();
         setProveedores(data);
+        setFilteredProveedores(data);
         setPendiente(false);
       }
     } catch (error) {
@@ -68,7 +111,19 @@ const Proveedor = () => {
     // Configurar suscripciones a eventos de SignalR
     const unsubscribeCreated = subscribe('ProveedorCreated', (nuevoProveedor) => {
       // Agrega el nuevo proveedor al inicio de la lista
-      setProveedores(prev => [nuevoProveedor, ...prev]);
+      setProveedores(prev => {
+        const newData = [nuevoProveedor, ...prev];
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProveedores(filtered);
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -84,13 +139,23 @@ const Proveedor = () => {
 
     const unsubscribeUpdated = subscribe('ProveedorUpdated', (proveedorActualizado) => {
       // Actualiza el proveedor en la lista
-      setProveedores(prev => 
-        prev.map(prov => 
+      setProveedores(prev => {
+        const newData = prev.map(prov => 
           prov.idProveedor === proveedorActualizado.idProveedor 
             ? proveedorActualizado 
             : prov
-        )
-      );
+        );
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProveedores(filtered);
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -106,9 +171,21 @@ const Proveedor = () => {
 
     const unsubscribeDeleted = subscribe('ProveedorDeleted', (id) => {
       // Marca el proveedor como inactivo
-      setProveedores(prev => prev.map(prov => 
-        prov.idProveedor === id ? { ...prov, esActivo: false } : prov
-      ));
+      setProveedores(prev => {
+        const newData = prev.map(prov => 
+          prov.idProveedor === id ? { ...prov, esActivo: false } : prov
+        );
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProveedores(filtered);
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -128,7 +205,20 @@ const Proveedor = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe]); // Dependencia: subscribe
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscribe]); // Removed searchTerm dependency
+
+  // Separate useEffect to handle search term changes
+  useEffect(() => {
+    const searchFields = [
+      { accessor: (item) => item.nombre },
+      { accessor: (item) => item.correo },
+      { accessor: (item) => item.telefono },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    const filtered = applySearchFilter(proveedores, searchTerm, searchFields);
+    setFilteredProveedores(filtered);
+  }, [searchTerm, proveedores]);
 
   const columns = [
     {
@@ -309,21 +399,62 @@ const Proveedor = () => {
           Lista de Proveedores
         </CardHeader>
         <CardBody>
-          <Button
-            color="success"
-            size="sm"
-            onClick={() => setVerModal(!verModal)}
-          >
-            Nuevo Proveedor
-          </Button>
-          <hr />
+          <Row className="mb-3">
+            <Col md="4">
+              <Button
+                color="success"
+                size="sm"
+                onClick={() => setVerModal(!verModal)}
+              >
+                Nuevo Proveedor
+              </Button>
+            </Col>
+            <Col md="4">
+              <div className="d-flex gap-2">
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={exportToPDFHandler}
+                  className="mr-2"
+                >
+                  <i className="fas fa-file-pdf"></i> PDF
+                </Button>
+                <Button
+                  color="info"
+                  size="sm"
+                  onClick={exportToExcelHandler}
+                >
+                  <i className="fas fa-file-excel"></i> Excel
+                </Button>
+              </div>
+            </Col>
+            <Col md="4">
+              <Input
+                type="text"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={handleSearch}
+                bsSize="sm"
+                style={{
+                  border: '2px solid #4e73df',
+                  borderRadius: '5px'
+                }}
+              />
+            </Col>
+          </Row>
           <DataTable
             columns={columns}
-            data={proveedores}
+            data={filteredProveedores}
             progressPending={pendiente}
             pagination
             paginationComponentOptions={paginationComponentOptions}
             customStyles={customStyles}
+            noDataComponent={
+              <div className="text-center p-4">
+                <i className="fas fa-search fa-3x text-muted mb-3"></i>
+                <p className="text-muted">No se encontraron registros coincidentes</p>
+              </div>
+            }
           />
         </CardBody>
       </Card>
