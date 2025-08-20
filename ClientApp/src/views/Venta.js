@@ -1,4 +1,4 @@
-﻿import {
+import {
   Card,
   CardBody,
   CardHeader,
@@ -18,15 +18,9 @@ import { useContext, useEffect, useState } from 'react';
 import './css/Venta.css';
 import { UserContext } from '../context/UserProvider';
 import { generateCode } from '../utils/generateCode';
+import printJS from 'print-js';
+import Ticket from '../componentes/Ticket';
 
-const modelo = {
-  nombre: '',
-  correo: '',
-  idRolNavigation: {
-    idRol: 0,
-    descripcion: '',
-  },
-};
 
 const Venta = () => {
   const { user } = useContext(UserContext);
@@ -45,6 +39,9 @@ const Venta = () => {
   const [igv, setIgv] = useState(0);
   const [tempProducts, setTempProducts] = useState([]);
   const [alreadyProductos, setAlreadyProductos] = useState(false);
+  
+  // Estado para la última venta (para imprimir)
+  const [ultimaVenta, setUltimaVenta] = useState({});
 
   const reestablecer = () => {
     setDocumentoCliente(generateCode());
@@ -71,7 +68,7 @@ const Venta = () => {
 
   //para obtener la lista de sugerencias
   const onSuggestionsFetchRequested = ({ value }) => {
-    const api = fetch('api/venta/Productos/' + value)
+    fetch('api/venta/Productos/' + value)
       .then((response) => {
         return response.ok ? response.json() : Promise.reject(response);
       })
@@ -103,6 +100,7 @@ const Venta = () => {
             ) {
               return item;
             }
+            return null;
           })
         );
       })
@@ -213,7 +211,7 @@ const Venta = () => {
   };
 
   const eliminarProducto = (id) => {
-    let listaproductos = productos.filter((p) => p.idProducto != id);
+    let listaproductos = productos.filter((p) => p.idProducto !== id);
     const tempProductsCart = productsCart.filter(
       (item) => item[0].idProducto !== id
     );
@@ -226,7 +224,6 @@ const Venta = () => {
     let t = 0;
     let st = 0;
     let imp = 0;
-    let ti = 0;
 
     if (arrayProductos.length > 0) {
       arrayProductos.forEach((p) => {
@@ -235,7 +232,6 @@ const Venta = () => {
 
       st = t / 1.15;
       imp = t - st;
-      ti = t + imp;
     }
 
     //Monto Base = (Monto con IGV) / (1.18)
@@ -246,6 +242,142 @@ const Venta = () => {
     setIgv(imp.toFixed(2));
     // setTotal(ti.toFixed(2));
     setTotal(t.toFixed(2));
+  };
+
+  // Función para obtener detalles de una venta específica
+  const obtenerDetalleVenta = async (numeroVenta) => {
+    try {
+      let options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      let fecha = new Date().toLocaleDateString('es-PE', options);
+      
+      const response = await fetch(
+        `api/venta/Listar?buscarPor=numero&numeroVenta=${numeroVenta}&fechaInicio=${fecha}&fechaFin=${fecha}`
+      );
+      
+      if (response.ok) {
+        const dataJson = await response.json();
+        if (dataJson.length > 0) {
+          setUltimaVenta(dataJson[0]);
+          return dataJson[0];
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error al obtener detalle de venta:', error);
+      return null;
+    }
+  };
+
+  // Función para imprimir el ticket (igual que en HistorialVenta)
+  const imprimirTicket = () => {
+    printJS({
+      printable: "ticket-impresion",
+      type: "html",
+      style: `
+        .ticket {
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
+          line-height: 1.4;
+          margin: 0 auto;
+          padding: 0;
+          text-align: left;
+          width: 80mm;
+          word-wrap: break-word;
+        }
+
+        .ticket__header,
+        .ticket__body,
+        .ticket__footer {
+          margin-bottom: 5px;
+          text-align: center;
+        }
+
+        .ticket__title {
+          font-size: 14px;
+          font-weight: bold;
+          margin-bottom: 5px;
+          text-transform: uppercase;
+        }
+
+        .ticket__address {
+          font-size: 10px;
+          margin: 3px 0;
+        }
+
+        .ticket__separator {
+          border: none;
+          border-top: 1px dashed #000;
+          margin: 3px 0;
+        }
+
+        .ticket__info {
+          font-size: 12px;
+          margin: 2px 0;
+          text-align: left;
+        }
+
+        .ticket__table {
+          border-collapse: collapse;
+          font-size: 12px;
+          margin-top: 5px;
+          width: 100%;
+        }
+
+        .ticket__table-header,
+        .ticket__table-cell {
+          padding: 0;
+        }
+
+        .ticket__table-header {
+          font-weight: bold;
+          text-align: left;
+        }
+
+        .ticket__table-cell {
+          overflow: hidden;
+          text-align: left;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .ticket__table-cell--center {
+          text-align: center;
+        }
+
+        .ticket__table-cell--right {
+          text-align: right;
+        }
+
+        .ticket__footer {
+          border-top: 1px dashed #000;
+          font-size: 10px;
+          padding-top: 5px;
+          text-align: center;
+        }
+
+        .ticket__footer-title {
+          font-size: 12px;
+          font-weight: bold;
+        }
+
+        @media print {
+          body {
+            align-items: flex-start;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+          }
+
+          .ticket {
+            font-size: 12px;
+            margin: 0;
+            page-break-inside: avoid;
+            width: 80mm;
+          }
+        }
+      `,
+    });
   };
 
   const terminarVenta = () => {
@@ -267,7 +399,7 @@ const Venta = () => {
 
     setProductsCart([]);
 
-    const api = fetch('api/venta/Registrar', {
+    fetch('api/venta/Registrar', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json;charset=utf-8',
@@ -277,14 +409,36 @@ const Venta = () => {
       .then((response) => {
         return response.ok ? response.json() : Promise.reject(response);
       })
-      .then((dataJson) => {
+      .then(async (dataJson) => {
         reestablecer();
         var data = dataJson;
-        Swal.fire(
-          'Venta Creada!',
-          'Numero de venta : ' + data.numeroDocumento,
-          'success'
-        );
+        
+        // Mostrar mensaje de éxito con opción de imprimir
+        const result = await Swal.fire({
+          title: 'Venta Creada!',
+          text: `Número de venta: ${data.numeroDocumento}`,
+          icon: 'success',
+          showCancelButton: true,
+          confirmButtonText: 'Imprimir Ticket',
+          cancelButtonText: 'Cerrar',
+          confirmButtonColor: '#4e73df',
+          cancelButtonColor: '#6c757d'
+        });
+
+        // Si el usuario quiere imprimir
+        if (result.isConfirmed) {
+          // Obtener los detalles de la venta para imprimir
+          const detalleVenta = await obtenerDetalleVenta(data.numeroDocumento);
+          if (detalleVenta) {
+            // Dar un pequeño tiempo para que se rendericen los elementos
+            setTimeout(() => {
+              imprimirTicket();
+            }, 500);
+          } else {
+            Swal.fire('Error', 'No se pudo obtener los detalles para imprimir', 'error');
+          }
+        }
+
         obtenerProductos();
       })
       .catch((error) => {
@@ -294,186 +448,193 @@ const Venta = () => {
   };
 
   return (
-    <Row>
-      <Col sm={8}>
-        <Row className="mb-2">
-          <Col sm={12}>
-            <Card>
-              <CardHeader
-                style={{ backgroundColor: '#4e73df', color: 'white' }}
-              >
-                Cliente
-              </CardHeader>
-              <CardBody>
-                <Row>
-                  <Col sm={6}>
-                    <FormGroup>
-                      <Label>Cod Documento</Label>
-                      <Input
-                        bsSize="sm"
-                        value={documentoCliente}
-                        onChange={(e) => setDocumentoCliente(e.target.value)}
-                        readOnly
-                      />
-                    </FormGroup>
-                  </Col>
-                  <Col sm={6}>
-                    <FormGroup>
-                      <Label>Nombre</Label>
-                      <Input
-                        bsSize="sm"
-                        value={nombreCliente}
-                        onChange={(e) => setNombreCliente(e.target.value)}
-                      />
-                    </FormGroup>
-                  </Col>
-                </Row>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-        <Row>
-          <Col sm={12}>
-            <Card>
-              <CardHeader
-                style={{ backgroundColor: '#4e73df', color: 'white' }}
-              >
-                Productos
-              </CardHeader>
-              <CardBody>
-                <Row className="mb-2">
-                  <Col sm={12}>
-                    <FormGroup>
-                      <Autosuggest
-                        suggestions={a_Productos}
-                        onSuggestionsFetchRequested={
-                          onSuggestionsFetchRequested
-                        }
-                        onSuggestionsClearRequested={
-                          onSuggestionsClearRequested
-                        }
-                        getSuggestionValue={getSuggestionValue}
-                        renderSuggestion={renderSuggestion}
-                        inputProps={inputProps}
-                        onSuggestionSelected={sugerenciaSeleccionada}
-                      />
-                    </FormGroup>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col sm={12}>
-                    <Table striped size="sm">
-                      <thead>
-                        <tr>
-                          <th></th>
-                          <th>Producto</th>
-                          <th>Cantidad</th>
-                          <th>Precio</th>
-                          <th>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {productos.length < 1 ? (
+    <>
+      <Row>
+        <Col sm={8}>
+          <Row className="mb-2">
+            <Col sm={12}>
+              <Card>
+                <CardHeader
+                  style={{ backgroundColor: '#4e73df', color: 'white' }}
+                >
+                  Cliente
+                </CardHeader>
+                <CardBody>
+                  <Row>
+                    <Col sm={6}>
+                      <FormGroup>
+                        <Label>Cod Documento</Label>
+                        <Input
+                          bsSize="sm"
+                          value={documentoCliente}
+                          onChange={(e) => setDocumentoCliente(e.target.value)}
+                          readOnly
+                        />
+                      </FormGroup>
+                    </Col>
+                    <Col sm={6}>
+                      <FormGroup>
+                        <Label>Nombre</Label>
+                        <Input
+                          bsSize="sm"
+                          value={nombreCliente}
+                          onChange={(e) => setNombreCliente(e.target.value)}
+                        />
+                      </FormGroup>
+                    </Col>
+                  </Row>
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+          <Row>
+            <Col sm={12}>
+              <Card>
+                <CardHeader
+                  style={{ backgroundColor: '#4e73df', color: 'white' }}
+                >
+                  Productos
+                </CardHeader>
+                <CardBody>
+                  <Row className="mb-2">
+                    <Col sm={12}>
+                      <FormGroup>
+                        <Autosuggest
+                          suggestions={a_Productos}
+                          onSuggestionsFetchRequested={
+                            onSuggestionsFetchRequested
+                          }
+                          onSuggestionsClearRequested={
+                            onSuggestionsClearRequested
+                          }
+                          getSuggestionValue={getSuggestionValue}
+                          renderSuggestion={renderSuggestion}
+                          inputProps={inputProps}
+                          onSuggestionSelected={sugerenciaSeleccionada}
+                        />
+                      </FormGroup>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col sm={12}>
+                      <Table striped size="sm">
+                        <thead>
                           <tr>
-                            <td colSpan="5">Sin productos</td>
+                            <th></th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Total</th>
                           </tr>
-                        ) : (
-                          productos.map((item) => (
-                            <tr key={item.idProducto}>
-                              <td>
-                                <Button
-                                  color="danger"
-                                  size="sm"
-                                  onClick={() =>
-                                    eliminarProducto(item.idProducto)
-                                  }
-                                >
-                                  <i className="fas fa-trash-alt"></i>
-                                </Button>
-                              </td>
-                              <td>{item.descripcion}</td>
-                              <td>{item.cantidad}</td>
-                              <td>C${item.precio}</td>
-                              <td>C${item.total}</td>
+                        </thead>
+                        <tbody>
+                          {productos.length < 1 ? (
+                            <tr>
+                              <td colSpan="5">Sin productos</td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </Table>
-                  </Col>
-                </Row>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      </Col>
+                          ) : (
+                            productos.map((item) => (
+                              <tr key={item.idProducto}>
+                                <td>
+                                  <Button
+                                    color="danger"
+                                    size="sm"
+                                    onClick={() =>
+                                      eliminarProducto(item.idProducto)
+                                    }
+                                  >
+                                    <i className="fas fa-trash-alt"></i>
+                                  </Button>
+                                </td>
+                                <td>{item.descripcion}</td>
+                                <td>{item.cantidad}</td>
+                                <td>C${item.precio}</td>
+                                <td>C${item.total}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </Table>
+                    </Col>
+                  </Row>
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+        </Col>
 
-      <Col sm={4}>
-        <Row className="mb-2">
-          <Col sm={12}>
-            <Card>
-              <CardHeader
-                style={{ backgroundColor: '#4e73df', color: 'white' }}
-              >
-                Detalle
-              </CardHeader>
-              <CardBody>
-                <Row className="mb-2">
-                  <Col sm={12}>
-                    <InputGroup size="sm">
-                      <InputGroupText>Tipo:</InputGroupText>
-                      <Input
-                        type="select"
-                        value={tipoDocumento}
-                        onChange={(e) => setTipoDocumento(e.target.value)}
-                      >
-                        <option value="Boleta">Boleta</option>
-                        <option value="Factura">Factura</option>
-                      </Input>
-                    </InputGroup>
-                  </Col>
-                </Row>
-                <Row className="mb-2">
-                  <Col sm={12}>
-                    <InputGroup size="sm">
-                      <InputGroupText>Sub Total:C$</InputGroupText>
-                      <Input disabled value={subTotal} />
-                    </InputGroup>
-                  </Col>
-                </Row>
-                <Row className="mb-2">
-                  <Col sm={12}>
-                    <InputGroup size="sm" className="Input-impuestos">
-                      <InputGroupText>IGV (15%):</InputGroupText>
-                      <Input disabled value={igv} />
-                    </InputGroup>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col sm={12}>
-                    <InputGroup size="sm">
-                      <InputGroupText>Total:C$</InputGroupText>
-                      <Input disabled value={total} />
-                    </InputGroup>
-                  </Col>
-                </Row>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-        <Row>
-          <Col sm={12}>
-            <Card>
-              <CardBody>
-                <Button color="success" block onClick={terminarVenta}>
-                  <i className="fas fa-money-check"></i> Terminar Venta
-                </Button>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      </Col>
-    </Row>
+        <Col sm={4}>
+          <Row className="mb-2">
+            <Col sm={12}>
+              <Card>
+                <CardHeader
+                  style={{ backgroundColor: '#4e73df', color: 'white' }}
+                >
+                  Detalle
+                </CardHeader>
+                <CardBody>
+                  <Row className="mb-2">
+                    <Col sm={12}>
+                      <InputGroup size="sm">
+                        <InputGroupText>Tipo:</InputGroupText>
+                        <Input
+                          type="select"
+                          value={tipoDocumento}
+                          onChange={(e) => setTipoDocumento(e.target.value)}
+                        >
+                          <option value="Boleta">Boleta</option>
+                          <option value="Factura">Factura</option>
+                        </Input>
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                  <Row className="mb-2">
+                    <Col sm={12}>
+                      <InputGroup size="sm">
+                        <InputGroupText>Sub Total:C$</InputGroupText>
+                        <Input disabled value={subTotal} />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                  <Row className="mb-2">
+                    <Col sm={12}>
+                      <InputGroup size="sm" className="Input-impuestos">
+                        <InputGroupText>IGV (15%):</InputGroupText>
+                        <Input disabled value={igv} />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col sm={12}>
+                      <InputGroup size="sm">
+                        <InputGroupText>Total:C$</InputGroupText>
+                        <Input disabled value={total} />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+          <Row>
+            <Col sm={12}>
+              <Card>
+                <CardBody>
+                  <Button color="success" block onClick={terminarVenta}>
+                    <i className="fas fa-money-check"></i> Terminar Venta
+                  </Button>
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+        </Col>
+      </Row>
+
+      {/* Ticket oculto para impresión */}
+      <div style={{ display: "none" }}>
+        <Ticket detalleVenta={ultimaVenta} />
+      </div>
+    </>
   );
 };
 
