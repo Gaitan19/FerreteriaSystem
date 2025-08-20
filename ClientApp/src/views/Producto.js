@@ -93,6 +93,7 @@ const Producto = () => {
 
   const exportToExcelHandler = () => {
     const excelData = filteredProductos.map(prod => ({
+      'ID': prod.idProducto,
       'Código': prod.codigo,
       'Marca': prod.marca,
       'Descripción': prod.descripcion,
@@ -100,8 +101,7 @@ const Producto = () => {
       'Proveedor': prod.idProveedorNavigation?.nombre || '',
       'Stock': prod.stock,
       'Precio': prod.precio,
-      'Estado': prod.esActivo ? 'Activo' : 'No Activo',
-      'ID': prod.idProducto
+      'Estado': prod.esActivo ? 'Activo' : 'No Activo'
     }));
 
     exportToExcel(excelData, 'Productos');

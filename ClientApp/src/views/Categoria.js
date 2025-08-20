@@ -72,9 +72,9 @@ const Categoria = () => {
 
   const exportToExcelHandler = () => {
     const excelData = filteredCategorias.map(cat => ({
+      'ID': cat.idCategoria,
       'Descripción': cat.descripcion,
-      'Estado': cat.esActivo ? 'Activo' : 'No Activo',
-      'ID': cat.idCategoria
+      'Estado': cat.esActivo ? 'Activo' : 'No Activo'
     }));
 
     exportToExcel(excelData, 'Categorias');

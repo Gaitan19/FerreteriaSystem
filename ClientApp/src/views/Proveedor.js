@@ -79,12 +79,12 @@ const Proveedor = () => {
 
   const exportToExcelHandler = () => {
     const excelData = filteredProveedores.map(prov => ({
+      'ID': prov.idProveedor,
       'Nombre': prov.nombre,
       'Correo': prov.correo,
       'Teléfono': prov.telefono,
       'Fecha Registro': prov.fechaRegistro,
-      'Estado': prov.esActivo ? 'Activo' : 'No Activo',
-      'ID': prov.idProveedor
+      'Estado': prov.esActivo ? 'Activo' : 'No Activo'
     }));
 
     exportToExcel(excelData, 'Proveedores');

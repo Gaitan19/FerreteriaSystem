@@ -60,7 +60,7 @@ const Usuario = () => {
       { accessor: (item) => item.nombre },
       { accessor: (item) => item.correo },
       { accessor: (item) => item.telefono },
-      { accessor: (item) => item.rol?.descripcion || "" },
+      { accessor: (item) => item.idRolNavigation?.descripcion || "" },
       { accessor: (item) => item.esActivo ? "activo" : "no activo" }
     ];
     
@@ -73,7 +73,7 @@ const Usuario = () => {
       { header: 'Nombre', accessor: (row) => row.nombre },
       { header: 'Correo', accessor: (row) => row.correo },
       { header: 'Teléfono', accessor: (row) => row.telefono },
-      { header: 'Rol', accessor: (row) => row.rol?.descripcion || '' },
+      { header: 'Rol', accessor: (row) => row.idRolNavigation?.descripcion || '' },
       { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
     ];
     
@@ -82,12 +82,12 @@ const Usuario = () => {
 
   const exportToExcelHandler = () => {
     const excelData = filteredUsuarios.map(user => ({
+      'ID': user.idUsuario,
       'Nombre': user.nombre,
       'Correo': user.correo,
       'Teléfono': user.telefono,
-      'Rol': user.rol?.descripcion || '',
-      'Estado': user.esActivo ? 'Activo' : 'No Activo',
-      'ID': user.idUsuario
+      'Rol': user.idRolNavigation?.descripcion || '',
+      'Estado': user.esActivo ? 'Activo' : 'No Activo'
     }));
 
     exportToExcel(excelData, 'Usuarios');
@@ -133,7 +133,7 @@ const Usuario = () => {
           { accessor: (item) => item.nombre },
           { accessor: (item) => item.correo },
           { accessor: (item) => item.telefono },
-          { accessor: (item) => item.rol?.descripcion || "" },
+          { accessor: (item) => item.idRolNavigation?.descripcion || "" },
           { accessor: (item) => item.esActivo ? "activo" : "no activo" }
         ];
         const filtered = applySearchFilter(newData, searchTerm, searchFields);
@@ -166,7 +166,7 @@ const Usuario = () => {
           { accessor: (item) => item.nombre },
           { accessor: (item) => item.correo },
           { accessor: (item) => item.telefono },
-          { accessor: (item) => item.rol?.descripcion || "" },
+          { accessor: (item) => item.idRolNavigation?.descripcion || "" },
           { accessor: (item) => item.esActivo ? "activo" : "no activo" }
         ];
         const filtered = applySearchFilter(newData, searchTerm, searchFields);
@@ -197,7 +197,7 @@ const Usuario = () => {
           { accessor: (item) => item.nombre },
           { accessor: (item) => item.correo },
           { accessor: (item) => item.telefono },
-          { accessor: (item) => item.rol?.descripcion || "" },
+          { accessor: (item) => item.idRolNavigation?.descripcion || "" },
           { accessor: (item) => item.esActivo ? "activo" : "no activo" }
         ];
         const filtered = applySearchFilter(newData, searchTerm, searchFields);
@@ -232,7 +232,7 @@ const Usuario = () => {
       { accessor: (item) => item.nombre },
       { accessor: (item) => item.correo },
       { accessor: (item) => item.telefono },
-      { accessor: (item) => item.rol?.descripcion || "" },
+      { accessor: (item) => item.idRolNavigation?.descripcion || "" },
       { accessor: (item) => item.esActivo ? "activo" : "no activo" }
     ];
     const filtered = applySearchFilter(usuarios, searchTerm, searchFields);
