@@ -173,6 +173,12 @@ const Ticket = React.forwardRef(({ detalleVenta }, ref) => {
           </tbody>
         </table>
         <hr className="ticket__separator" />
+         <p className="ticket__info">
+          <strong>IVA:</strong> C${detalleVenta.impuesto}
+        </p>
+         <p className="ticket__info">
+          <strong>Sub-Total:</strong> C${detalleVenta.subTotal}
+        </p>
         <p className="ticket__info">
           <strong>Total:</strong> C${detalleVenta.total}
         </p>
