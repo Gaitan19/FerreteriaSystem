@@ -16,8 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
-import * as XLSX from 'xlsx';
-import printJS from 'print-js';
+import { exportToPDF, exportToExcel, applySearchFilter } from "../utils/exportHelpers";
 import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloProveedor = {
@@ -53,42 +52,32 @@ const Proveedor = () => {
   };
 
   const handleSearch = (e) => {
-    const value = e.target.value.toLowerCase();
+    const value = e.target.value;
     setSearchTerm(value);
     
-    if (value === "") {
-      setFilteredProveedores(proveedores);
-    } else {
-      const filtered = proveedores.filter((item) =>
-        item.nombre.toLowerCase().includes(value) ||
-        item.correo.toLowerCase().includes(value) ||
-        item.telefono.toLowerCase().includes(value) ||
-        (item.esActivo ? "activo" : "no activo").includes(value)
-      );
-      setFilteredProveedores(filtered);
-    }
+    const searchFields = [
+      { accessor: (item) => item.nombre },
+      { accessor: (item) => item.correo },
+      { accessor: (item) => item.telefono },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    
+    const filtered = applySearchFilter(proveedores, value, searchFields);
+    setFilteredProveedores(filtered);
   };
 
-  const exportToPDF = () => {
-    const printData = filteredProveedores.map(prov => ({
-      Nombre: prov.nombre,
-      Correo: prov.correo,
-      Telefono: prov.telefono,
-      Estado: prov.esActivo ? "Activo" : "No Activo"
-    }));
-
-    printJS({
-      printable: printData,
-      properties: ['Nombre', 'Correo', 'Telefono', 'Estado'],
-      type: 'json',
-      gridHeaderStyle: 'color: black; border: 2px solid #3971A5; font-weight: bold;',
-      gridStyle: 'border: 2px solid #3971A5; margin-bottom: 20px',
-      documentTitle: 'Lista de Proveedores',
-      header: 'Lista de Proveedores'
-    });
+  const exportToPDFHandler = () => {
+    const columns = [
+      { header: 'Nombre', accessor: (row) => row.nombre },
+      { header: 'Correo', accessor: (row) => row.correo },
+      { header: 'Teléfono', accessor: (row) => row.telefono },
+      { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
+    ];
+    
+    exportToPDF(filteredProveedores, columns, 'Lista_de_Proveedores');
   };
 
-  const exportToExcel = () => {
+  const exportToExcelHandler = () => {
     const excelData = filteredProveedores.map(prov => ({
       'Nombre': prov.nombre,
       'Correo': prov.correo,
@@ -98,10 +87,7 @@ const Proveedor = () => {
       'ID': prov.idProveedor
     }));
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Proveedores');
-    XLSX.writeFile(wb, 'proveedores.xlsx');
+    exportToExcel(excelData, 'Proveedores');
   };
 
   const obtenerProveedores = async () => {
@@ -127,10 +113,15 @@ const Proveedor = () => {
       // Agrega el nuevo proveedor al inicio de la lista
       setProveedores(prev => {
         const newData = [nuevoProveedor, ...prev];
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredProveedores(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProveedores(filtered);
         return newData;
       });
       
@@ -154,10 +145,15 @@ const Proveedor = () => {
             ? proveedorActualizado 
             : prov
         );
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredProveedores(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProveedores(filtered);
         return newData;
       });
       
@@ -179,10 +175,15 @@ const Proveedor = () => {
         const newData = prev.map(prov => 
           prov.idProveedor === id ? { ...prov, esActivo: false } : prov
         );
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredProveedores(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProveedores(filtered);
         return newData;
       });
       
@@ -204,7 +205,20 @@ const Proveedor = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe, searchTerm]); // Dependencia: subscribe
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscribe]); // Removed searchTerm dependency
+
+  // Separate useEffect to handle search term changes
+  useEffect(() => {
+    const searchFields = [
+      { accessor: (item) => item.nombre },
+      { accessor: (item) => item.correo },
+      { accessor: (item) => item.telefono },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    const filtered = applySearchFilter(proveedores, searchTerm, searchFields);
+    setFilteredProveedores(filtered);
+  }, [searchTerm, proveedores]);
 
   const columns = [
     {
@@ -400,7 +414,7 @@ const Proveedor = () => {
                 <Button
                   color="danger"
                   size="sm"
-                  onClick={exportToPDF}
+                  onClick={exportToPDFHandler}
                   className="mr-2"
                 >
                   <i className="fas fa-file-pdf"></i> PDF
@@ -408,7 +422,7 @@ const Proveedor = () => {
                 <Button
                   color="info"
                   size="sm"
-                  onClick={exportToExcel}
+                  onClick={exportToExcelHandler}
                 >
                   <i className="fas fa-file-excel"></i> Excel
                 </Button>

@@ -16,8 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
-import * as XLSX from 'xlsx';
-import printJS from 'print-js';
+import { exportToPDF, exportToExcel, applySearchFilter } from "../utils/exportHelpers";
 import { useSignalR } from "../context/SignalRProvider";
 
 const modeloCategoria = {
@@ -50,48 +49,35 @@ const Categoria = () => {
   };
 
   const handleSearch = (e) => {
-    const value = e.target.value.toLowerCase();
+    const value = e.target.value;
     setSearchTerm(value);
     
-    if (value === "") {
-      setFilteredCategorias(categorias);
-    } else {
-      const filtered = categorias.filter((item) =>
-        item.descripcion.toLowerCase().includes(value) ||
-        (item.esActivo ? "activo" : "no activo").includes(value)
-      );
-      setFilteredCategorias(filtered);
-    }
+    const searchFields = [
+      { accessor: (item) => item.descripcion },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    
+    const filtered = applySearchFilter(categorias, value, searchFields);
+    setFilteredCategorias(filtered);
   };
 
-  const exportToPDF = () => {
-    const printData = filteredCategorias.map(cat => ({
-      Descripcion: cat.descripcion,
-      Estado: cat.esActivo ? "Activo" : "No Activo"
-    }));
-
-    printJS({
-      printable: printData,
-      properties: ['Descripcion', 'Estado'],
-      type: 'json',
-      gridHeaderStyle: 'color: black; border: 2px solid #3971A5; font-weight: bold;',
-      gridStyle: 'border: 2px solid #3971A5; margin-bottom: 20px',
-      documentTitle: 'Lista de Categorías',
-      header: 'Lista de Categorías'
-    });
+  const exportToPDFHandler = () => {
+    const columns = [
+      { header: 'Descripción', accessor: (row) => row.descripcion },
+      { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
+    ];
+    
+    exportToPDF(filteredCategorias, columns, 'Lista_de_Categorias');
   };
 
-  const exportToExcel = () => {
+  const exportToExcelHandler = () => {
     const excelData = filteredCategorias.map(cat => ({
       'Descripción': cat.descripcion,
       'Estado': cat.esActivo ? 'Activo' : 'No Activo',
       'ID': cat.idCategoria
     }));
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Categorías');
-    XLSX.writeFile(wb, 'categorias.xlsx');
+    exportToExcel(excelData, 'Categorias');
   };
 
   const obtenerCategorias = async () => {
@@ -112,10 +98,13 @@ const Categoria = () => {
     const unsubscribeCreated = subscribe('CategoriaCreated', (nuevaCategoria) => {
       setCategorias(prev => {
         const newData = [nuevaCategoria, ...prev];
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredCategorias(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredCategorias(filtered);
         return newData;
       });
       Swal.fire({
@@ -136,10 +125,13 @@ const Categoria = () => {
             ? categoriaActualizada 
             : cat
         );
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredCategorias(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredCategorias(filtered);
         return newData;
       });
       Swal.fire({
@@ -158,10 +150,13 @@ const Categoria = () => {
         const newData = prev.map(cat => 
           cat.idCategoria === id ? { ...cat, esActivo: false } : cat
         );
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredCategorias(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredCategorias(filtered);
         return newData;
       });
 
@@ -182,7 +177,18 @@ const Categoria = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe, searchTerm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscribe]); // Removed searchTerm dependency
+
+  // Separate useEffect to handle search term changes
+  useEffect(() => {
+    const searchFields = [
+      { accessor: (item) => item.descripcion },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    const filtered = applySearchFilter(categorias, searchTerm, searchFields);
+    setFilteredCategorias(filtered);
+  }, [searchTerm, categorias]);
 
   const columns = [
     {
@@ -349,7 +355,7 @@ const Categoria = () => {
                 <Button
                   color="danger"
                   size="sm"
-                  onClick={exportToPDF}
+                  onClick={exportToPDFHandler}
                   className="mr-2"
                 >
                   <i className="fas fa-file-pdf"></i> PDF
@@ -357,7 +363,7 @@ const Categoria = () => {
                 <Button
                   color="info"
                   size="sm"
-                  onClick={exportToExcel}
+                  onClick={exportToExcelHandler}
                 >
                   <i className="fas fa-file-excel"></i> Excel
                 </Button>

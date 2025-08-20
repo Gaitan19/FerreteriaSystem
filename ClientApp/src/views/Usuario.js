@@ -17,8 +17,7 @@ import {
 } from "reactstrap";
 import Swal from "sweetalert2";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
-import * as XLSX from 'xlsx';
-import printJS from 'print-js';
+import { exportToPDF, exportToExcel, applySearchFilter } from "../utils/exportHelpers";
 import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloUsuario = {
@@ -54,44 +53,34 @@ const Usuario = () => {
   };
 
   const handleSearch = (e) => {
-    const value = e.target.value.toLowerCase();
+    const value = e.target.value;
     setSearchTerm(value);
     
-    if (value === "") {
-      setFilteredUsuarios(usuarios);
-    } else {
-      const filtered = usuarios.filter((item) =>
-        item.nombre.toLowerCase().includes(value) ||
-        item.correo.toLowerCase().includes(value) ||
-        item.telefono.toLowerCase().includes(value) ||
-        (item.rol?.descripcion || "").toLowerCase().includes(value) ||
-        (item.esActivo ? "activo" : "no activo").includes(value)
-      );
-      setFilteredUsuarios(filtered);
-    }
+    const searchFields = [
+      { accessor: (item) => item.nombre },
+      { accessor: (item) => item.correo },
+      { accessor: (item) => item.telefono },
+      { accessor: (item) => item.rol?.descripcion || "" },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    
+    const filtered = applySearchFilter(usuarios, value, searchFields);
+    setFilteredUsuarios(filtered);
   };
 
-  const exportToPDF = () => {
-    const printData = filteredUsuarios.map(user => ({
-      Nombre: user.nombre,
-      Correo: user.correo,
-      Telefono: user.telefono,
-      Rol: user.rol?.descripcion || '',
-      Estado: user.esActivo ? "Activo" : "No Activo"
-    }));
-
-    printJS({
-      printable: printData,
-      properties: ['Nombre', 'Correo', 'Telefono', 'Rol', 'Estado'],
-      type: 'json',
-      gridHeaderStyle: 'color: black; border: 2px solid #3971A5; font-weight: bold;',
-      gridStyle: 'border: 2px solid #3971A5; margin-bottom: 20px',
-      documentTitle: 'Lista de Usuarios',
-      header: 'Lista de Usuarios'
-    });
+  const exportToPDFHandler = () => {
+    const columns = [
+      { header: 'Nombre', accessor: (row) => row.nombre },
+      { header: 'Correo', accessor: (row) => row.correo },
+      { header: 'Teléfono', accessor: (row) => row.telefono },
+      { header: 'Rol', accessor: (row) => row.rol?.descripcion || '' },
+      { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
+    ];
+    
+    exportToPDF(filteredUsuarios, columns, 'Lista_de_Usuarios');
   };
 
-  const exportToExcel = () => {
+  const exportToExcelHandler = () => {
     const excelData = filteredUsuarios.map(user => ({
       'Nombre': user.nombre,
       'Correo': user.correo,
@@ -101,10 +90,7 @@ const Usuario = () => {
       'ID': user.idUsuario
     }));
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
-    XLSX.writeFile(wb, 'usuarios.xlsx');
+    exportToExcel(excelData, 'Usuarios');
   };
 
   const obtenerRoles = async () => {
@@ -142,10 +128,16 @@ const Usuario = () => {
       // Agrega el nuevo usuario al inicio de la lista
       setUsuarios(prev => {
         const newData = [nuevoUsuario, ...prev];
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredUsuarios(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.rol?.descripcion || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredUsuarios(filtered);
         return newData;
       });
       
@@ -169,10 +161,16 @@ const Usuario = () => {
             ? { ...usr, ...usuarioActualizado } 
             : usr
         );
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredUsuarios(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.rol?.descripcion || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredUsuarios(filtered);
         return newData;
       });
       
@@ -194,10 +192,16 @@ const Usuario = () => {
         const newData = prev.map(usr => 
           usr.idUsuario === id ? { ...usr, esActivo: false } : usr
         );
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredUsuarios(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.nombre },
+          { accessor: (item) => item.correo },
+          { accessor: (item) => item.telefono },
+          { accessor: (item) => item.rol?.descripcion || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredUsuarios(filtered);
         return newData;
       });
       
@@ -219,7 +223,21 @@ const Usuario = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe, searchTerm]); // Dependencia: subscribe
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscribe]); // Removed searchTerm dependency
+
+  // Separate useEffect to handle search term changes
+  useEffect(() => {
+    const searchFields = [
+      { accessor: (item) => item.nombre },
+      { accessor: (item) => item.correo },
+      { accessor: (item) => item.telefono },
+      { accessor: (item) => item.rol?.descripcion || "" },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    const filtered = applySearchFilter(usuarios, searchTerm, searchFields);
+    setFilteredUsuarios(filtered);
+  }, [searchTerm, usuarios]);
 
   const columns = [
     {
@@ -443,7 +461,7 @@ const Usuario = () => {
                 <Button
                   color="danger"
                   size="sm"
-                  onClick={exportToPDF}
+                  onClick={exportToPDFHandler}
                   className="mr-2"
                 >
                   <i className="fas fa-file-pdf"></i> PDF
@@ -451,7 +469,7 @@ const Usuario = () => {
                 <Button
                   color="info"
                   size="sm"
-                  onClick={exportToExcel}
+                  onClick={exportToExcelHandler}
                 >
                   <i className="fas fa-file-excel"></i> Excel
                 </Button>

@@ -16,8 +16,7 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
-import * as XLSX from 'xlsx';
-import printJS from 'print-js';
+import { exportToPDF, exportToExcel, applySearchFilter } from "../utils/exportHelpers";
 import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloProducto = {
@@ -61,48 +60,38 @@ const Producto = () => {
   };
 
   const handleSearch = (e) => {
-    const value = e.target.value.toLowerCase();
+    const value = e.target.value;
     setSearchTerm(value);
     
-    if (value === "") {
-      setFilteredProductos(productos);
-    } else {
-      const filtered = productos.filter((item) =>
-        item.codigo.toLowerCase().includes(value) ||
-        item.marca.toLowerCase().includes(value) ||
-        item.descripcion.toLowerCase().includes(value) ||
-        (item.idCategoriaNavigation?.descripcion || "").toLowerCase().includes(value) ||
-        (item.idProveedorNavigation?.nombre || "").toLowerCase().includes(value) ||
-        (item.esActivo ? "activo" : "no activo").includes(value)
-      );
-      setFilteredProductos(filtered);
-    }
+    const searchFields = [
+      { accessor: (item) => item.codigo },
+      { accessor: (item) => item.marca },
+      { accessor: (item) => item.descripcion },
+      { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+      { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    
+    const filtered = applySearchFilter(productos, value, searchFields);
+    setFilteredProductos(filtered);
   };
 
-  const exportToPDF = () => {
-    const printData = filteredProductos.map(prod => ({
-      Codigo: prod.codigo,
-      Marca: prod.marca,
-      Descripcion: prod.descripcion,
-      Categoria: prod.idCategoriaNavigation?.descripcion || '',
-      Proveedor: prod.idProveedorNavigation?.nombre || '',
-      Stock: prod.stock,
-      Precio: `$${prod.precio}`,
-      Estado: prod.esActivo ? "Activo" : "No Activo"
-    }));
-
-    printJS({
-      printable: printData,
-      properties: ['Codigo', 'Marca', 'Descripcion', 'Categoria', 'Proveedor', 'Stock', 'Precio', 'Estado'],
-      type: 'json',
-      gridHeaderStyle: 'color: black; border: 2px solid #3971A5; font-weight: bold;',
-      gridStyle: 'border: 2px solid #3971A5; margin-bottom: 20px',
-      documentTitle: 'Lista de Productos',
-      header: 'Lista de Productos'
-    });
+  const exportToPDFHandler = () => {
+    const columns = [
+      { header: 'Código', accessor: (row) => row.codigo },
+      { header: 'Marca', accessor: (row) => row.marca },
+      { header: 'Descripción', accessor: (row) => row.descripcion },
+      { header: 'Categoría', accessor: (row) => row.idCategoriaNavigation?.descripcion || '' },
+      { header: 'Proveedor', accessor: (row) => row.idProveedorNavigation?.nombre || '' },
+      { header: 'Stock', accessor: (row) => row.stock.toString() },
+      { header: 'Precio', accessor: (row) => `$${row.precio}` },
+      { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
+    ];
+    
+    exportToPDF(filteredProductos, columns, 'Lista_de_Productos');
   };
 
-  const exportToExcel = () => {
+  const exportToExcelHandler = () => {
     const excelData = filteredProductos.map(prod => ({
       'Código': prod.codigo,
       'Marca': prod.marca,
@@ -115,10 +104,7 @@ const Producto = () => {
       'ID': prod.idProducto
     }));
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Productos');
-    XLSX.writeFile(wb, 'productos.xlsx');
+    exportToExcel(excelData, 'Productos');
   };
 
   const obtenerCategorias = async () => {
@@ -170,10 +156,17 @@ const Producto = () => {
       // Agrega el nuevo producto al inicio de la lista
       setProductos(prev => {
         const newData = [nuevoProducto, ...prev];
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredProductos(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.codigo },
+          { accessor: (item) => item.marca },
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+          { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProductos(filtered);
         return newData;
       });
       
@@ -197,10 +190,17 @@ const Producto = () => {
             ? productoActualizado 
             : prod
         );
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredProductos(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.codigo },
+          { accessor: (item) => item.marca },
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+          { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProductos(filtered);
         return newData;
       });
       
@@ -222,10 +222,17 @@ const Producto = () => {
         const newData = prev.map(prod => 
           prod.idProducto === id ? { ...prod, esActivo: false } : prod
         );
-        // Update filtered data if no search term
-        if (searchTerm === "") {
-          setFilteredProductos(newData);
-        }
+        // Apply current search filter to new data
+        const searchFields = [
+          { accessor: (item) => item.codigo },
+          { accessor: (item) => item.marca },
+          { accessor: (item) => item.descripcion },
+          { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+          { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+          { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+        ];
+        const filtered = applySearchFilter(newData, searchTerm, searchFields);
+        setFilteredProductos(filtered);
         return newData;
       });
       
@@ -247,7 +254,22 @@ const Producto = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe, searchTerm]); // Dependencia: subscribe
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscribe]); // Removed searchTerm dependency
+
+  // Separate useEffect to handle search term changes
+  useEffect(() => {
+    const searchFields = [
+      { accessor: (item) => item.codigo },
+      { accessor: (item) => item.marca },
+      { accessor: (item) => item.descripcion },
+      { accessor: (item) => item.idCategoriaNavigation?.descripcion || "" },
+      { accessor: (item) => item.idProveedorNavigation?.nombre || "" },
+      { accessor: (item) => item.esActivo ? "activo" : "no activo" }
+    ];
+    const filtered = applySearchFilter(productos, searchTerm, searchFields);
+    setFilteredProductos(filtered);
+  }, [searchTerm, productos]);
 
   const columns = [
     {
@@ -453,7 +475,7 @@ const Producto = () => {
                 <Button
                   color="danger"
                   size="sm"
-                  onClick={exportToPDF}
+                  onClick={exportToPDFHandler}
                   className="mr-2"
                 >
                   <i className="fas fa-file-pdf"></i> PDF
@@ -461,7 +483,7 @@ const Producto = () => {
                 <Button
                   color="info"
                   size="sm"
-                  onClick={exportToExcel}
+                  onClick={exportToExcelHandler}
                 >
                   <i className="fas fa-file-excel"></i> Excel
                 </Button>
