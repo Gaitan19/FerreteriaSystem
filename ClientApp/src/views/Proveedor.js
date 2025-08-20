@@ -16,6 +16,8 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import * as XLSX from 'xlsx';
+import printJS from 'print-js';
 import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloProveedor = {
@@ -31,6 +33,8 @@ const Proveedor = () => {
   const [proveedor, setProveedor] = useState(modeloProveedor);
   const [pendiente, setPendiente] = useState(true);
   const [proveedores, setProveedores] = useState([]);
+  const [filteredProveedores, setFilteredProveedores] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [verModal, setVerModal] = useState(false);
   const { subscribe } = useSignalR(); // Obtiene la función subscribe del contexto
 
@@ -48,12 +52,65 @@ const Proveedor = () => {
     });
   };
 
+  const handleSearch = (e) => {
+    const value = e.target.value.toLowerCase();
+    setSearchTerm(value);
+    
+    if (value === "") {
+      setFilteredProveedores(proveedores);
+    } else {
+      const filtered = proveedores.filter((item) =>
+        item.nombre.toLowerCase().includes(value) ||
+        item.correo.toLowerCase().includes(value) ||
+        item.telefono.toLowerCase().includes(value) ||
+        (item.esActivo ? "activo" : "no activo").includes(value)
+      );
+      setFilteredProveedores(filtered);
+    }
+  };
+
+  const exportToPDF = () => {
+    const printData = filteredProveedores.map(prov => ({
+      Nombre: prov.nombre,
+      Correo: prov.correo,
+      Telefono: prov.telefono,
+      Estado: prov.esActivo ? "Activo" : "No Activo"
+    }));
+
+    printJS({
+      printable: printData,
+      properties: ['Nombre', 'Correo', 'Telefono', 'Estado'],
+      type: 'json',
+      gridHeaderStyle: 'color: black; border: 2px solid #3971A5; font-weight: bold;',
+      gridStyle: 'border: 2px solid #3971A5; margin-bottom: 20px',
+      documentTitle: 'Lista de Proveedores',
+      header: 'Lista de Proveedores'
+    });
+  };
+
+  const exportToExcel = () => {
+    const excelData = filteredProveedores.map(prov => ({
+      'Nombre': prov.nombre,
+      'Correo': prov.correo,
+      'Teléfono': prov.telefono,
+      'Fecha Registro': prov.fechaRegistro,
+      'Estado': prov.esActivo ? 'Activo' : 'No Activo',
+      'ID': prov.idProveedor
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Proveedores');
+    XLSX.writeFile(wb, 'proveedores.xlsx');
+  };
+
   const obtenerProveedores = async () => {
     try {
       let response = await fetch("api/proveedor/Lista");
       if (response.ok) {
         let data = await response.json();
         setProveedores(data);
+        setFilteredProveedores(data);
         setPendiente(false);
       }
     } catch (error) {
@@ -68,7 +125,14 @@ const Proveedor = () => {
     // Configurar suscripciones a eventos de SignalR
     const unsubscribeCreated = subscribe('ProveedorCreated', (nuevoProveedor) => {
       // Agrega el nuevo proveedor al inicio de la lista
-      setProveedores(prev => [nuevoProveedor, ...prev]);
+      setProveedores(prev => {
+        const newData = [nuevoProveedor, ...prev];
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredProveedores(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -84,13 +148,18 @@ const Proveedor = () => {
 
     const unsubscribeUpdated = subscribe('ProveedorUpdated', (proveedorActualizado) => {
       // Actualiza el proveedor en la lista
-      setProveedores(prev => 
-        prev.map(prov => 
+      setProveedores(prev => {
+        const newData = prev.map(prov => 
           prov.idProveedor === proveedorActualizado.idProveedor 
             ? proveedorActualizado 
             : prov
-        )
-      );
+        );
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredProveedores(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -106,9 +175,16 @@ const Proveedor = () => {
 
     const unsubscribeDeleted = subscribe('ProveedorDeleted', (id) => {
       // Marca el proveedor como inactivo
-      setProveedores(prev => prev.map(prov => 
-        prov.idProveedor === id ? { ...prov, esActivo: false } : prov
-      ));
+      setProveedores(prev => {
+        const newData = prev.map(prov => 
+          prov.idProveedor === id ? { ...prov, esActivo: false } : prov
+        );
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredProveedores(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -128,7 +204,7 @@ const Proveedor = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe]); // Dependencia: subscribe
+  }, [subscribe, searchTerm]); // Dependencia: subscribe
 
   const columns = [
     {
@@ -309,21 +385,62 @@ const Proveedor = () => {
           Lista de Proveedores
         </CardHeader>
         <CardBody>
-          <Button
-            color="success"
-            size="sm"
-            onClick={() => setVerModal(!verModal)}
-          >
-            Nuevo Proveedor
-          </Button>
-          <hr />
+          <Row className="mb-3">
+            <Col md="4">
+              <Button
+                color="success"
+                size="sm"
+                onClick={() => setVerModal(!verModal)}
+              >
+                Nuevo Proveedor
+              </Button>
+            </Col>
+            <Col md="4">
+              <div className="d-flex gap-2">
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={exportToPDF}
+                  className="mr-2"
+                >
+                  <i className="fas fa-file-pdf"></i> PDF
+                </Button>
+                <Button
+                  color="info"
+                  size="sm"
+                  onClick={exportToExcel}
+                >
+                  <i className="fas fa-file-excel"></i> Excel
+                </Button>
+              </div>
+            </Col>
+            <Col md="4">
+              <Input
+                type="text"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={handleSearch}
+                bsSize="sm"
+                style={{
+                  border: '2px solid #4e73df',
+                  borderRadius: '5px'
+                }}
+              />
+            </Col>
+          </Row>
           <DataTable
             columns={columns}
-            data={proveedores}
+            data={filteredProveedores}
             progressPending={pendiente}
             pagination
             paginationComponentOptions={paginationComponentOptions}
             customStyles={customStyles}
+            noDataComponent={
+              <div className="text-center p-4">
+                <i className="fas fa-search fa-3x text-muted mb-3"></i>
+                <p className="text-muted">No se encontraron registros coincidentes</p>
+              </div>
+            }
           />
         </CardBody>
       </Card>

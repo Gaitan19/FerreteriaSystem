@@ -16,6 +16,8 @@ import {
   Col,
 } from "reactstrap";
 import Swal from "sweetalert2";
+import * as XLSX from 'xlsx';
+import printJS from 'print-js';
 import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloProducto = {
@@ -34,6 +36,8 @@ const Producto = () => {
   const [producto, setProducto] = useState(modeloProducto);
   const [pendiente, setPendiente] = useState(true);
   const [productos, setProductos] = useState([]);
+  const [filteredProductos, setFilteredProductos] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [categorias, setCategorias] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [verModal, setVerModal] = useState(false);
@@ -54,6 +58,67 @@ const Producto = () => {
       ...producto,
       [e.target.name]: value,
     });
+  };
+
+  const handleSearch = (e) => {
+    const value = e.target.value.toLowerCase();
+    setSearchTerm(value);
+    
+    if (value === "") {
+      setFilteredProductos(productos);
+    } else {
+      const filtered = productos.filter((item) =>
+        item.codigo.toLowerCase().includes(value) ||
+        item.marca.toLowerCase().includes(value) ||
+        item.descripcion.toLowerCase().includes(value) ||
+        (item.idCategoriaNavigation?.descripcion || "").toLowerCase().includes(value) ||
+        (item.idProveedorNavigation?.nombre || "").toLowerCase().includes(value) ||
+        (item.esActivo ? "activo" : "no activo").includes(value)
+      );
+      setFilteredProductos(filtered);
+    }
+  };
+
+  const exportToPDF = () => {
+    const printData = filteredProductos.map(prod => ({
+      Codigo: prod.codigo,
+      Marca: prod.marca,
+      Descripcion: prod.descripcion,
+      Categoria: prod.idCategoriaNavigation?.descripcion || '',
+      Proveedor: prod.idProveedorNavigation?.nombre || '',
+      Stock: prod.stock,
+      Precio: `$${prod.precio}`,
+      Estado: prod.esActivo ? "Activo" : "No Activo"
+    }));
+
+    printJS({
+      printable: printData,
+      properties: ['Codigo', 'Marca', 'Descripcion', 'Categoria', 'Proveedor', 'Stock', 'Precio', 'Estado'],
+      type: 'json',
+      gridHeaderStyle: 'color: black; border: 2px solid #3971A5; font-weight: bold;',
+      gridStyle: 'border: 2px solid #3971A5; margin-bottom: 20px',
+      documentTitle: 'Lista de Productos',
+      header: 'Lista de Productos'
+    });
+  };
+
+  const exportToExcel = () => {
+    const excelData = filteredProductos.map(prod => ({
+      'Código': prod.codigo,
+      'Marca': prod.marca,
+      'Descripción': prod.descripcion,
+      'Categoría': prod.idCategoriaNavigation?.descripcion || '',
+      'Proveedor': prod.idProveedorNavigation?.nombre || '',
+      'Stock': prod.stock,
+      'Precio': prod.precio,
+      'Estado': prod.esActivo ? 'Activo' : 'No Activo',
+      'ID': prod.idProducto
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+    XLSX.writeFile(wb, 'productos.xlsx');
   };
 
   const obtenerCategorias = async () => {
@@ -86,6 +151,7 @@ const Producto = () => {
       if (response.ok) {
         let data = await response.json();
         setProductos(() => data);
+        setFilteredProductos(() => data);
         setPendiente(false);
       }
     } catch (error) {
@@ -102,7 +168,14 @@ const Producto = () => {
     // Configurar suscripciones a eventos de SignalR
     const unsubscribeCreated = subscribe('ProductoCreated', (nuevoProducto) => {
       // Agrega el nuevo producto al inicio de la lista
-      setProductos(prev => [nuevoProducto, ...prev]);
+      setProductos(prev => {
+        const newData = [nuevoProducto, ...prev];
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredProductos(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -118,13 +191,18 @@ const Producto = () => {
 
     const unsubscribeUpdated = subscribe('ProductoUpdated', (productoActualizado) => {
       // Actualiza el producto en la lista
-      setProductos(prev => 
-        prev.map(prod => 
+      setProductos(prev => {
+        const newData = prev.map(prod => 
           prod.idProducto === productoActualizado.idProducto 
             ? productoActualizado 
             : prod
-        )
-      );
+        );
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredProductos(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -140,9 +218,16 @@ const Producto = () => {
 
     const unsubscribeDeleted = subscribe('ProductoDeleted', (id) => {
       // Marca el producto como inactivo
-      setProductos(prev => prev.map(prod => 
-        prod.idProducto === id ? { ...prod, esActivo: false } : prod
-      ));
+      setProductos(prev => {
+        const newData = prev.map(prod => 
+          prod.idProducto === id ? { ...prod, esActivo: false } : prod
+        );
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredProductos(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -162,7 +247,7 @@ const Producto = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe]); // Dependencia: subscribe
+  }, [subscribe, searchTerm]); // Dependencia: subscribe
 
   const columns = [
     {
@@ -353,21 +438,62 @@ const Producto = () => {
           Lista de Productos
         </CardHeader>
         <CardBody>
-          <Button
-            color="success"
-            size="sm"
-            onClick={() => setVerModal(!verModal)}
-          >
-            Nuevo Producto
-          </Button>
-          <hr></hr>
+          <Row className="mb-3">
+            <Col md="4">
+              <Button
+                color="success"
+                size="sm"
+                onClick={() => setVerModal(!verModal)}
+              >
+                Nuevo Producto
+              </Button>
+            </Col>
+            <Col md="4">
+              <div className="d-flex gap-2">
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={exportToPDF}
+                  className="mr-2"
+                >
+                  <i className="fas fa-file-pdf"></i> PDF
+                </Button>
+                <Button
+                  color="info"
+                  size="sm"
+                  onClick={exportToExcel}
+                >
+                  <i className="fas fa-file-excel"></i> Excel
+                </Button>
+              </div>
+            </Col>
+            <Col md="4">
+              <Input
+                type="text"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={handleSearch}
+                bsSize="sm"
+                style={{
+                  border: '2px solid #4e73df',
+                  borderRadius: '5px'
+                }}
+              />
+            </Col>
+          </Row>
           <DataTable
             columns={columns}
-            data={productos}
+            data={filteredProductos}
             progressPending={pendiente}
             pagination
             paginationComponentOptions={paginationComponentOptions}
             customStyles={customStyles}
+            noDataComponent={
+              <div className="text-center p-4">
+                <i className="fas fa-search fa-3x text-muted mb-3"></i>
+                <p className="text-muted">No se encontraron registros coincidentes</p>
+              </div>
+            }
           />
         </CardBody>
       </Card>

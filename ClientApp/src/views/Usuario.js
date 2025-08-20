@@ -17,6 +17,8 @@ import {
 } from "reactstrap";
 import Swal from "sweetalert2";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
+import * as XLSX from 'xlsx';
+import printJS from 'print-js';
 import { useSignalR } from "../context/SignalRProvider"; // Importa el hook de SignalR
 
 const modeloUsuario = {
@@ -35,6 +37,8 @@ const Usuario = () => {
   const [usuario, setUsuario] = useState(modeloUsuario);
   const [pendiente, setPendiente] = useState(true);
   const [usuarios, setUsuarios] = useState([]);
+  const [filteredUsuarios, setFilteredUsuarios] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [roles, setRoles] = useState([]);
   const [verModal, setVerModal] = useState(false);
   const [visiblePassword, setVisiblePassword] = useState(false);
@@ -47,6 +51,60 @@ const Usuario = () => {
       ...usuario,
       [name]: value,
     });
+  };
+
+  const handleSearch = (e) => {
+    const value = e.target.value.toLowerCase();
+    setSearchTerm(value);
+    
+    if (value === "") {
+      setFilteredUsuarios(usuarios);
+    } else {
+      const filtered = usuarios.filter((item) =>
+        item.nombre.toLowerCase().includes(value) ||
+        item.correo.toLowerCase().includes(value) ||
+        item.telefono.toLowerCase().includes(value) ||
+        (item.rol?.descripcion || "").toLowerCase().includes(value) ||
+        (item.esActivo ? "activo" : "no activo").includes(value)
+      );
+      setFilteredUsuarios(filtered);
+    }
+  };
+
+  const exportToPDF = () => {
+    const printData = filteredUsuarios.map(user => ({
+      Nombre: user.nombre,
+      Correo: user.correo,
+      Telefono: user.telefono,
+      Rol: user.rol?.descripcion || '',
+      Estado: user.esActivo ? "Activo" : "No Activo"
+    }));
+
+    printJS({
+      printable: printData,
+      properties: ['Nombre', 'Correo', 'Telefono', 'Rol', 'Estado'],
+      type: 'json',
+      gridHeaderStyle: 'color: black; border: 2px solid #3971A5; font-weight: bold;',
+      gridStyle: 'border: 2px solid #3971A5; margin-bottom: 20px',
+      documentTitle: 'Lista de Usuarios',
+      header: 'Lista de Usuarios'
+    });
+  };
+
+  const exportToExcel = () => {
+    const excelData = filteredUsuarios.map(user => ({
+      'Nombre': user.nombre,
+      'Correo': user.correo,
+      'Teléfono': user.telefono,
+      'Rol': user.rol?.descripcion || '',
+      'Estado': user.esActivo ? 'Activo' : 'No Activo',
+      'ID': user.idUsuario
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+    XLSX.writeFile(wb, 'usuarios.xlsx');
   };
 
   const obtenerRoles = async () => {
@@ -67,6 +125,7 @@ const Usuario = () => {
       if (response.ok) {
         let data = await response.json();
         setUsuarios(data);
+        setFilteredUsuarios(data);
         setPendiente(false);
       }
     } catch (error) {
@@ -81,7 +140,14 @@ const Usuario = () => {
     // Configurar suscripciones a eventos de SignalR
     const unsubscribeCreated = subscribe('UsuarioCreated', (nuevoUsuario) => {
       // Agrega el nuevo usuario al inicio de la lista
-      setUsuarios(prev => [nuevoUsuario, ...prev]);
+      setUsuarios(prev => {
+        const newData = [nuevoUsuario, ...prev];
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredUsuarios(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -97,13 +163,18 @@ const Usuario = () => {
 
     const unsubscribeUpdated = subscribe('UsuarioUpdated', (usuarioActualizado) => {
       // Actualiza el usuario en la lista
-      setUsuarios(prev => 
-        prev.map(usr => 
+      setUsuarios(prev => {
+        const newData = prev.map(usr => 
           usr.idUsuario === usuarioActualizado.idUsuario 
             ? { ...usr, ...usuarioActualizado } 
             : usr
-        )
-      );
+        );
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredUsuarios(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -119,9 +190,16 @@ const Usuario = () => {
 
     const unsubscribeDeleted = subscribe('UsuarioDeleted', (id) => {
       // Marca el usuario como inactivo
-      setUsuarios(prev => prev.map(usr => 
-        usr.idUsuario === id ? { ...usr, esActivo: false } : usr
-      ));
+      setUsuarios(prev => {
+        const newData = prev.map(usr => 
+          usr.idUsuario === id ? { ...usr, esActivo: false } : usr
+        );
+        // Update filtered data if no search term
+        if (searchTerm === "") {
+          setFilteredUsuarios(newData);
+        }
+        return newData;
+      });
       
       // Muestra notificación toast
       Swal.fire({
@@ -141,7 +219,7 @@ const Usuario = () => {
       unsubscribeUpdated();
       unsubscribeDeleted();
     };
-  }, [subscribe]); // Dependencia: subscribe
+  }, [subscribe, searchTerm]); // Dependencia: subscribe
 
   const columns = [
     {
@@ -351,22 +429,61 @@ const Usuario = () => {
           className="py-3"
           style={{ backgroundColor: "#4e73df", color: "white" }}
         >
-          <div className="d-flex justify-content-between align-items-center">
-            <h6 className="m-0 font-weight-bold">Lista de Usuarios</h6>
-            <Button color="success" size="sm" onClick={abrirNuevoModal}>
-              <i className="fas fa-plus mr-1"></i> Nuevo Usuario
-            </Button>
-          </div>
+          <h6 className="m-0 font-weight-bold">Lista de Usuarios</h6>
         </CardHeader>
         <CardBody>
+          <Row className="mb-3">
+            <Col md="4">
+              <Button color="success" size="sm" onClick={abrirNuevoModal}>
+                <i className="fas fa-plus mr-1"></i> Nuevo Usuario
+              </Button>
+            </Col>
+            <Col md="4">
+              <div className="d-flex gap-2">
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={exportToPDF}
+                  className="mr-2"
+                >
+                  <i className="fas fa-file-pdf"></i> PDF
+                </Button>
+                <Button
+                  color="info"
+                  size="sm"
+                  onClick={exportToExcel}
+                >
+                  <i className="fas fa-file-excel"></i> Excel
+                </Button>
+              </div>
+            </Col>
+            <Col md="4">
+              <Input
+                type="text"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={handleSearch}
+                bsSize="sm"
+                style={{
+                  border: '2px solid #4e73df',
+                  borderRadius: '5px'
+                }}
+              />
+            </Col>
+          </Row>
           <DataTable
             columns={columns}
-            data={usuarios}
+            data={filteredUsuarios}
             progressPending={pendiente}
             pagination
             paginationComponentOptions={paginationComponentOptions}
             customStyles={customStyles}
-            noDataComponent="No hay usuarios registrados"
+            noDataComponent={
+              <div className="text-center p-4">
+                <i className="fas fa-search fa-3x text-muted mb-3"></i>
+                <p className="text-muted">No se encontraron registros coincidentes</p>
+              </div>
+            }
           />
         </CardBody>
       </Card>
