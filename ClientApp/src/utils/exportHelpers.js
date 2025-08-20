@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 // Helper function to format date and time for filenames
@@ -29,8 +29,8 @@ export const exportToPDF = (data, columns, filename) => {
   doc.setFontSize(10);
   doc.text(`Exportado el: ${new Date().toLocaleString('es-ES')}`, 14, 30);
   
-  // Create table
-  doc.autoTable({
+  // Create table using autoTable function
+  autoTable(doc, {
     head: [columns.map(col => col.header)],
     body: data.map(row => columns.map(col => col.accessor(row))),
     startY: 40,
