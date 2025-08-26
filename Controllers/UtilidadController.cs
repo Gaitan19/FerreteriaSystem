@@ -79,30 +79,40 @@ namespace ReactVentas.Controllers
                     .ToString();
 
                 // Get products sold based on the specified date range and sort order
-                var productQuery = from p in _context.Productos
-                                   join d in _context.DetalleVenta on p.IdProducto equals d.IdProducto
-                                   join v in _context.Venta on d.IdVenta equals v.IdVenta
-                                   where v.FechaRegistro >= fecha && v.FechaRegistro <= fecha2
-                                   group p by p.Descripcion into g
-                                   select new DtoProductoVendidos
-                                   {
-                                       Producto = g.Key,
-                                       Total = g.Count().ToString()
-                                   };
+                var productQueryBase = from p in _context.Productos
+                                       join d in _context.DetalleVenta on p.IdProducto equals d.IdProducto
+                                       join v in _context.Venta on d.IdVenta equals v.IdVenta
+                                       where v.FechaRegistro >= fecha && v.FechaRegistro <= fecha2
+                                       group p by p.Descripcion into g
+                                       select new 
+                                       {
+                                           Producto = g.Key,
+                                           Count = g.Count()
+                                       };
 
                 // Apply sorting based on productSort parameter
                 if (productSort == "least")
                 {
-                    config.ProductosVendidos = productQuery
-                        .OrderBy(p => int.Parse(p.Total))
+                    config.ProductosVendidos = productQueryBase
+                        .OrderBy(p => p.Count)
                         .Take(4)
+                        .Select(p => new DtoProductoVendidos
+                        {
+                            Producto = p.Producto,
+                            Total = p.Count.ToString()
+                        })
                         .ToList();
                 }
                 else // "most" (default)
                 {
-                    config.ProductosVendidos = productQuery
-                        .OrderByDescending(p => int.Parse(p.Total))
+                    config.ProductosVendidos = productQueryBase
+                        .OrderByDescending(p => p.Count)
                         .Take(4)
+                        .Select(p => new DtoProductoVendidos
+                        {
+                            Producto = p.Producto,
+                            Total = p.Count.ToString()
+                        })
                         .ToList();
                 }
 
@@ -120,7 +130,7 @@ namespace ReactVentas.Controllers
             catch (Exception ex)
             {
                 // Return a 500 Internal Server Error status if an exception occurs.
-                return StatusCode(StatusCodes.Status500InternalServerError, config);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
             }
         }
     }
