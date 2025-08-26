@@ -3,7 +3,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale,LinearScal
 import { Doughnut, Bar } from 'react-chartjs-2';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { exportToPDF } from '../utils/exportHelpers';
+import { exportToPDF, exportToExcel, findDateWithMostSales, findProductExtreme } from '../utils/exportHelpers';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -171,19 +171,91 @@ const DashBoard = () => {
             
             // Export sales data if available
             if (salesData.length > 0) {
-                exportToPDF(salesData, salesColumns, `${fileName}_Ventas`);
+                const maxSalesDate = findDateWithMostSales(salesData);
+                const salesAnalytics = maxSalesDate ? [
+                    `Fecha con más ventas: ${maxSalesDate.fecha}`,
+                    `Cantidad: ${maxSalesDate.cantidad}`
+                ] : [];
+                
+                exportToPDF(salesData, salesColumns, `${fileName}_Ventas`, salesAnalytics);
             }
             
             // Export products data if available
             if (productsData.length > 0) {
                 setTimeout(() => {
-                    exportToPDF(productsData, productsColumns, `${fileName}_Productos`);
+                    const isMaxSort = productSort === "most";
+                    const extremeProduct = findProductExtreme(productsData, isMaxSort);
+                    const productsAnalytics = extremeProduct ? [
+                        `Producto ${isMaxSort ? 'más vendido' : 'menos vendido'}: ${extremeProduct.producto}`,
+                        `Cantidad: ${extremeProduct.cantidad}`
+                    ] : [];
+                    
+                    exportToPDF(productsData, productsColumns, `${fileName}_Productos`, productsAnalytics);
                 }, 500);
             }
                 
         } catch (error) {
             console.error('Error exporting to PDF:', error);
             alert('Error al exportar PDF. Por favor, inténtelo de nuevo.');
+        }
+    };
+
+    const exportChartsToExcel = () => {
+        try {
+            // Prepare data for Excel export
+            const salesData = config.ventasporDias || [];
+            const productsData = config.productosVendidos || [];
+
+            if (salesData.length === 0 && productsData.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+
+            // Create filename based on current filters
+            const dateRangeText = dateRange === "Elegir rango" 
+                ? `${startDate.toLocaleDateString('es-ES').replace(/\//g, '-')}_a_${endDate.toLocaleDateString('es-ES').replace(/\//g, '-')}`
+                : dateRange.replace(' ', '_');
+            const productSortText = productSort === "most" ? "mas_vendidos" : "menos_vendidos";
+            const fileName = `Dashboard_${dateRangeText}_${productSortText}`;
+            
+            // Export sales data if available
+            if (salesData.length > 0) {
+                const maxSalesDate = findDateWithMostSales(salesData);
+                const salesAnalytics = maxSalesDate ? [
+                    `Fecha con más ventas: ${maxSalesDate.fecha}`,
+                    `Cantidad: ${maxSalesDate.cantidad}`
+                ] : [];
+                
+                const salesExcelData = salesData.map(row => ({
+                    'Fecha': row.fecha,
+                    'Cantidad': row.total
+                }));
+                
+                exportToExcel(salesExcelData, `${fileName}_Ventas`, salesAnalytics);
+            }
+            
+            // Export products data if available
+            if (productsData.length > 0) {
+                setTimeout(() => {
+                    const isMaxSort = productSort === "most";
+                    const extremeProduct = findProductExtreme(productsData, isMaxSort);
+                    const productsAnalytics = extremeProduct ? [
+                        `Producto ${isMaxSort ? 'más vendido' : 'menos vendido'}: ${extremeProduct.producto}`,
+                        `Cantidad: ${extremeProduct.cantidad}`
+                    ] : [];
+                    
+                    const productsExcelData = productsData.map(row => ({
+                        'Producto': row.producto,
+                        'Total Vendido': row.total
+                    }));
+                    
+                    exportToExcel(productsExcelData, `${fileName}_Productos`, productsAnalytics);
+                }, 500);
+            }
+                
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            alert('Error al exportar Excel. Por favor, inténtelo de nuevo.');
         }
     };
 
@@ -328,12 +400,22 @@ const DashBoard = () => {
                                 
                                 <div className="col-md-2">
                                     <label className="font-weight-bold text-dark mb-1">&nbsp;</label>
-                                    <button 
-                                        className="btn btn-primary btn-sm d-block w-100"
-                                        onClick={exportChartsToPDF}
-                                    >
-                                        <i className="fas fa-file-pdf mr-1"></i>Exportar PDF
-                                    </button>
+                                    <div className="d-flex gap-1">
+                                        <button 
+                                            className="btn btn-primary btn-sm flex-fill"
+                                            onClick={exportChartsToPDF}
+                                            title="Exportar a PDF"
+                                        >
+                                            <i className="fas fa-file-pdf mr-1"></i>PDF
+                                        </button>
+                                        <button 
+                                            className="btn btn-success btn-sm flex-fill"
+                                            onClick={exportChartsToExcel}
+                                            title="Exportar a Excel"
+                                        >
+                                            <i className="fas fa-file-excel mr-1"></i>Excel
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
