@@ -32,6 +32,7 @@ const Categoria = () => {
   const [filteredCategorias, setFilteredCategorias] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [verModal, setVerModal] = useState(false);
+  const [modoSoloLectura, setModoSoloLectura] = useState(false);
   const { subscribe } = useSignalR();
 
   const handleChange = (e) => {
@@ -215,6 +216,15 @@ const Categoria = () => {
       cell: (row) => (
         <>
           <Button
+            color="info"
+            size="sm"
+            className="mr-2"
+            onClick={() => abrirVerModal(row)}
+          >
+            <i className="fas fa-eye"></i>
+          </Button>
+
+          <Button
             color="primary"
             size="sm"
             className="mr-2"
@@ -258,11 +268,19 @@ const Categoria = () => {
 
   const abrirEditarModal = (data) => {
     setCategoria(data);
+    setModoSoloLectura(false);
+    setVerModal(!verModal);
+  };
+
+  const abrirVerModal = (data) => {
+    setCategoria(data);
+    setModoSoloLectura(true);
     setVerModal(!verModal);
   };
 
   const cerrarModal = () => {
     setCategoria(modeloCategoria);
+    setModoSoloLectura(false);
     setVerModal(!verModal);
   };
 
@@ -401,7 +419,7 @@ const Categoria = () => {
       </Card>
 
       <Modal isOpen={verModal}>
-        <ModalHeader>Detalle Categoria</ModalHeader>
+        <ModalHeader>{modoSoloLectura ? "Ver Detalle Categoria" : "Detalle Categoria"}</ModalHeader>
         <form onSubmit={handleSubmit}>
           <ModalBody>
             <FormGroup>
@@ -412,6 +430,7 @@ const Categoria = () => {
                 onChange={handleChange}
                 value={categoria.descripcion}
                 required
+                readOnly={modoSoloLectura}
               />
             </FormGroup>
             <FormGroup>
@@ -422,6 +441,7 @@ const Categoria = () => {
                 name="esActivo"
                 onChange={handleChange}
                 value={categoria.esActivo}
+                disabled={modoSoloLectura}
               >
                 <option value={true}>Activo</option>
                 <option value={false}>No Activo</option>
@@ -429,9 +449,11 @@ const Categoria = () => {
             </FormGroup>
           </ModalBody>
           <ModalFooter>
-            <Button size="sm" color="primary" type="submit">
-              Guardar
-            </Button>
+            {!modoSoloLectura && (
+              <Button size="sm" color="primary" type="submit">
+                Guardar
+              </Button>
+            )}
             <Button size="sm" color="danger" onClick={cerrarModal}>
               Cerrar
             </Button>

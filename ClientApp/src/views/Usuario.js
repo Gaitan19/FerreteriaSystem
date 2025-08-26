@@ -40,6 +40,7 @@ const Usuario = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roles, setRoles] = useState([]);
   const [verModal, setVerModal] = useState(false);
+  const [modoSoloLectura, setModoSoloLectura] = useState(false);
   const [visiblePassword, setVisiblePassword] = useState(false);
   const [cambiandoClave, setCambiandoClave] = useState(false);
   const { subscribe } = useSignalR(); // Obtiene la función subscribe del contexto
@@ -279,6 +280,14 @@ const Usuario = () => {
       cell: (row) => (
         <div className="d-flex">
           <Button
+            color="info"
+            size="sm"
+            className="mr-2"
+            onClick={() => abrirVerModal(row)}
+          >
+            <i className="fas fa-eye"></i>
+          </Button>
+          <Button
             color="primary"
             size="sm"
             className="mr-2"
@@ -327,12 +336,26 @@ const Usuario = () => {
       claveNueva: "",
     });
     setCambiandoClave(false);
+    setModoSoloLectura(false);
+    setVerModal(true);
+  };
+
+  const abrirVerModal = (data) => {
+    setUsuario({
+      ...data,
+      clave: "",
+      claveActual: "",
+      claveNueva: "",
+    });
+    setCambiandoClave(false);
+    setModoSoloLectura(true);
     setVerModal(true);
   };
 
   const abrirNuevoModal = () => {
     setUsuario(modeloUsuario);
     setCambiandoClave(false);
+    setModoSoloLectura(false);
     setVerModal(true);
   };
 
@@ -341,6 +364,7 @@ const Usuario = () => {
     setVerModal(false);
     setVisiblePassword(false);
     setCambiandoClave(false);
+    setModoSoloLectura(false);
   };
 
   const guardarCambios = async () => {
@@ -508,7 +532,11 @@ const Usuario = () => {
 
       <Modal isOpen={verModal} toggle={cerrarModal} centered>
         <ModalHeader toggle={cerrarModal}>
-          {usuario.idUsuario === 0 ? "Nuevo Usuario" : "Editar Usuario"}
+          {modoSoloLectura 
+            ? "Ver Detalle Usuario" 
+            : usuario.idUsuario === 0 
+              ? "Nuevo Usuario" 
+              : "Editar Usuario"}
         </ModalHeader>
         <form onSubmit={handleSubmit}>
           <ModalBody>
@@ -522,6 +550,7 @@ const Usuario = () => {
                     onChange={handleChange}
                     value={usuario.nombre}
                     required
+                    readOnly={modoSoloLectura}
                   />
                 </FormGroup>
               </Col>
@@ -535,6 +564,7 @@ const Usuario = () => {
                     value={usuario.correo}
                     type="email"
                     required
+                    readOnly={modoSoloLectura}
                   />
                 </FormGroup>
               </Col>
@@ -549,6 +579,7 @@ const Usuario = () => {
                     name="telefono"
                     onChange={handleChange}
                     value={usuario.telefono}
+                    readOnly={modoSoloLectura}
                   />
                 </FormGroup>
               </Col>
@@ -562,6 +593,7 @@ const Usuario = () => {
                     onChange={handleChange}
                     value={usuario.idRol}
                     required
+                    disabled={modoSoloLectura}
                   >
                     <option value="">Seleccionar rol...</option>
                     {roles.map((item) => (
@@ -575,7 +607,7 @@ const Usuario = () => {
             </Row>
 
             {/* Contraseña para nuevo usuario */}
-            {usuario.idUsuario === 0 && (
+            {usuario.idUsuario === 0 && !modoSoloLectura && (
               <Row>
                 <Col sm="6">
                   <FormGroup>
@@ -610,6 +642,7 @@ const Usuario = () => {
                       onChange={handleChange}
                       value={usuario.esActivo}
                       required
+                      disabled={modoSoloLectura}
                     >
                       <option value={true}>Activo</option>
                       <option value={false}>Inactivo</option>
@@ -633,29 +666,32 @@ const Usuario = () => {
                         onChange={handleChange}
                         value={usuario.esActivo}
                         required
+                        disabled={modoSoloLectura}
                       >
                         <option value={true}>Activo</option>
                         <option value={false}>Inactivo</option>
                       </Input>
                     </FormGroup>
                   </Col>
-                  <Col sm="6">
-                    <FormGroup className="d-flex align-items-center mt-4">
-                      <Input
-                        type="checkbox"
-                        id="cambiarClave"
-                        checked={cambiandoClave}
-                        onChange={() => setCambiandoClave(!cambiandoClave)}
-                        className="mr-2"
-                      />
-                      <Label for="cambiarClave" className="mb-0">
-                        Cambiar contraseña
-                      </Label>
-                    </FormGroup>
-                  </Col>
+                  {!modoSoloLectura && (
+                    <Col sm="6">
+                      <FormGroup className="d-flex align-items-center mt-4">
+                        <Input
+                          type="checkbox"
+                          id="cambiarClave"
+                          checked={cambiandoClave}
+                          onChange={() => setCambiandoClave(!cambiandoClave)}
+                          className="mr-2"
+                        />
+                        <Label for="cambiarClave" className="mb-0">
+                          Cambiar contraseña
+                        </Label>
+                      </FormGroup>
+                    </Col>
+                  )}
                 </Row>
 
-                {cambiandoClave && (
+                {cambiandoClave && !modoSoloLectura && (
                   <Row>
                     <Col sm="6">
                       <FormGroup>
@@ -693,9 +729,11 @@ const Usuario = () => {
             <Button color="secondary" size="sm" onClick={cerrarModal}>
               Cancelar
             </Button>
-            <Button type="submit" color="primary" size="sm">
-              {usuario.idUsuario === 0 ? "Crear Usuario" : "Guardar Cambios"}
-            </Button>
+            {!modoSoloLectura && (
+              <Button type="submit" color="primary" size="sm">
+                {usuario.idUsuario === 0 ? "Crear Usuario" : "Guardar Cambios"}
+              </Button>
+            )}
           </ModalFooter>
         </form>
       </Modal>
