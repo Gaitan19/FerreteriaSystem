@@ -400,20 +400,20 @@ const DashBoard = () => {
                                 
                                 <div className="col-md-2">
                                     <label className="font-weight-bold text-dark mb-1">&nbsp;</label>
-                                    <div className="d-flex gap-1">
+                                    <div className="d-flex gap-2">
                                         <button 
-                                            className="btn btn-primary btn-sm flex-fill"
+                                            className="btn btn-primary btn-sm me-2"
                                             onClick={exportChartsToPDF}
                                             title="Exportar a PDF"
                                         >
-                                            <i className="fas fa-file-pdf mr-1"></i>PDF
+                                            <i className="fas fa-file-pdf me-1"></i>PDF
                                         </button>
                                         <button 
-                                            className="btn btn-success btn-sm flex-fill"
+                                            className="btn btn-success btn-sm"
                                             onClick={exportChartsToExcel}
                                             title="Exportar a Excel"
                                         >
-                                            <i className="fas fa-file-excel mr-1"></i>Excel
+                                            <i className="fas fa-file-excel me-1"></i>Excel
                                         </button>
                                     </div>
                                 </div>

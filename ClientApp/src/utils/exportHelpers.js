@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 // Helper function to format date and time for filenames
@@ -30,7 +30,7 @@ export const exportToPDF = (data, columns, filename, analytics = null) => {
   doc.text(`Exportado el: ${new Date().toLocaleString('es-ES')}`, 14, 30);
   
   // Create table using autoTable function
-  const table = autoTable(doc, {
+  doc.autoTable({
     head: [columns.map(col => col.header)],
     body: data.map(row => columns.map(col => col.accessor(row))),
     startY: 40,
@@ -40,7 +40,7 @@ export const exportToPDF = (data, columns, filename, analytics = null) => {
   
   // Add analytics text if provided
   if (analytics && analytics.length > 0) {
-    let yPosition = table.lastAutoTable.finalY + 15;
+    let yPosition = doc.lastAutoTable.finalY + 15;
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     
@@ -82,7 +82,9 @@ export const exportToExcel = (data, filename, analytics = null) => {
   }
   
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, filename);
+  // Truncate sheet name to 31 characters maximum (Excel limit)
+  const sheetName = filename.length > 31 ? filename.substring(0, 31) : filename;
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
   XLSX.writeFile(wb, finalFilename);
 };
 
