@@ -19,26 +19,50 @@ namespace ReactVentas.Controllers
 
         [HttpGet]
         [Route("Dashboard")]
-        public async Task<IActionResult> Dashboard()
+        public async Task<IActionResult> Dashboard(
+            string? dateRange = "Esta semana",
+            string? startDate = null,
+            string? endDate = null,
+            string? productSort = "most"
+        )
         {
             // Initialize a new dashboard configuration object.
             DtoDashboard config = new DtoDashboard();
 
-            // Calculate date ranges for the dashboard statistics.
-            DateTime fecha = DateTime.Now.AddDays(-30);
-            DateTime fecha2 = DateTime.Now.AddDays(-7);
+            // Calculate date ranges based on parameters
+            DateTime fecha, fecha2;
+            
+            if (dateRange == "Elegir rango" && !string.IsNullOrEmpty(startDate) && !string.IsNullOrEmpty(endDate))
+            {
+                fecha = DateTime.ParseExact(startDate, "yyyy-MM-dd", null);
+                fecha2 = DateTime.ParseExact(endDate, "yyyy-MM-dd", null);
+            }
+            else if (dateRange == "Este mes")
+            {
+                var today = DateTime.Now;
+                fecha = new DateTime(today.Year, today.Month, 1);
+                fecha2 = today;
+            }
+            else // Default: "Esta semana"
+            {
+                fecha2 = DateTime.Now;
+                fecha = fecha2.AddDays(-7);
+            }
+
+            // For total stats, we'll use a 30-day period regardless of chart filters
+            DateTime fechaStats = DateTime.Now.AddDays(-30);
 
             try
             {
                 // Calculate total sales in the last 30 days.
                 config.TotalVentas = _context.Venta
-                    .Where(v => v.FechaRegistro >= fecha)
+                    .Where(v => v.FechaRegistro >= fechaStats)
                     .Count()
                     .ToString();
 
                 // Calculate total revenue in the last 30 days.
                 config.TotalIngresos = _context.Venta
-                    .Where(v => v.FechaRegistro >= fecha)
+                    .Where(v => v.FechaRegistro >= fechaStats)
                     .Sum(v => v.Total)
                     .ToString();
 
@@ -54,38 +78,41 @@ namespace ReactVentas.Controllers
                     .Count()
                     .ToString();
 
-                // Get the top 4 sold products in the last 30 days.
-                //config.ProductosVendidos = (from p in _context.Productos
-                //                             join d in _context.DetalleVenta on p.IdProducto equals d.IdProducto
-                //                             group p by p.Descripcion into g
-                //                             orderby g.Count() ascending
-                //                             select new DtoProductoVendidos { Producto = g.Key, Total = g.Count().ToString() })
-                //                             .Take(4)
-                //                             .ToList();
+                // Get products sold based on the specified date range and sort order
+                var productQuery = from p in _context.Productos
+                                   join d in _context.DetalleVenta on p.IdProducto equals d.IdProducto
+                                   join v in _context.Venta on d.IdVenta equals v.IdVenta
+                                   where v.FechaRegistro >= fecha && v.FechaRegistro <= fecha2
+                                   group p by p.Descripcion into g
+                                   select new DtoProductoVendidos
+                                   {
+                                       Producto = g.Key,
+                                       Total = g.Count().ToString()
+                                   };
 
-                // Get the top 4 sold products in the last 30 days.
-                config.ProductosVendidos = (from p in _context.Productos
-                                            join d in _context.DetalleVenta on p.IdProducto equals d.IdProducto
-                                            join v in _context.Venta on d.IdVenta equals v.IdVenta
-                                            where v.FechaRegistro >= fecha  // Filtra por las ventas de los últimos 30 días
-                                            group p by p.Descripcion into g
-                                            orderby g.Count() descending  // Cambiado a 'descending' para obtener los más vendidos
-                                            select new DtoProductoVendidos
-                                            {
-                                                Producto = g.Key,
-                                                Total = g.Count().ToString()
-                                            })
-                                             .Take(4)
-                                             .ToList();
+                // Apply sorting based on productSort parameter
+                if (productSort == "least")
+                {
+                    config.ProductosVendidos = productQuery
+                        .OrderBy(p => int.Parse(p.Total))
+                        .Take(4)
+                        .ToList();
+                }
+                else // "most" (default)
+                {
+                    config.ProductosVendidos = productQuery
+                        .OrderByDescending(p => int.Parse(p.Total))
+                        .Take(4)
+                        .ToList();
+                }
 
-
-                // Get sales count grouped by day for the last 7 days.
+                // Get sales count grouped by day for the specified date range
                 config.VentasporDias = (from v in _context.Venta
-                                         where v.FechaRegistro.Value.Date >= fecha2.Date
-                                         group v by v.FechaRegistro.Value.Date into g
-                                         orderby g.Key ascending
-                                         select new DtoVentasDias { Fecha = g.Key.ToString("dd/MM/yyyy"), Total = g.Count().ToString() })
-                                         .ToList();
+                                        where v.FechaRegistro.Value.Date >= fecha.Date && v.FechaRegistro.Value.Date <= fecha2.Date
+                                        group v by v.FechaRegistro.Value.Date into g
+                                        orderby g.Key ascending
+                                        select new DtoVentasDias { Fecha = g.Key.ToString("dd/MM/yyyy"), Total = g.Count().ToString() })
+                                        .ToList();
 
                 // Return the dashboard configuration with a 200 OK status.
                 return StatusCode(StatusCodes.Status200OK, config);
