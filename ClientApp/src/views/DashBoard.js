@@ -145,27 +145,45 @@ const DashBoard = () => {
             const salesData = config.ventasporDias || [];
             const productsData = config.productosVendidos || [];
 
-            // Export sales chart data
+            if (salesData.length === 0 && productsData.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+
+            // Prepare sales data for PDF
             const salesColumns = [
                 { header: 'Fecha', accessor: (row) => row.fecha },
                 { header: 'Cantidad', accessor: (row) => row.total }
             ];
 
+            // Prepare products data for PDF
             const productsColumns = [
                 { header: 'Producto', accessor: (row) => row.producto },
-                { header: 'Total', accessor: (row) => row.total }
+                { header: 'Total Vendido', accessor: (row) => row.total }
             ];
 
-            // Create a combined PDF with both charts
-            const fileName = `Dashboard_${dateRange.replace(' ', '_')}_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}`;
+            // Create filename based on current filters
+            const dateRangeText = dateRange === "Elegir rango" 
+                ? `${startDate.toLocaleDateString('es-ES').replace(/\//g, '-')}_a_${endDate.toLocaleDateString('es-ES').replace(/\//g, '-')}`
+                : dateRange.replace(' ', '_');
+            const productSortText = productSort === "most" ? "mas_vendidos" : "menos_vendidos";
+            const fileName = `Dashboard_${dateRangeText}_${productSortText}`;
             
-            // For now, we'll export the data tables. In a future iteration, we could add chart images.
-            exportToPDF([...salesData, ...productsData], 
-                [...salesColumns, ...productsColumns], 
-                fileName);
+            // Export sales data if available
+            if (salesData.length > 0) {
+                exportToPDF(salesData, salesColumns, `${fileName}_Ventas`);
+            }
+            
+            // Export products data if available
+            if (productsData.length > 0) {
+                setTimeout(() => {
+                    exportToPDF(productsData, productsColumns, `${fileName}_Productos`);
+                }, 500);
+            }
                 
         } catch (error) {
             console.error('Error exporting to PDF:', error);
+            alert('Error al exportar PDF. Por favor, inténtelo de nuevo.');
         }
     };
 
