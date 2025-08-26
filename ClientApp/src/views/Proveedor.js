@@ -35,6 +35,7 @@ const Proveedor = () => {
   const [filteredProveedores, setFilteredProveedores] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [verModal, setVerModal] = useState(false);
+  const [modoSoloLectura, setModoSoloLectura] = useState(false);
   const { subscribe } = useSignalR(); // Obtiene la función subscribe del contexto
 
   const handleChange = (e) => {
@@ -255,6 +256,15 @@ const Proveedor = () => {
       cell: (row) => (
         <>
           <Button
+            color="info"
+            size="sm"
+            className="mr-2"
+            onClick={() => abrirVerModal(row)}
+          >
+            <i className="fas fa-eye"></i>
+          </Button>
+
+          <Button
             color="primary"
             size="sm"
             className="mr-2"
@@ -298,11 +308,19 @@ const Proveedor = () => {
 
   const abrirEditarModal = (data) => {
     setProveedor(data);
+    setModoSoloLectura(false);
+    setVerModal(!verModal);
+  };
+
+  const abrirVerModal = (data) => {
+    setProveedor(data);
+    setModoSoloLectura(true);
     setVerModal(!verModal);
   };
 
   const cerrarModal = () => {
     setProveedor(modeloProveedor);
+    setModoSoloLectura(false);
     setVerModal(!verModal);
   };
 
@@ -460,7 +478,7 @@ const Proveedor = () => {
       </Card>
 
       <Modal isOpen={verModal}>
-        <ModalHeader>Detalle Proveedor</ModalHeader>
+        <ModalHeader>{modoSoloLectura ? "Ver Detalle Proveedor" : "Detalle Proveedor"}</ModalHeader>
         <form onSubmit={handleSubmit}>
           <ModalBody>
             <Row>
@@ -473,6 +491,7 @@ const Proveedor = () => {
                     onChange={handleChange}
                     value={proveedor.nombre}
                     required
+                    readOnly={modoSoloLectura}
                   />
                 </FormGroup>
               </Col>
@@ -486,6 +505,7 @@ const Proveedor = () => {
                     value={proveedor.correo}
                     type="email"
                     required
+                    readOnly={modoSoloLectura}
                   />
                 </FormGroup>
               </Col>
@@ -499,6 +519,7 @@ const Proveedor = () => {
                     name="telefono"
                     onChange={handleChange}
                     value={proveedor.telefono}
+                    readOnly={modoSoloLectura}
                   />
                 </FormGroup>
               </Col>
@@ -511,6 +532,7 @@ const Proveedor = () => {
                     name="esActivo"
                     onChange={handleChange}
                     value={proveedor.esActivo}
+                    disabled={modoSoloLectura}
                   >
                     <option value={true}>Activo</option>
                     <option value={false}>No Activo</option>
@@ -520,9 +542,11 @@ const Proveedor = () => {
             </Row>
           </ModalBody>
           <ModalFooter>
-            <Button size="sm" color="primary" type="submit">
-              Guardar
-            </Button>
+            {!modoSoloLectura && (
+              <Button size="sm" color="primary" type="submit">
+                Guardar
+              </Button>
+            )}
             <Button size="sm" color="danger" onClick={cerrarModal}>
               Cerrar
             </Button>
