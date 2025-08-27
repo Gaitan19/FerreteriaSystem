@@ -143,9 +143,9 @@ const DashBoard = () => {
     const calculateSalesAnalytics = (salesData) => {
         if (!salesData || salesData.length === 0) return null;
         
-        const maxSale = salesData.reduce((max, current) => 
-            current.total > max.total ? current : max
-        );
+        // Sort sales data by total quantity to ensure we get the correct maximum
+        const sortedSales = [...salesData].sort((a, b) => Number(b.total) - Number(a.total));
+        const maxSale = sortedSales[0];
         
         return {
             type: 'sales',
