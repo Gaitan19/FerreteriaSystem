@@ -1,9 +1,9 @@
-﻿import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale,LinearScale,BarElement,Title } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { exportToPDF } from '../utils/exportHelpers';
+import { exportToPDF, exportToExcel } from '../utils/exportHelpers';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -139,6 +139,144 @@ const DashBoard = () => {
         setProductSort(value);
     };
 
+    // Helper function to calculate sales analytics
+    const calculateSalesAnalytics = (salesData) => {
+        if (!salesData || salesData.length === 0) return null;
+        
+        // Sort sales data by total quantity to ensure we get the correct maximum and minimum
+        const sortedSales = [...salesData].sort((a, b) => Number(b.total) - Number(a.total));
+        const maxSale = sortedSales[0];
+        const minSale = sortedSales[sortedSales.length - 1];
+        
+        return {
+            type: 'sales',
+            maxSales: {
+                date: maxSale.fecha,
+                quantity: maxSale.total
+            },
+            minSales: {
+                date: minSale.fecha,
+                quantity: minSale.total
+            }
+        };
+    };
+
+    // Helper function to calculate products analytics
+    const calculateProductsAnalytics = (productsData, isTopSelling) => {
+        if (!productsData || productsData.length === 0) return null;
+        
+        // Sort products by total quantity to ensure we get the correct max/min
+        const sortedProducts = [...productsData].sort((a, b) => b.total - a.total);
+        const targetProduct = isTopSelling ? sortedProducts[0] : sortedProducts[sortedProducts.length - 1];
+        
+        return {
+            type: 'products',
+            product: targetProduct.producto,
+            quantity: targetProduct.total,
+            isTopSelling: isTopSelling
+        };
+    };
+
+    const exportSalesChartToPDF = () => {
+        try {
+            const salesData = config.ventasporDias || [];
+            if (salesData.length === 0) {
+                alert('No hay datos de ventas para exportar');
+                return;
+            }
+
+            const salesAnalytics = calculateSalesAnalytics(salesData);
+            const salesColumns = [
+                { header: 'Fecha', accessor: (row) => row.fecha },
+                { header: 'Cantidad', accessor: (row) => row.total }
+            ];
+
+            const dateRangeText = dateRange === "Elegir rango" 
+                ? `${startDate.toLocaleDateString('es-ES').replace(/\//g, '-')}_a_${endDate.toLocaleDateString('es-ES').replace(/\//g, '-')}`
+                : dateRange.replace(' ', '_');
+            const fileName = `Ventas_${dateRangeText}`;
+            
+            exportToPDF(salesData, salesColumns, fileName, salesAnalytics);
+        } catch (error) {
+            console.error('Error exporting sales to PDF:', error);
+            alert('Error al exportar ventas PDF. Por favor, inténtelo de nuevo.');
+        }
+    };
+
+    const exportSalesChartToExcel = () => {
+        try {
+            const salesData = config.ventasporDias || [];
+            if (salesData.length === 0) {
+                alert('No hay datos de ventas para exportar');
+                return;
+            }
+
+            const salesAnalytics = calculateSalesAnalytics(salesData);
+            const salesExcelData = salesData.map(item => ({
+                'Fecha': item.fecha,
+                'Cantidad': item.total
+            }));
+
+            const dateRangeText = dateRange === "Elegir rango" 
+                ? `${startDate.toLocaleDateString('es-ES').replace(/\//g, '-')}_a_${endDate.toLocaleDateString('es-ES').replace(/\//g, '-')}`
+                : dateRange.replace(' ', '_');
+            const fileName = `Ventas_${dateRangeText}`;
+            
+            exportToExcel(salesExcelData, fileName, salesAnalytics);
+        } catch (error) {
+            console.error('Error exporting sales to Excel:', error);
+            alert('Error al exportar ventas Excel. Por favor, inténtelo de nuevo.');
+        }
+    };
+
+    const exportProductsChartToPDF = () => {
+        try {
+            const productsData = config.productosVendidos || [];
+            if (productsData.length === 0) {
+                alert('No hay datos de productos para exportar');
+                return;
+            }
+
+            const productsAnalytics = calculateProductsAnalytics(productsData, productSort === "most");
+            const productsColumns = [
+                { header: 'Producto', accessor: (row) => row.producto },
+                { header: 'Total Vendido', accessor: (row) => row.total }
+            ];
+
+            const productSortText = productSort === "most" ? "mas_vendidos" : "menos_vendidos";
+            const fileName = `Productos_${productSortText}`;
+            
+            exportToPDF(productsData, productsColumns, fileName, productsAnalytics);
+        } catch (error) {
+            console.error('Error exporting products to PDF:', error);
+            alert('Error al exportar productos PDF. Por favor, inténtelo de nuevo.');
+        }
+    };
+
+    const exportProductsChartToExcel = () => {
+        try {
+            const productsData = config.productosVendidos || [];
+            if (productsData.length === 0) {
+                alert('No hay datos de productos para exportar');
+                return;
+            }
+
+            const productsAnalytics = calculateProductsAnalytics(productsData, productSort === "most");
+            const productsExcelData = productsData.map(item => ({
+                'Producto': item.producto,
+                'Total Vendido': item.total
+            }));
+
+            const productSortText = productSort === "most" ? "mas_vendidos" : "menos_vendidos";
+            const fileName = `Productos_${productSortText}`;
+            
+            exportToExcel(productsExcelData, fileName, productsAnalytics);
+        } catch (error) {
+            console.error('Error exporting products to Excel:', error);
+            alert('Error al exportar productos Excel. Por favor, inténtelo de nuevo.');
+        }
+    };
+
     const exportChartsToPDF = () => {
         try {
             // Prepare data for PDF export
@@ -149,6 +287,10 @@ const DashBoard = () => {
                 alert('No hay datos para exportar');
                 return;
             }
+
+            // Calculate analytics
+            const salesAnalytics = calculateSalesAnalytics(salesData);
+            const productsAnalytics = calculateProductsAnalytics(productsData, productSort === "most");
 
             // Prepare sales data for PDF
             const salesColumns = [
@@ -171,19 +313,71 @@ const DashBoard = () => {
             
             // Export sales data if available
             if (salesData.length > 0) {
-                exportToPDF(salesData, salesColumns, `${fileName}_Ventas`);
+                exportToPDF(salesData, salesColumns, `${fileName}_Ventas`, salesAnalytics);
             }
             
             // Export products data if available
             if (productsData.length > 0) {
                 setTimeout(() => {
-                    exportToPDF(productsData, productsColumns, `${fileName}_Productos`);
+                    exportToPDF(productsData, productsColumns, `${fileName}_Productos`, productsAnalytics);
                 }, 500);
             }
                 
         } catch (error) {
             console.error('Error exporting to PDF:', error);
             alert('Error al exportar PDF. Por favor, inténtelo de nuevo.');
+        }
+    };
+
+    const exportChartsToExcel = () => {
+        try {
+            // Prepare data for Excel export
+            const salesData = config.ventasporDias || [];
+            const productsData = config.productosVendidos || [];
+
+            if (salesData.length === 0 && productsData.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+
+            // Calculate analytics
+            const salesAnalytics = calculateSalesAnalytics(salesData);
+            const productsAnalytics = calculateProductsAnalytics(productsData, productSort === "most");
+
+            // Create filename based on current filters
+            const dateRangeText = dateRange === "Elegir rango" 
+                ? `${startDate.toLocaleDateString('es-ES').replace(/\//g, '-')}_a_${endDate.toLocaleDateString('es-ES').replace(/\//g, '-')}`
+                : dateRange.replace(' ', '_');
+            const productSortText = productSort === "most" ? "mas_vendidos" : "menos_vendidos";
+            const fileName = `Dashboard_${dateRangeText}_${productSortText}`;
+            
+            // Prepare sales data for Excel (simple object format)
+            const salesExcelData = salesData.map(item => ({
+                'Fecha': item.fecha,
+                'Cantidad': item.total
+            }));
+
+            // Prepare products data for Excel (simple object format)
+            const productsExcelData = productsData.map(item => ({
+                'Producto': item.producto,
+                'Total Vendido': item.total
+            }));
+            
+            // Export sales data if available
+            if (salesData.length > 0) {
+                exportToExcel(salesExcelData, `${fileName}_Ventas`, salesAnalytics);
+            }
+            
+            // Export products data if available
+            if (productsData.length > 0) {
+                setTimeout(() => {
+                    exportToExcel(productsExcelData, `${fileName}_Productos`, productsAnalytics);
+                }, 500);
+            }
+                
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            alert('Error al exportar Excel. Por favor, inténtelo de nuevo.');
         }
     };
 
@@ -326,14 +520,22 @@ const DashBoard = () => {
                                     </select>
                                 </div>
                                 
-                                <div className="col-md-2">
-                                    <label className="font-weight-bold text-dark mb-1">&nbsp;</label>
-                                    <button 
-                                        className="btn btn-primary btn-sm d-block w-100"
-                                        onClick={exportChartsToPDF}
-                                    >
-                                        <i className="fas fa-file-pdf mr-1"></i>Exportar PDF
-                                    </button>
+                                <div style={{display: 'none'}} className="col-md-3">
+                                    <label className="font-weight-bold text-dark mb-1">Exportar datos:</label>
+                                    <div className="d-flex gap-2">
+                                        <button 
+                                            className="btn btn-danger btn-sm mr-2"
+                                            onClick={exportChartsToPDF}
+                                        >
+                                            <i className="fas fa-file-pdf mr-1"></i>PDF
+                                        </button>
+                                        <button 
+                                            className="btn btn-success btn-sm"
+                                            onClick={exportChartsToExcel}
+                                        >
+                                            <i className="fas fa-file-excel mr-1"></i>Excel
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -347,6 +549,22 @@ const DashBoard = () => {
                             <h6 className="m-0 font-weight-bold text-white">
                                 Ventas - {dateRange === "Elegir rango" ? `${startDate.toLocaleDateString()} a ${endDate.toLocaleDateString()}` : dateRange}
                             </h6>
+                            <div className="d-flex">
+                                <button 
+                                    className="btn btn-danger btn-sm mr-2"
+                                    onClick={exportSalesChartToPDF}
+                                    title="Exportar ventas a PDF"
+                                >
+                                    <i className="fas fa-file-pdf mr-1"></i>PDF
+                                </button>
+                                <button 
+                                    className="btn btn-success btn-sm"
+                                    onClick={exportSalesChartToExcel}
+                                    title="Exportar ventas a Excel"
+                                >
+                                    <i className="fas fa-file-excel mr-1"></i>Excel
+                                </button>
+                            </div>
                         </div>
                         <div className="card-body">
                             <div style={{height:350}}>
@@ -362,6 +580,22 @@ const DashBoard = () => {
                             <h6 className="m-0 font-weight-bold text-white">
                                 Productos {productSort === "most" ? "más vendidos" : "menos vendidos"}
                             </h6>
+                            <div className="d-flex">
+                                <button 
+                                    className="btn btn-danger btn-sm mr-2"
+                                    onClick={exportProductsChartToPDF}
+                                    title="Exportar productos a PDF"
+                                >
+                                    <i className="fas fa-file-pdf mr-1"></i>PDF
+                                </button>
+                                <button 
+                                    className="btn btn-success btn-sm"
+                                    onClick={exportProductsChartToExcel}
+                                    title="Exportar productos a Excel"
+                                >
+                                    <i className="fas fa-file-excel mr-1"></i>Excel
+                                </button>
+                            </div>
                         </div>
                         <div className="card-body">
                             <div style={{ height: 350 }}>
