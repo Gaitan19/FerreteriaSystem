@@ -520,7 +520,7 @@ const DashBoard = () => {
                                     </select>
                                 </div>
                                 
-                                <div className="col-md-3">
+                                <div style={{display: 'none'}} className="col-md-3">
                                     <label className="font-weight-bold text-dark mb-1">Exportar datos:</label>
                                     <div className="d-flex gap-2">
                                         <button 
