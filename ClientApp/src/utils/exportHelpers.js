@@ -69,6 +69,9 @@ export const exportToExcel = (data, filename, analytics = null) => {
   const dateTime = getFormattedDateTime();
   const finalFilename = `${filename}_${dateTime}.xlsx`;
   
+  // Truncate sheet name to fit Excel's 31 character limit
+  const sheetName = filename.length > 31 ? filename.substring(0, 31) : filename;
+  
   // Prepare the data for Excel
   let worksheetData = [...data];
   
@@ -94,7 +97,7 @@ export const exportToExcel = (data, filename, analytics = null) => {
   
   const ws = XLSX.utils.json_to_sheet(worksheetData);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, filename);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
   XLSX.writeFile(wb, finalFilename);
 };
 
