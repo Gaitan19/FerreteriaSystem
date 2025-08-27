@@ -143,14 +143,21 @@ const DashBoard = () => {
     const calculateSalesAnalytics = (salesData) => {
         if (!salesData || salesData.length === 0) return null;
         
-        // Sort sales data by total quantity to ensure we get the correct maximum
+        // Sort sales data by total quantity to ensure we get the correct maximum and minimum
         const sortedSales = [...salesData].sort((a, b) => Number(b.total) - Number(a.total));
         const maxSale = sortedSales[0];
+        const minSale = sortedSales[sortedSales.length - 1];
         
         return {
             type: 'sales',
-            date: maxSale.fecha,
-            quantity: maxSale.total
+            maxSales: {
+                date: maxSale.fecha,
+                quantity: maxSale.total
+            },
+            minSales: {
+                date: minSale.fecha,
+                quantity: minSale.total
+            }
         };
     };
 

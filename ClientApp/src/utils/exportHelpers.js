@@ -38,9 +38,16 @@ export const exportToPDF = (data, columns, filename, analytics = null) => {
     currentY += 10;
     
     if (analytics.type === 'sales') {
-      doc.text(`Fecha con más ventas: ${analytics.date}`, 14, currentY);
+      // Show max sales
+      doc.text(`Fecha con más ventas: ${analytics.maxSales.date}`, 14, currentY);
       currentY += 8;
-      doc.text(`Cantidad: ${analytics.quantity}`, 14, currentY);
+      doc.text(`Cantidad: ${analytics.maxSales.quantity}`, 14, currentY);
+      currentY += 12;
+      
+      // Show min sales
+      doc.text(`Fecha con menos ventas: ${analytics.minSales.date}`, 14, currentY);
+      currentY += 8;
+      doc.text(`Cantidad: ${analytics.minSales.quantity}`, 14, currentY);
       currentY += 15;
     } else if (analytics.type === 'products') {
       const productLabel = analytics.isTopSelling ? 'Producto más vendido' : 'Producto menos vendido';
@@ -82,9 +89,15 @@ export const exportToExcel = (data, filename, analytics = null) => {
     worksheetData.unshift({});
     
     if (analytics.type === 'sales') {
+      // Add min sales info
       worksheetData.unshift({
-        [Object.keys(data[0] || {})[0] || 'Info']: `Fecha con más ventas: ${analytics.date}`,
-        [Object.keys(data[0] || {})[1] || 'Value']: `Cantidad: ${analytics.quantity}`
+        [Object.keys(data[0] || {})[0] || 'Info']: `Fecha con menos ventas: ${analytics.minSales.date}`,
+        [Object.keys(data[0] || {})[1] || 'Value']: `Cantidad: ${analytics.minSales.quantity}`
+      });
+      // Add max sales info
+      worksheetData.unshift({
+        [Object.keys(data[0] || {})[0] || 'Info']: `Fecha con más ventas: ${analytics.maxSales.date}`,
+        [Object.keys(data[0] || {})[1] || 'Value']: `Cantidad: ${analytics.maxSales.quantity}`
       });
     } else if (analytics.type === 'products') {
       const productLabel = analytics.isTopSelling ? 'Producto más vendido' : 'Producto menos vendido';
