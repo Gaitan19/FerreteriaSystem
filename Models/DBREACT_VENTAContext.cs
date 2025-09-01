@@ -18,6 +18,8 @@ namespace ReactVentas.Models
 
         public virtual DbSet<Categoria> Categoria { get; set; } = null!;
         public virtual DbSet<DetalleVenta> DetalleVenta { get; set; } = null!;
+        public virtual DbSet<Egreso> Egresos { get; set; } = null!;
+        public virtual DbSet<Ingreso> Ingresos { get; set; } = null!;
         public virtual DbSet<NumeroDocumento> NumeroDocumentos { get; set; } = null!;
         public virtual DbSet<Producto> Productos { get; set; } = null!;
         public virtual DbSet<Proveedor> Proveedores { get; set; } = null!;
@@ -292,6 +294,82 @@ namespace ReactVentas.Models
                     .WithMany(p => p.Venta)
                     .HasForeignKey(d => d.IdUsuario)
                     .HasConstraintName("FK__Venta__idUsuario__5CD6CB2B");
+            });
+
+            modelBuilder.Entity<Ingreso>(entity =>
+            {
+                entity.HasKey(e => e.IdIngreso)
+                    .HasName("PK__Ingreso__1B4A9DC0");
+
+                entity.Property(e => e.IdIngreso).HasColumnName("idIngreso");
+
+                entity.Property(e => e.Descripcion)
+                    .HasMaxLength(200)
+                    .IsUnicode(false)
+                    .HasColumnName("descripcion");
+
+                entity.Property(e => e.FechaRegistro)
+                    .HasColumnType("datetime")
+                    .HasColumnName("fechaRegistro")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Monto)
+                    .HasColumnType("decimal(10, 2)")
+                    .HasColumnName("monto");
+
+                entity.Property(e => e.TipoMoneda)
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("tipoMoneda");
+
+                entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
+
+                entity.Property(e => e.EsActivo)
+                    .HasColumnName("esActivo")
+                    .HasDefaultValueSql("((1))");
+
+                entity.HasOne(d => d.IdUsuarioNavigation)
+                    .WithMany(p => p.Ingresos)
+                    .HasForeignKey(d => d.IdUsuario)
+                    .HasConstraintName("FK__Ingreso__idUsuario");
+            });
+
+            modelBuilder.Entity<Egreso>(entity =>
+            {
+                entity.HasKey(e => e.IdEgreso)
+                    .HasName("PK__Egreso__1B4A9DC1");
+
+                entity.Property(e => e.IdEgreso).HasColumnName("idEgreso");
+
+                entity.Property(e => e.Descripcion)
+                    .HasMaxLength(200)
+                    .IsUnicode(false)
+                    .HasColumnName("descripcion");
+
+                entity.Property(e => e.FechaRegistro)
+                    .HasColumnType("datetime")
+                    .HasColumnName("fechaRegistro")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Monto)
+                    .HasColumnType("decimal(10, 2)")
+                    .HasColumnName("monto");
+
+                entity.Property(e => e.TipoMoneda)
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("tipoMoneda");
+
+                entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
+
+                entity.Property(e => e.EsActivo)
+                    .HasColumnName("esActivo")
+                    .HasDefaultValueSql("((1))");
+
+                entity.HasOne(d => d.IdUsuarioNavigation)
+                    .WithMany(p => p.Egresos)
+                    .HasForeignKey(d => d.IdUsuario)
+                    .HasConstraintName("FK__Egreso__idUsuario");
             });
 
             OnModelCreatingPartial(modelBuilder);

@@ -93,4 +93,26 @@ fechaRegistro datetime default getdate()
 )
 go
 
+create table Ingreso(
+idIngreso int primary key identity(1,1),
+descripcion varchar(200),
+fechaRegistro datetime default getdate(),
+monto decimal(10,2),
+tipoMoneda varchar(50), -- 'efectivo' o 'transferencia'
+idUsuario int references Usuario(idUsuario),
+esActivo bit default 1
+)
+go
+
+create table Egreso(
+idEgreso int primary key identity(1,1),
+descripcion varchar(200),
+fechaRegistro datetime default getdate(),
+monto decimal(10,2),
+tipoMoneda varchar(50), -- 'efectivo' o 'transferencia'
+idUsuario int references Usuario(idUsuario),
+esActivo bit default 1
+)
+go
+
 
