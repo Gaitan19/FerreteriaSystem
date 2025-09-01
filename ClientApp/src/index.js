@@ -5,7 +5,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './App';
 import Categoria from './views/Categoria';
 import DashBoard from './views/DashBoard';
+import Egreso from './views/Egreso';
 import HistorialVenta from './views/HistorialVenta';
+import Ingreso from './views/Ingreso';
 import Inicio from './views/Inicio';
 import NotFound from './views/NotFound';
 import Producto from './views/Producto';
@@ -103,6 +105,24 @@ root.render(
               <VerificarUsuario>
                 {' '}
                 <ReporteVenta />{' '}
+              </VerificarUsuario>
+            }
+          />
+          <Route
+            path="ingreso"
+            element={
+              <VerificarUsuario>
+                {' '}
+                <Ingreso />{' '}
+              </VerificarUsuario>
+            }
+          />
+          <Route
+            path="egreso"
+            element={
+              <VerificarUsuario>
+                {' '}
+                <Egreso />{' '}
               </VerificarUsuario>
             }
           />
