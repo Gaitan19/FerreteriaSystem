@@ -14,7 +14,7 @@ import {
 } from 'reactstrap';
 import Swal from 'sweetalert2';
 import Autosuggest from 'react-autosuggest';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useCallback } from 'react';
 import './css/Venta.css';
 import { UserContext } from '../context/UserProvider';
 import { generateCode } from '../utils/generateCode';
@@ -75,6 +75,19 @@ const Venta = () => {
   useEffect(() => {
     obtenerProductos();
   }, []);
+
+  // Recalculate change when payment type changes
+  useEffect(() => {
+    if (tipoPago === 'Transferencia') {
+      setVuelto(0);
+    } else if (tipoPago === 'Dolares') {
+      // Don't auto-calculate for dollars, reset to 0
+      setVuelto(0);
+    } else if (montoPago > 0) {
+      // For Cordobas, recalculate automatically
+      calcularVuelto(montoPago);
+    }
+  }, [tipoPago, total, montoPago, calcularVuelto]);
 
   //para obtener la lista de sugerencias
   const onSuggestionsFetchRequested = ({ value }) => {
@@ -230,12 +243,24 @@ const Venta = () => {
     calcularTotal(listaproductos);
   };
 
-  const calcularVuelto = (pagoCliente) => {
+  const calcularVuelto = useCallback((pagoCliente) => {
+    // For Transferencia, no change is calculated (exact payment)
+    if (tipoPago === 'Transferencia') {
+      setVuelto(0);
+      return;
+    }
+    
+    // For Dolares, don't auto-calculate - let user enter manually
+    if (tipoPago === 'Dolares') {
+      return;
+    }
+    
+    // For Cordobas, calculate change normally
     const totalVenta = parseFloat(total) || 0;
     const pago = parseFloat(pagoCliente) || 0;
     const cambio = pago - totalVenta;
     setVuelto(cambio >= 0 ? cambio : 0);
-  };
+  }, [tipoPago, total]);
 
   const calcularTotal = (arrayProductos) => {
     let st = 0;  // subtotal sin IVA
@@ -697,8 +722,20 @@ const Venta = () => {
                   <Row>
                     <Col sm={12}>
                       <InputGroup size="sm">
-                        <InputGroupText>Vuelto:C$</InputGroupText>
-                        <Input disabled value={vuelto.toFixed(2)} />
+                        <InputGroupText>
+                          Vuelto:{tipoPago === 'Dolares' ? '$' : 'C$'}
+                        </InputGroupText>
+                        <Input 
+                          disabled={tipoPago !== 'Dolares'} 
+                          value={vuelto.toFixed(2)} 
+                          onChange={(e) => {
+                            if (tipoPago === 'Dolares') {
+                              setVuelto(parseFloat(e.target.value) || 0);
+                            }
+                          }}
+                          type="number"
+                          step="0.01"
+                        />
                       </InputGroup>
                     </Col>
                   </Row>

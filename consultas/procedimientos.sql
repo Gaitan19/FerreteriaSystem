@@ -62,8 +62,8 @@ begin
 			insert into Ingreso(descripcion,monto,tipoDinero,idUsuario,esActivo)
 			values ('Pago de venta #' + @nrodocgenerado,@montoPago,@tipoPago,@idUsuario,1)
 
-			-- Registrar egreso con el vuelto (solo si hay vuelto)
-			if @vuelto > 0
+			-- Registrar egreso con el vuelto (solo si hay vuelto y no es transferencia)
+			if @vuelto > 0 and @tipoPago != 'Transferencia'
 			begin
 				insert into Egreso(descripcion,monto,tipoDinero,idUsuario,esActivo)
 				values ('Vuelto de venta #' + @nrodocgenerado,@vuelto,'Cordobas',@idUsuario,1)
