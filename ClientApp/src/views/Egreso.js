@@ -26,7 +26,7 @@ const modeloEgreso = {
   tipoDinero: "efectivo",
   idUsuario: 0,
   esActivo: true,
-  fechaRegistro: new Date().toISOString().slice(0, 16),
+  fechaRegistro: null,
 };
 
 const Egreso = () => {
@@ -150,9 +150,13 @@ const Egreso = () => {
         Monto: egreso.monto,
         TipoDinero: egreso.tipoDinero,
         IdUsuario: userData.idUsuario,
-        EsActivo: egreso.esActivo,
-        FechaRegistro: egreso.fechaRegistro ? new Date(egreso.fechaRegistro).toISOString() : null
+        EsActivo: egreso.esActivo
       };
+
+      // Only include FechaRegistro for edit operations (not for new records)
+      if (egreso.idEgreso !== 0 && egreso.fechaRegistro) {
+        egresoParaEnviar.FechaRegistro = new Date(egreso.fechaRegistro).toISOString();
+      }
 
       let response;
       if (egreso.idEgreso === 0) {
@@ -466,18 +470,13 @@ const Egreso = () => {
                     bsSize="sm"
                     type="datetime-local"
                     name="fechaRegistro"
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setEgreso({
-                        ...egreso,
-                        fechaRegistro: value
-                      });
-                    }}
                     value={egreso.fechaRegistro ? 
                       (typeof egreso.fechaRegistro === 'string' && egreso.fechaRegistro.includes('T') ? 
                         egreso.fechaRegistro.slice(0, 16) : 
-                        new Date(egreso.fechaRegistro).toISOString().slice(0, 16)) : ''}
-                    readOnly={modoSoloLectura}
+                        new Date(egreso.fechaRegistro).toISOString().slice(0, 16)) : 
+                      (egreso.idEgreso === 0 ? new Date().toISOString().slice(0, 16) : '')}
+                    readOnly={true}
+                    style={{backgroundColor: '#f8f9fa', cursor: 'not-allowed'}}
                   />
                 </FormGroup>
               </Col>
