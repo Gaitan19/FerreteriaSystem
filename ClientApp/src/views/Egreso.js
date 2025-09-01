@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import DataTable from "react-data-table-component";
 import {
   Card,
@@ -18,6 +18,7 @@ import {
 import Swal from "sweetalert2";
 import { exportToPDF, exportToExcel, applySearchFilter } from "../utils/exportHelpers";
 import { useSignalR } from "../context/SignalRProvider";
+import { UserContext } from "../context/UserProvider";
 
 const modeloEgreso = {
   idEgreso: 0,
@@ -29,12 +30,12 @@ const modeloEgreso = {
 };
 
 const Egreso = () => {
+  const { user } = useContext(UserContext);
   const [egreso, setEgreso] = useState(modeloEgreso);
   const [pendiente, setPendiente] = useState(true);
   const [egresos, setEgresos] = useState([]);
   const [filteredEgresos, setFilteredEgresos] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [usuarios, setUsuarios] = useState([]);
   const [verModal, setVerModal] = useState(false);
   const [modoSoloLectura, setModoSoloLectura] = useState(false);
   const { subscribe } = useSignalR();
@@ -44,8 +45,6 @@ const Egreso = () => {
     
     if (e.target.name === "monto") {
       value = parseFloat(value) || 0;
-    } else if (e.target.name === "idUsuario") {
-      value = parseInt(value) || 0;
     } else if (e.target.name === "esActivo") {
       value = e.target.value === "true";
     }
@@ -99,18 +98,6 @@ const Egreso = () => {
     exportToExcel(excelData, 'Egresos');
   };
 
-  const obtenerUsuarios = async () => {
-    try {
-      let response = await fetch("api/usuario/Lista");
-      if (response.ok) {
-        let data = await response.json();
-        setUsuarios(data.filter(u => u.esActivo));
-      }
-    } catch (error) {
-      Swal.fire("Error", "Error al obtener usuarios", "error");
-    }
-  };
-
   const obtenerEgresos = async () => {
     try {
       let response = await fetch("api/egreso/Lista");
@@ -127,7 +114,6 @@ const Egreso = () => {
 
   useEffect(() => {
     obtenerEgresos();
-    obtenerUsuarios();
 
     // Set up SignalR listeners for real-time updates
     const unsubscribeCreated = subscribe('EgresoCreated', (nuevoEgreso) => {
@@ -330,7 +316,11 @@ const Egreso = () => {
   };
 
   const abrirNuevoModal = () => {
-    setEgreso(modeloEgreso);
+    const currentUser = user ? JSON.parse(user) : null;
+    setEgreso({
+      ...modeloEgreso,
+      idUsuario: currentUser ? currentUser.idUsuario : 0
+    });
     setModoSoloLectura(false);
     setVerModal(true);
   };
@@ -550,20 +540,12 @@ const Egreso = () => {
                   <Label>Usuario *</Label>
                   <Input
                     bsSize="sm"
-                    type="select"
-                    name="idUsuario"
-                    onChange={handleChange}
-                    value={egreso.idUsuario}
-                    required
-                    disabled={modoSoloLectura}
-                  >
-                    <option value="">Seleccionar usuario...</option>
-                    {usuarios.map((item) => (
-                      <option key={item.idUsuario} value={item.idUsuario}>
-                        {item.nombre}
-                      </option>
-                    ))}
-                  </Input>
+                    type="text"
+                    name="usuario"
+                    value={user ? JSON.parse(user).nombre : 'Usuario no disponible'}
+                    disabled
+                    readOnly
+                  />
                 </FormGroup>
               </Col>
               <Col sm={6}>
