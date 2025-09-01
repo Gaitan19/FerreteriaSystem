@@ -57,14 +57,28 @@ namespace ReactVentas.Controllers
             }
         }
 
-        [HttpPut]
+        [HttpPatch]
         [Route("Editar")]
         public async Task<IActionResult> Editar([FromBody] Egreso request)
         {
-            // Updates an existing expense record in the database.
+            // Partially updates an existing expense record in the database (excludes FechaRegistro).
             try
             {
-                await _egresoRepository.UpdateAsync(request);
+                // Get the existing record to preserve the original FechaRegistro
+                var existingEgreso = await _egresoRepository.GetByIdAsync(request.IdEgreso);
+                if (existingEgreso == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Egreso not found");
+                }
+
+                // Update only the fields that should be modifiable, preserve FechaRegistro
+                existingEgreso.Descripcion = request.Descripcion;
+                existingEgreso.Monto = request.Monto;
+                existingEgreso.TipoDinero = request.TipoDinero;
+                existingEgreso.EsActivo = request.EsActivo;
+                // Keep existing FechaRegistro unchanged
+
+                await _egresoRepository.UpdateAsync(existingEgreso);
                 await _egresoRepository.SaveChangesAsync();
 
                 // Returns a 200 OK status on successful update.

@@ -57,14 +57,28 @@ namespace ReactVentas.Controllers
             }
         }
 
-        [HttpPut]
+        [HttpPatch]
         [Route("Editar")]
         public async Task<IActionResult> Editar([FromBody] Ingreso request)
         {
-            // Updates an existing income record in the database.
+            // Partially updates an existing income record in the database (excludes FechaRegistro).
             try
             {
-                await _ingresoRepository.UpdateAsync(request);
+                // Get the existing record to preserve the original FechaRegistro
+                var existingIngreso = await _ingresoRepository.GetByIdAsync(request.IdIngreso);
+                if (existingIngreso == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Ingreso not found");
+                }
+
+                // Update only the fields that should be modifiable, preserve FechaRegistro
+                existingIngreso.Descripcion = request.Descripcion;
+                existingIngreso.Monto = request.Monto;
+                existingIngreso.TipoDinero = request.TipoDinero;
+                existingIngreso.EsActivo = request.EsActivo;
+                // Keep existing FechaRegistro unchanged
+
+                await _ingresoRepository.UpdateAsync(existingIngreso);
                 await _ingresoRepository.SaveChangesAsync();
 
                 // Returns a 200 OK status on successful update.

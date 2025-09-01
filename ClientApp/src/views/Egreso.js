@@ -145,7 +145,6 @@ const Egreso = () => {
       
       // Prepare data for sending with PascalCase property names for backend
       const egresoParaEnviar = {
-        IdEgreso: egreso.idEgreso,
         Descripcion: egreso.descripcion,
         Monto: egreso.monto,
         TipoDinero: egreso.tipoDinero,
@@ -153,9 +152,9 @@ const Egreso = () => {
         EsActivo: egreso.esActivo
       };
 
-      // Only include FechaRegistro for edit operations (not for new records)
-      if (egreso.idEgreso !== 0 && egreso.fechaRegistro) {
-        egresoParaEnviar.FechaRegistro = new Date(egreso.fechaRegistro).toISOString();
+      // For edit operations, include the ID but never include FechaRegistro
+      if (egreso.idEgreso !== 0) {
+        egresoParaEnviar.IdEgreso = egreso.idEgreso;
       }
 
       let response;
@@ -169,7 +168,7 @@ const Egreso = () => {
         });
       } else {
         response = await fetch("api/egreso/Editar", {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json;charset=utf-8",
           },
@@ -184,9 +183,9 @@ const Egreso = () => {
         setVerModal(!verModal);
 
         Swal.fire(
-          `${egresoParaEnviar.idEgreso === 0 ? "Guardado" : "Actualizado"}`,
+          `${egreso.idEgreso === 0 ? "Guardado" : "Actualizado"}`,
           `El egreso fue ${
-            egresoParaEnviar.idEgreso === 0 ? "agregado" : "actualizado"
+            egreso.idEgreso === 0 ? "agregado" : "actualizado"
           }`,
           "success"
         );
@@ -462,47 +461,77 @@ const Egreso = () => {
                 </FormGroup>
               </Col>
             </Row>
-            <Row>
-              <Col sm={6}>
-                <FormGroup>
-                  <Label>Fecha de Registro</Label>
-                  <Input
-                    bsSize="sm"
-                    type="datetime-local"
-                    name="fechaRegistro"
-                    value={egreso.fechaRegistro ? 
-                      (typeof egreso.fechaRegistro === 'string' && egreso.fechaRegistro.includes('T') ? 
-                        egreso.fechaRegistro.slice(0, 16) : 
-                        new Date(egreso.fechaRegistro).toISOString().slice(0, 16)) : 
-                      (egreso.idEgreso === 0 ? new Date().toISOString().slice(0, 16) : '')}
-                    readOnly={true}
-                    style={{backgroundColor: '#f8f9fa', cursor: 'not-allowed'}}
-                  />
-                </FormGroup>
-              </Col>
-              <Col sm={6}>
-                <FormGroup>
-                  <Label>Estado</Label>
-                  <Input
-                    bsSize="sm"
-                    type="select"
-                    name="esActivo"
-                    onChange={(e) => {
-                      const value = e.target.value === "true";
-                      setEgreso({
-                        ...egreso,
-                        esActivo: value
-                      });
-                    }}
-                    value={egreso.esActivo ? "true" : "false"}
-                    disabled={modoSoloLectura}
-                  >
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                  </Input>
-                </FormGroup>
-              </Col>
-            </Row>
+            {/* Only show date and status fields for existing records */}
+            {egreso.idEgreso !== 0 && (
+              <Row>
+                <Col sm={6}>
+                  <FormGroup>
+                    <Label>Fecha de Registro</Label>
+                    <Input
+                      bsSize="sm"
+                      type="datetime-local"
+                      name="fechaRegistro"
+                      value={egreso.fechaRegistro ? 
+                        (typeof egreso.fechaRegistro === 'string' && egreso.fechaRegistro.includes('T') ? 
+                          egreso.fechaRegistro.slice(0, 16) : 
+                          new Date(egreso.fechaRegistro).toISOString().slice(0, 16)) : 
+                        ''}
+                      readOnly={true}
+                      style={{backgroundColor: '#f8f9fa', cursor: 'not-allowed'}}
+                    />
+                  </FormGroup>
+                </Col>
+                <Col sm={6}>
+                  <FormGroup>
+                    <Label>Estado</Label>
+                    <Input
+                      bsSize="sm"
+                      type="select"
+                      name="esActivo"
+                      onChange={(e) => {
+                        const value = e.target.value === "true";
+                        setEgreso({
+                          ...egreso,
+                          esActivo: value
+                        });
+                      }}
+                      value={egreso.esActivo ? "true" : "false"}
+                      disabled={modoSoloLectura}
+                    >
+                      <option value="true">Activo</option>
+                      <option value="false">Inactivo</option>
+                    </Input>
+                  </FormGroup>
+                </Col>
+              </Row>
+            )}
+            {/* Show only status field for new records */}
+            {egreso.idEgreso === 0 && (
+              <Row>
+                <Col sm={6}>
+                  <FormGroup>
+                    <Label>Estado</Label>
+                    <Input
+                      bsSize="sm"
+                      type="select"
+                      name="esActivo"
+                      onChange={(e) => {
+                        const value = e.target.value === "true";
+                        setEgreso({
+                          ...egreso,
+                          esActivo: value
+                        });
+                      }}
+                      value={egreso.esActivo ? "true" : "false"}
+                      disabled={modoSoloLectura}
+                    >
+                      <option value="true">Activo</option>
+                      <option value="false">Inactivo</option>
+                    </Input>
+                  </FormGroup>
+                </Col>
+              </Row>
+            )}
           </ModalBody>
           <ModalFooter>
             {!modoSoloLectura && (
