@@ -93,4 +93,26 @@ fechaRegistro datetime default getdate()
 )
 go
 
+create table Ingreso(
+idIngreso int primary key identity(1,1),
+descripcion varchar(200),
+fechaRegistro datetime default getdate(),
+monto decimal(10,2),
+tipoDinero varchar(50),
+idUsuario int references Usuario(idUsuario)
+)
+
+go
+
+create table Egreso(
+idEgreso int primary key identity(1,1),
+descripcion varchar(200),
+fechaRegistro datetime default getdate(),
+monto decimal(10,2),
+tipoDinero varchar(50),
+idUsuario int references Usuario(idUsuario)
+)
+
+go
+
 

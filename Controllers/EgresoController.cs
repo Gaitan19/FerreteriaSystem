@@ -1,0 +1,107 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using ReactVentas.Models;
+using ReactVentas.Interfaces;
+
+namespace ReactVentas.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EgresoController : ControllerBase
+    {
+        private readonly IEgresoRepository _egresoRepository;
+
+        public EgresoController(IEgresoRepository egresoRepository)
+        {
+            _egresoRepository = egresoRepository;
+        }
+
+        [HttpGet]
+        [Route("Lista")]
+        public async Task<IActionResult> Lista()
+        {
+            // Retrieves a list of expense records with user information ordered by ID in descending order.
+            try
+            {
+                var lista = await _egresoRepository.GetEgresosWithUserAsync();
+                return StatusCode(StatusCodes.Status200OK, lista);
+            }
+            catch (Exception ex)
+            {
+                // Returns a 500 Internal Server Error status if an exception occurs.
+                return StatusCode(StatusCodes.Status500InternalServerError, new List<Models.DTO.DtoEgreso>());
+            }
+        }
+
+        [HttpPost]
+        [Route("Guardar")]
+        public async Task<IActionResult> Guardar([FromBody] Egreso request)
+        {
+            // Adds a new expense record to the database.
+            try
+            {
+                // Set the registration date
+                request.FechaRegistro = DateTime.Now;
+                
+                await _egresoRepository.AddAsync(request);
+                await _egresoRepository.SaveChangesAsync();
+
+                // Returns a 200 OK status on successful save.
+                return StatusCode(StatusCodes.Status200OK, "ok");
+            }
+            catch (Exception ex)
+            {
+                // Returns a 500 Internal Server Error status if an exception occurs during saving.
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpPut]
+        [Route("Editar")]
+        public async Task<IActionResult> Editar([FromBody] Egreso request)
+        {
+            // Updates an existing expense record in the database.
+            try
+            {
+                await _egresoRepository.UpdateAsync(request);
+                await _egresoRepository.SaveChangesAsync();
+
+                // Returns a 200 OK status on successful update.
+                return StatusCode(StatusCodes.Status200OK, "ok");
+            }
+            catch (Exception ex)
+            {
+                // Returns a 500 Internal Server Error status if an exception occurs during update.
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("Eliminar/{id:int}")]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            // Deletes an expense record from the database.
+            try
+            {
+                var egreso = await _egresoRepository.GetByIdAsync(id);
+                if (egreso != null)
+                {
+                    var context = ((Repositories.EgresoRepository)_egresoRepository).GetContext();
+                    context.Egresos.Remove(egreso);
+                    await _egresoRepository.SaveChangesAsync();
+                    
+                    return StatusCode(StatusCodes.Status200OK, "ok");
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Egreso not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Returns a 500 Internal Server Error status if an exception occurs during deletion.
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+    }
+}

@@ -15,6 +15,8 @@ namespace ReactVentas.Models
         public Usuario()
         {
             Venta = new HashSet<Venta>();
+            Ingresos = new HashSet<Ingreso>();
+            Egresos = new HashSet<Egreso>();
         }
 
         /// <summary>
@@ -67,5 +69,15 @@ namespace ReactVentas.Models
         /// Navigation property to the collection of sales associated with the user.
         /// </summary>
         public virtual ICollection<Venta> Venta { get; set; }
+
+        /// <summary>
+        /// Navigation property to the collection of income records associated with the user.
+        /// </summary>
+        public virtual ICollection<Ingreso> Ingresos { get; set; }
+
+        /// <summary>
+        /// Navigation property to the collection of expense records associated with the user.
+        /// </summary>
+        public virtual ICollection<Egreso> Egresos { get; set; }
     }
 }
