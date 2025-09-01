@@ -42,7 +42,7 @@ namespace ReactVentas.Controllers
             {
                 // Set the registration date and default active status
                 request.FechaRegistro = DateTime.Now;
-                request.Activo = true;
+                request.EsActivo = true;
                 
                 await _egresoRepository.AddAsync(request);
                 await _egresoRepository.SaveChangesAsync();
@@ -84,14 +84,14 @@ namespace ReactVentas.Controllers
         [Route("Eliminar/{id:int}")]
         public async Task<IActionResult> Eliminar(int id, [FromQuery] int usuarioId)
         {
-            // Soft deletes an expense record (sets Activo = false).
+            // Soft deletes an expense record (sets EsActivo = false).
             try
             {
                 var egreso = await _egresoRepository.GetByIdAsync(id);
                 if (egreso != null)
                 {
-                    // Soft delete: set Activo to false instead of removing from database
-                    egreso.Activo = false;
+                    // Soft delete: set EsActivo to false instead of removing from database
+                    egreso.EsActivo = false;
                     egreso.ActualizadoPor = usuarioId;
                     
                     await _egresoRepository.UpdateAsync(egreso);

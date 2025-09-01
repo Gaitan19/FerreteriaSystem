@@ -99,7 +99,8 @@ descripcion varchar(200),
 fechaRegistro datetime default getdate(),
 monto decimal(10,2),
 tipoDinero varchar(50),
-idUsuario int references Usuario(idUsuario)
+idUsuario int references Usuario(idUsuario),
+esActivo bit
 )
 
 go
@@ -110,7 +111,8 @@ descripcion varchar(200),
 fechaRegistro datetime default getdate(),
 monto decimal(10,2),
 tipoDinero varchar(50),
-idUsuario int references Usuario(idUsuario)
+idUsuario int references Usuario(idUsuario),
+esActivo bit
 )
 
 go

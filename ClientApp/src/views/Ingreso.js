@@ -26,7 +26,7 @@ const modeloIngreso = {
   tipoDinero: "efectivo",
   idUsuario: 0,
   actualizadoPor: null,
-  activo: true,
+  esActivo: true,
 };
 
 const Ingreso = () => {

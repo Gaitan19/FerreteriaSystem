@@ -27,7 +27,7 @@ namespace ReactVentas.Repositories
         /// </summary>
         public async Task<List<DtoEgreso>> GetEgresosWithUserAsync()
         {
-            var query = from e in _dbSet.Where(x => x.Activo == true)
+            var query = from e in _dbSet.Where(x => x.EsActivo == true)
                         join u in _context.Usuarios on e.IdUsuario equals u.IdUsuario
                         join ua in _context.Usuarios on e.ActualizadoPor equals ua.IdUsuario into actualizadoPorGroup
                         from ua in actualizadoPorGroup.DefaultIfEmpty()
@@ -43,7 +43,7 @@ namespace ReactVentas.Repositories
                             NombreUsuario = u.Nombre ?? "",
                             ActualizadoPor = e.ActualizadoPor,
                             NombreActualizadoPor = ua != null ? ua.Nombre : null,
-                            Activo = e.Activo
+                            EsActivo = e.EsActivo
                         };
 
             return await query.ToListAsync();
@@ -55,7 +55,7 @@ namespace ReactVentas.Repositories
         public override async Task<List<Egreso>> GetAllAsync()
         {
             return await _dbSet
-                .Where(e => e.Activo == true)
+                .Where(e => e.EsActivo == true)
                 .Include(e => e.IdUsuarioNavigation)
                 .Include(e => e.ActualizadoPorNavigation)
                 .OrderByDescending(e => e.IdEgreso)

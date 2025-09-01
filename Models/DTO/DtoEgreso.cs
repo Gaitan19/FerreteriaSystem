@@ -11,6 +11,6 @@ namespace ReactVentas.Models.DTO
         public string? NombreUsuario { get; set; }
         public int? ActualizadoPor { get; set; }
         public string? NombreActualizadoPor { get; set; }
-        public bool? Activo { get; set; }
+        public bool? EsActivo { get; set; }
     }
 }

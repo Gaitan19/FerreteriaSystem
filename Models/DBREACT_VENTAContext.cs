@@ -276,8 +276,8 @@ namespace ReactVentas.Models
 
                 entity.Property(e => e.ActualizadoPor).HasColumnName("actualizadoPor");
 
-                entity.Property(e => e.Activo)
-                    .HasColumnName("activo")
+                entity.Property(e => e.EsActivo)
+                    .HasColumnName("esActivo")
                     .HasDefaultValue(true);
 
                 entity.HasOne(d => d.IdUsuarioNavigation)
@@ -323,8 +323,8 @@ namespace ReactVentas.Models
 
                 entity.Property(e => e.ActualizadoPor).HasColumnName("actualizadoPor");
 
-                entity.Property(e => e.Activo)
-                    .HasColumnName("activo")
+                entity.Property(e => e.EsActivo)
+                    .HasColumnName("esActivo")
                     .HasDefaultValue(true);
 
                 entity.HasOne(d => d.IdUsuarioNavigation)
