@@ -27,7 +27,7 @@ namespace ReactVentas.Repositories
         /// </summary>
         public async Task<List<DtoEgreso>> GetEgresosWithUserAsync()
         {
-            var query = from e in _dbSet.Where(x => x.EsActivo == true)
+            var query = from e in _dbSet
                         join u in _context.Usuarios on e.IdUsuario equals u.IdUsuario
                         orderby e.IdEgreso descending
                         select new DtoEgreso
@@ -46,9 +46,20 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Sobrescribe GetAllAsync para ordenar por IdEgreso descendente y filtrar activos
+        /// Sobrescribe GetAllAsync para ordenar por IdEgreso descendente 
         /// </summary>
         public override async Task<List<Egreso>> GetAllAsync()
+        {
+            return await _dbSet
+                .Include(e => e.IdUsuarioNavigation)
+                .OrderByDescending(e => e.IdEgreso)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Sobrescribe GetAllAsync para ordenar por IdEgreso descendente y filtrar activos
+        /// </summary>
+        public async Task<List<Egreso>> GetAllActiveAsync()
         {
             return await _dbSet
                 .Where(e => e.EsActivo == true)

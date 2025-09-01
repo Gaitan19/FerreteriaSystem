@@ -27,7 +27,7 @@ namespace ReactVentas.Repositories
         /// </summary>
         public async Task<List<DtoIngreso>> GetIngresosWithUserAsync()
         {
-            var query = from i in _dbSet.Where(x => x.EsActivo == true)
+            var query = from i in _dbSet
                         join u in _context.Usuarios on i.IdUsuario equals u.IdUsuario
                         orderby i.IdIngreso descending
                         select new DtoIngreso
@@ -46,9 +46,20 @@ namespace ReactVentas.Repositories
         }
 
         /// <summary>
-        /// Sobrescribe GetAllAsync para ordenar por IdIngreso descendente y filtrar activos
+        /// Sobrescribe GetAllAsync para ordenar por IdIngreso descendente 
         /// </summary>
         public override async Task<List<Ingreso>> GetAllAsync()
+        {
+            return await _dbSet
+                .Include(i => i.IdUsuarioNavigation)
+                .OrderByDescending(i => i.IdIngreso)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Sobrescribe GetAllAsync para ordenar por IdIngreso descendente y filtrar activos
+        /// </summary>
+        public async Task<List<Ingreso>> GetAllActiveAsync()
         {
             return await _dbSet
                 .Where(i => i.EsActivo == true)

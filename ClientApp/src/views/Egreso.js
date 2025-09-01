@@ -74,7 +74,8 @@ const Egreso = () => {
       { header: 'Fecha', accessor: (row) => row.fechaRegistro },
       { header: 'Monto', accessor: (row) => `$${row.monto}` },
       { header: 'Tipo', accessor: (row) => row.tipoDinero },
-      { header: 'Usuario', accessor: (row) => row.nombreUsuario }
+      { header: 'Usuario', accessor: (row) => row.nombreUsuario },
+      { header: 'Estado', accessor: (row) => row.esActivo ? "Activo" : "No Activo" }
     ];
     
     exportToPDF(filteredEgresos, columns, 'Lista_de_Egresos');
@@ -87,7 +88,8 @@ const Egreso = () => {
       'Fecha': egr.fechaRegistro,
       'Monto': egr.monto,
       'Tipo': egr.tipoDinero,
-      'Usuario': egr.nombreUsuario
+      'Usuario': egr.nombreUsuario,
+      'Estado': egr.esActivo ? "Activo" : "No Activo"
     }));
 
     exportToExcel(excelData, 'Egresos');
@@ -262,16 +264,14 @@ const Egreso = () => {
       name: "Monto",
       selector: (row) => row.monto,
       sortable: true,
-      cell: (row) => `$${parseFloat(row.monto).toFixed(2)}`,
+      cell: (row) => `${parseFloat(row.monto).toFixed(2)}`,
     },
     {
       name: "Tipo",
       selector: (row) => row.tipoDinero,
       sortable: true,
       cell: (row) => (
-        <span className="badge badge-warning p-2">
-          {row.tipoDinero}
-        </span>
+          `${row.tipoDinero}`
       ),
     },
     {
@@ -283,11 +283,15 @@ const Egreso = () => {
       name: "Estado",
       selector: (row) => row.esActivo,
       sortable: true,
-      cell: (row) => (
-        <span className={`badge p-2 ${row.esActivo ? 'badge-success' : 'badge-secondary'}`}>
-          {row.esActivo ? 'Activo' : 'Inactivo'}
-        </span>
-      ),
+      cell: (row) => {
+        let clase;
+        clase = row.esActivo
+          ? "badge badge-info p-2"
+          : "badge badge-danger p-2";
+        return (
+          <span className={clase}>{row.esActivo ? "Activo" : "No Activo"}</span>
+        );
+      },
     },
     {
       name: "Acciones",
@@ -327,12 +331,12 @@ const Egreso = () => {
     headCells: {
       style: {
         fontSize: "13px",
-        fontWeight: "bold",
+        fontWeight: 800,
       },
     },
-    cells: {
+    headRow: {
       style: {
-        fontSize: "12px",
+        backgroundColor: "#eee",
       },
     },
   };
@@ -349,7 +353,7 @@ const Egreso = () => {
       <Row>
         <Col sm="12">
           <Card>
-            <CardHeader style={{ backgroundColor: "#e74a3b", color: "white" }}>
+            <CardHeader style={{ backgroundColor: "#4e73df", color: "white" }}>
               <Row>
                 <Col sm="6">
                   <h5>Lista de Egresos</h5>
@@ -455,8 +459,9 @@ const Egreso = () => {
                     value={egreso.tipoDinero}
                     disabled={modoSoloLectura}
                   >
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
+                    <option value="Cordobas">Cordobas</option>
+                    <option value="Dolares">Dolares</option>
+                    <option value="Transferencia">Transferencia</option>
                   </Input>
                 </FormGroup>
               </Col>
@@ -464,23 +469,7 @@ const Egreso = () => {
             {/* Only show date and status fields for existing records */}
             {egreso.idEgreso !== 0 && (
               <Row>
-                <Col sm={6}>
-                  <FormGroup>
-                    <Label>Fecha de Registro</Label>
-                    <Input
-                      bsSize="sm"
-                      type="datetime-local"
-                      name="fechaRegistro"
-                      value={egreso.fechaRegistro ? 
-                        (typeof egreso.fechaRegistro === 'string' && egreso.fechaRegistro.includes('T') ? 
-                          egreso.fechaRegistro.slice(0, 16) : 
-                          new Date(egreso.fechaRegistro).toISOString().slice(0, 16)) : 
-                        ''}
-                      readOnly={true}
-                      style={{backgroundColor: '#f8f9fa', cursor: 'not-allowed'}}
-                    />
-                  </FormGroup>
-                </Col>
+               
                 <Col sm={6}>
                   <FormGroup>
                     <Label>Estado</Label>
