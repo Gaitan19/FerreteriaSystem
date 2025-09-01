@@ -9,6 +9,10 @@
         public decimal subTotal { get; set; }
         public decimal igv { get; set; }
         public decimal total { get; set; }
+        public string tipoPago { get; set; }
+        public string numeroRuc { get; set; }
+        public decimal montoPago { get; set; }
+        public decimal vuelto { get; set; }
 
         public List<DtoProducto> listaProductos { get; set; }
     }

@@ -97,6 +97,10 @@ namespace ReactVentas.Controllers
                     cmd.Parameters.Add("impuestoTotal", SqlDbType.Decimal).Value = request.igv;
                     cmd.Parameters.Add("total", SqlDbType.Decimal).Value = request.total;
                     cmd.Parameters.Add("productos", SqlDbType.Xml).Value = productos.ToString();
+                    cmd.Parameters.Add("tipoPago", SqlDbType.VarChar, 50).Value = request.tipoPago;
+                    cmd.Parameters.Add("numeroRuc", SqlDbType.VarChar, 50).Value = request.numeroRuc ?? "";
+                    cmd.Parameters.Add("montoPago", SqlDbType.Decimal).Value = request.montoPago;
+                    cmd.Parameters.Add("vuelto", SqlDbType.Decimal).Value = request.vuelto;
                     cmd.Parameters.Add("nroDocumento", SqlDbType.VarChar, 6).Direction = ParameterDirection.Output;
                     cmd.ExecuteNonQuery();
                     numeroDocumento = cmd.Parameters["nroDocumento"].Value.ToString();

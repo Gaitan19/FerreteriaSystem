@@ -40,6 +40,12 @@ const Venta = () => {
   const [tempProducts, setTempProducts] = useState([]);
   const [alreadyProductos, setAlreadyProductos] = useState(false);
   
+  // New fields for payment
+  const [tipoPago, setTipoPago] = useState('Cordobas');
+  const [numeroRuc, setNumeroRuc] = useState('');
+  const [montoPago, setMontoPago] = useState(0);
+  const [vuelto, setVuelto] = useState(0);
+  
   // Estado para la última venta (para imprimir)
   const [ultimaVenta, setUltimaVenta] = useState({});
 
@@ -51,6 +57,10 @@ const Venta = () => {
     setTotal(0);
     setSubTotal(0);
     setIgv(0);
+    setTipoPago('Cordobas');
+    setNumeroRuc('');
+    setMontoPago(0);
+    setVuelto(0);
   };
 
   const obtenerProductos = async () => {
@@ -220,6 +230,13 @@ const Venta = () => {
     calcularTotal(listaproductos);
   };
 
+  const calcularVuelto = (pagoCliente) => {
+    const totalVenta = parseFloat(total) || 0;
+    const pago = parseFloat(pagoCliente) || 0;
+    const cambio = pago - totalVenta;
+    setVuelto(cambio >= 0 ? cambio : 0);
+  };
+
   const calcularTotal = (arrayProductos) => {
     let st = 0;  // subtotal sin IVA
     let imp = 0; // IVA
@@ -385,6 +402,22 @@ const Venta = () => {
       return;
     }
 
+    // Validation for required fields
+    if (!tipoPago) {
+      Swal.fire('Opps!', 'Debe seleccionar un tipo de pago', 'error');
+      return;
+    }
+
+    if (montoPago <= 0) {
+      Swal.fire('Opps!', 'Debe ingresar el monto que paga el cliente', 'error');
+      return;
+    }
+
+    if (montoPago < parseFloat(total)) {
+      Swal.fire('Opps!', 'El monto pagado debe ser mayor o igual al total de la venta', 'error');
+      return;
+    }
+
     let venta = {
       documentoCliente: documentoCliente,
       nombreCliente: nombreCliente,
@@ -393,6 +426,10 @@ const Venta = () => {
       subTotal: parseFloat(subTotal),
       igv: parseFloat(igv),
       total: parseFloat(total),
+      tipoPago: tipoPago,
+      numeroRuc: numeroRuc || '',
+      montoPago: parseFloat(montoPago),
+      vuelto: parseFloat(vuelto),
       listaProductos: productos,
     };
 
@@ -479,6 +516,34 @@ const Venta = () => {
                           value={nombreCliente}
                           onChange={(e) => setNombreCliente(e.target.value)}
                         />
+                      </FormGroup>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col sm={6}>
+                      <FormGroup>
+                        <Label>Número RUC (Opcional)</Label>
+                        <Input
+                          bsSize="sm"
+                          value={numeroRuc}
+                          onChange={(e) => setNumeroRuc(e.target.value)}
+                          placeholder="RUC del cliente"
+                        />
+                      </FormGroup>
+                    </Col>
+                    <Col sm={6}>
+                      <FormGroup>
+                        <Label>Tipo de Pago <span style={{color: 'red'}}>*</span></Label>
+                        <Input
+                          type="select"
+                          bsSize="sm"
+                          value={tipoPago}
+                          onChange={(e) => setTipoPago(e.target.value)}
+                        >
+                          <option value="Cordobas">Córdobas</option>
+                          <option value="Dolares">Dólares</option>
+                          <option value="Transferencia">Transferencia</option>
+                        </Input>
                       </FormGroup>
                     </Col>
                   </Row>
@@ -603,11 +668,37 @@ const Venta = () => {
                       </InputGroup>
                     </Col>
                   </Row>
-                  <Row>
+                  <Row className="mb-2">
                     <Col sm={12}>
                       <InputGroup size="sm">
                         <InputGroupText>Total:C$</InputGroupText>
                         <Input disabled value={total} />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                  <Row className="mb-2">
+                    <Col sm={12}>
+                      <InputGroup size="sm">
+                        <InputGroupText>Paga con <span style={{color: 'red'}}>*</span>:</InputGroupText>
+                        <Input 
+                          type="number" 
+                          step="0.01"
+                          value={montoPago} 
+                          onChange={(e) => {
+                            const valor = e.target.value;
+                            setMontoPago(valor);
+                            calcularVuelto(valor);
+                          }}
+                          placeholder="Monto que paga el cliente"
+                        />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col sm={12}>
+                      <InputGroup size="sm">
+                        <InputGroupText>Vuelto:C$</InputGroupText>
+                        <Input disabled value={vuelto.toFixed(2)} />
                       </InputGroup>
                     </Col>
                   </Row>

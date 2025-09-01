@@ -77,6 +77,30 @@ namespace ReactVentas.Models
         public decimal? Total { get; set; }
 
         /// <summary>
+        /// Gets or sets the payment type for the sale (Cordobas, Dolares, Transferencia).
+        /// Optional field.
+        /// </summary>
+        public string? TipoPago { get; set; }
+
+        /// <summary>
+        /// Gets or sets the client's RUC number.
+        /// Optional field.
+        /// </summary>
+        public string? NumeroRuc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the amount paid by the customer.
+        /// Optional field.
+        /// </summary>
+        public decimal? MontoPago { get; set; }
+
+        /// <summary>
+        /// Gets or sets the change amount given to the customer.
+        /// Optional field.
+        /// </summary>
+        public decimal? Vuelto { get; set; }
+
+        /// <summary>
         /// Navigation property to the user associated with this sale.
         /// </summary>
         public virtual Usuario? IdUsuarioNavigation { get; set; }
