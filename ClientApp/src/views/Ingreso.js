@@ -151,7 +151,7 @@ const Ingreso = () => {
         TipoDinero: ingreso.tipoDinero,
         IdUsuario: userData.idUsuario,
         EsActivo: ingreso.esActivo,
-        FechaRegistro: ingreso.fechaRegistro
+        FechaRegistro: ingreso.fechaRegistro ? new Date(ingreso.fechaRegistro).toISOString() : null
       };
 
       let response;
@@ -473,7 +473,10 @@ const Ingreso = () => {
                         fechaRegistro: value
                       });
                     }}
-                    value={ingreso.fechaRegistro ? new Date(ingreso.fechaRegistro).toISOString().slice(0, 16) : ''}
+                    value={ingreso.fechaRegistro ? 
+                      (typeof ingreso.fechaRegistro === 'string' && ingreso.fechaRegistro.includes('T') ? 
+                        ingreso.fechaRegistro.slice(0, 16) : 
+                        new Date(ingreso.fechaRegistro).toISOString().slice(0, 16)) : ''}
                     readOnly={modoSoloLectura}
                   />
                 </FormGroup>

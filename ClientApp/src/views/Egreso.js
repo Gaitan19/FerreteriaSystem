@@ -151,7 +151,7 @@ const Egreso = () => {
         TipoDinero: egreso.tipoDinero,
         IdUsuario: userData.idUsuario,
         EsActivo: egreso.esActivo,
-        FechaRegistro: egreso.fechaRegistro
+        FechaRegistro: egreso.fechaRegistro ? new Date(egreso.fechaRegistro).toISOString() : null
       };
 
       let response;
@@ -473,7 +473,10 @@ const Egreso = () => {
                         fechaRegistro: value
                       });
                     }}
-                    value={egreso.fechaRegistro ? new Date(egreso.fechaRegistro).toISOString().slice(0, 16) : ''}
+                    value={egreso.fechaRegistro ? 
+                      (typeof egreso.fechaRegistro === 'string' && egreso.fechaRegistro.includes('T') ? 
+                        egreso.fechaRegistro.slice(0, 16) : 
+                        new Date(egreso.fechaRegistro).toISOString().slice(0, 16)) : ''}
                     readOnly={modoSoloLectura}
                   />
                 </FormGroup>
