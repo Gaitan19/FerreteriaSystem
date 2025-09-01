@@ -13,6 +13,8 @@ import ReporteVenta from './views/ReporteVenta';
 import Usuario from './views/Usuario';
 import Venta from './views/Venta';
 import Login from './views/Login';
+import Ingreso from './views/Ingreso';
+import Egreso from './views/Egreso';
 
 import UserProvider from './context/UserProvider';
 import SignalRProvider from './context/SignalRProvider';
@@ -103,6 +105,24 @@ root.render(
               <VerificarUsuario>
                 {' '}
                 <ReporteVenta />{' '}
+              </VerificarUsuario>
+            }
+          />
+          <Route
+            path="ingreso"
+            element={
+              <VerificarUsuario>
+                {' '}
+                <Ingreso />{' '}
+              </VerificarUsuario>
+            }
+          />
+          <Route
+            path="egreso"
+            element={
+              <VerificarUsuario>
+                {' '}
+                <Egreso />{' '}
               </VerificarUsuario>
             }
           />

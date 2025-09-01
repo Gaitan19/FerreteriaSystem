@@ -141,6 +141,35 @@ const NavBar = () => {
         </div>
       </li>
 
+      <li className="nav-item">
+        <a
+          className="nav-link collapsed"
+          href="#"
+          data-toggle="collapse"
+          data-target="#collapseFinanzas"
+          aria-expanded="true"
+          aria-controls="collapseFinanzas"
+        >
+          <i className="fas fa-fw fa-dollar-sign"></i>
+          <span>Finanzas</span>
+        </a>
+        <div
+          id="collapseFinanzas"
+          className="collapse"
+          aria-labelledby="headingUtilities"
+          data-parent="#accordionSidebar"
+        >
+          <div className="bg-white py-2 collapse-inner rounded">
+            <NavLink to="/ingreso" className="collapse-item">
+              Ingresos
+            </NavLink>
+            <NavLink to="/egreso" className="collapse-item">
+              Egresos
+            </NavLink>
+          </div>
+        </div>
+      </li>
+
       {dataUser.idRolNavigation.descripcion == "Administrador" && (
         <li className="nav-item">
           <a
