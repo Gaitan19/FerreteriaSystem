@@ -141,9 +141,7 @@ const Ingreso = () => {
       // Prepare data for sending
       const ingresoParaEnviar = {
         ...ingreso,
-        idUsuario: userData.idUsuario,
-        // Set ActualizadoPor only for updates (not for new records)
-        actualizadoPor: ingreso.idIngreso === 0 ? null : userData.idUsuario
+        idUsuario: userData.idUsuario
       };
 
       let response;
@@ -202,7 +200,7 @@ const Ingreso = () => {
         // Get current user data
         const userData = JSON.parse(user);
         
-        fetch(`api/ingreso/Eliminar/${id}?usuarioId=${userData.idUsuario}`, {
+        fetch(`api/ingreso/Eliminar/${id}`, {
           method: "DELETE",
         })
           .then((response) => {

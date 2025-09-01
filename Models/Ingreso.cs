@@ -11,10 +11,8 @@ namespace ReactVentas.Models
         public decimal? Monto { get; set; }
         public string? TipoDinero { get; set; }
         public int? IdUsuario { get; set; }
-        public int? ActualizadoPor { get; set; }
         public bool? EsActivo { get; set; }
 
         public virtual Usuario? IdUsuarioNavigation { get; set; }
-        public virtual Usuario? ActualizadoPorNavigation { get; set; }
     }
 }

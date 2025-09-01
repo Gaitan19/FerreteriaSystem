@@ -64,9 +64,6 @@ namespace ReactVentas.Controllers
             // Updates an existing income record in the database.
             try
             {
-                // Set ActualizadoPor to the user making the update
-                // Note: The frontend should send the logged-in user ID in ActualizadoPor field
-                
                 await _ingresoRepository.UpdateAsync(request);
                 await _ingresoRepository.SaveChangesAsync();
 
@@ -82,7 +79,7 @@ namespace ReactVentas.Controllers
 
         [HttpDelete]
         [Route("Eliminar/{id:int}")]
-        public async Task<IActionResult> Eliminar(int id, [FromQuery] int usuarioId)
+        public async Task<IActionResult> Eliminar(int id)
         {
             // Soft deletes an income record (sets EsActivo = false).
             try
@@ -92,7 +89,6 @@ namespace ReactVentas.Controllers
                 {
                     // Soft delete: set EsActivo to false instead of removing from database
                     ingreso.EsActivo = false;
-                    ingreso.ActualizadoPor = usuarioId;
                     
                     await _ingresoRepository.UpdateAsync(ingreso);
                     await _ingresoRepository.SaveChangesAsync();

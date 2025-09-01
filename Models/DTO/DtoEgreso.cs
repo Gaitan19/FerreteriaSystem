@@ -9,8 +9,6 @@ namespace ReactVentas.Models.DTO
         public string TipoDinero { get; set; }
         public int IdUsuario { get; set; }
         public string? NombreUsuario { get; set; }
-        public int? ActualizadoPor { get; set; }
-        public string? NombreActualizadoPor { get; set; }
         public bool? EsActivo { get; set; }
     }
 }

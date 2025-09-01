@@ -25,7 +25,6 @@ const modeloEgreso = {
   monto: 0,
   tipoDinero: "efectivo",
   idUsuario: 0,
-  actualizadoPor: null,
   esActivo: true,
 };
 
@@ -141,9 +140,7 @@ const Egreso = () => {
       // Prepare data for sending
       const egresoParaEnviar = {
         ...egreso,
-        idUsuario: userData.idUsuario,
-        // Set ActualizadoPor only for updates (not for new records)
-        actualizadoPor: egreso.idEgreso === 0 ? null : userData.idUsuario
+        idUsuario: userData.idUsuario
       };
 
       let response;
@@ -202,7 +199,7 @@ const Egreso = () => {
         // Get current user data
         const userData = JSON.parse(user);
         
-        fetch(`api/egreso/Eliminar/${id}?usuarioId=${userData.idUsuario}`, {
+        fetch(`api/egreso/Eliminar/${id}`, {
           method: "DELETE",
         })
           .then((response) => {

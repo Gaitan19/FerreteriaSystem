@@ -29,8 +29,6 @@ namespace ReactVentas.Repositories
         {
             var query = from i in _dbSet.Where(x => x.EsActivo == true)
                         join u in _context.Usuarios on i.IdUsuario equals u.IdUsuario
-                        join ua in _context.Usuarios on i.ActualizadoPor equals ua.IdUsuario into actualizadoPorGroup
-                        from ua in actualizadoPorGroup.DefaultIfEmpty()
                         orderby i.IdIngreso descending
                         select new DtoIngreso
                         {
@@ -41,8 +39,6 @@ namespace ReactVentas.Repositories
                             TipoDinero = i.TipoDinero ?? "",
                             IdUsuario = i.IdUsuario ?? 0,
                             NombreUsuario = u.Nombre ?? "",
-                            ActualizadoPor = i.ActualizadoPor,
-                            NombreActualizadoPor = ua != null ? ua.Nombre : null,
                             EsActivo = i.EsActivo
                         };
 
@@ -57,7 +53,6 @@ namespace ReactVentas.Repositories
             return await _dbSet
                 .Where(i => i.EsActivo == true)
                 .Include(i => i.IdUsuarioNavigation)
-                .Include(i => i.ActualizadoPorNavigation)
                 .OrderByDescending(i => i.IdIngreso)
                 .ToListAsync();
         }
