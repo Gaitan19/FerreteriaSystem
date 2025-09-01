@@ -40,8 +40,9 @@ namespace ReactVentas.Controllers
             // Adds a new expense record to the database.
             try
             {
-                // Set the registration date
+                // Set the registration date and default active status
                 request.FechaRegistro = DateTime.Now;
+                request.Activo = true;
                 
                 await _egresoRepository.AddAsync(request);
                 await _egresoRepository.SaveChangesAsync();
@@ -63,6 +64,9 @@ namespace ReactVentas.Controllers
             // Updates an existing expense record in the database.
             try
             {
+                // Set ActualizadoPor to the user making the update
+                // Note: The frontend should send the logged-in user ID in ActualizadoPor field
+                
                 await _egresoRepository.UpdateAsync(request);
                 await _egresoRepository.SaveChangesAsync();
 
@@ -78,16 +82,19 @@ namespace ReactVentas.Controllers
 
         [HttpDelete]
         [Route("Eliminar/{id:int}")]
-        public async Task<IActionResult> Eliminar(int id)
+        public async Task<IActionResult> Eliminar(int id, [FromQuery] int usuarioId)
         {
-            // Deletes an expense record from the database.
+            // Soft deletes an expense record (sets Activo = false).
             try
             {
                 var egreso = await _egresoRepository.GetByIdAsync(id);
                 if (egreso != null)
                 {
-                    var context = ((Repositories.EgresoRepository)_egresoRepository).GetContext();
-                    context.Egresos.Remove(egreso);
+                    // Soft delete: set Activo to false instead of removing from database
+                    egreso.Activo = false;
+                    egreso.ActualizadoPor = usuarioId;
+                    
+                    await _egresoRepository.UpdateAsync(egreso);
                     await _egresoRepository.SaveChangesAsync();
                     
                     return StatusCode(StatusCodes.Status200OK, "ok");

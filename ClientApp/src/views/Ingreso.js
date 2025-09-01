@@ -25,6 +25,8 @@ const modeloIngreso = {
   monto: 0,
   tipoDinero: "efectivo",
   idUsuario: 0,
+  actualizadoPor: null,
+  activo: true,
 };
 
 const Ingreso = () => {
@@ -139,7 +141,9 @@ const Ingreso = () => {
       // Prepare data for sending
       const ingresoParaEnviar = {
         ...ingreso,
-        idUsuario: userData.idUsuario
+        idUsuario: userData.idUsuario,
+        // Set ActualizadoPor only for updates (not for new records)
+        actualizadoPor: ingreso.idIngreso === 0 ? null : userData.idUsuario
       };
 
       let response;
@@ -195,7 +199,10 @@ const Ingreso = () => {
       cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
-        fetch(`api/ingreso/Eliminar/${id}`, {
+        // Get current user data
+        const userData = JSON.parse(user);
+        
+        fetch(`api/ingreso/Eliminar/${id}?usuarioId=${userData.idUsuario}`, {
           method: "DELETE",
         })
           .then((response) => {

@@ -274,10 +274,21 @@ namespace ReactVentas.Models
 
                 entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
 
+                entity.Property(e => e.ActualizadoPor).HasColumnName("actualizadoPor");
+
+                entity.Property(e => e.Activo)
+                    .HasColumnName("activo")
+                    .HasDefaultValue(true);
+
                 entity.HasOne(d => d.IdUsuarioNavigation)
                     .WithMany(p => p.Ingresos)
                     .HasForeignKey(d => d.IdUsuario)
                     .HasConstraintName("FK__Ingreso__idUsuario__71D1E811");
+
+                entity.HasOne(d => d.ActualizadoPorNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.ActualizadoPor)
+                    .HasConstraintName("FK__Ingreso__actualizadoPor__72C60C4A");
             });
 
             modelBuilder.Entity<Egreso>(entity =>
@@ -310,10 +321,21 @@ namespace ReactVentas.Models
 
                 entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
 
+                entity.Property(e => e.ActualizadoPor).HasColumnName("actualizadoPor");
+
+                entity.Property(e => e.Activo)
+                    .HasColumnName("activo")
+                    .HasDefaultValue(true);
+
                 entity.HasOne(d => d.IdUsuarioNavigation)
                     .WithMany(p => p.Egresos)
                     .HasForeignKey(d => d.IdUsuario)
                     .HasConstraintName("FK__Egreso__idUsuario__74AE54BC");
+
+                entity.HasOne(d => d.ActualizadoPorNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.ActualizadoPor)
+                    .HasConstraintName("FK__Egreso__actualizadoPor__75A278F5");
             });
 
             modelBuilder.Entity<Venta>(entity =>
