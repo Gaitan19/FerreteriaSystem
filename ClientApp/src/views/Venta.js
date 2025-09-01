@@ -72,6 +72,25 @@ const Venta = () => {
     }
   };
 
+  const calcularVuelto = useCallback((pagoCliente) => {
+    // For Transferencia, no change is calculated (exact payment)
+    if (tipoPago === 'Transferencia') {
+      setVuelto(0);
+      return;
+    }
+    
+    // For Dolares, don't auto-calculate - let user enter manually
+    if (tipoPago === 'Dolares') {
+      return;
+    }
+    
+    // For Cordobas, calculate change normally
+    const totalVenta = parseFloat(total) || 0;
+    const pago = parseFloat(pagoCliente) || 0;
+    const cambio = pago - totalVenta;
+    setVuelto(cambio >= 0 ? cambio : 0);
+  }, [tipoPago, total]);
+
   useEffect(() => {
     obtenerProductos();
   }, []);
@@ -242,25 +261,6 @@ const Venta = () => {
     setProductos(listaproductos);
     calcularTotal(listaproductos);
   };
-
-  const calcularVuelto = useCallback((pagoCliente) => {
-    // For Transferencia, no change is calculated (exact payment)
-    if (tipoPago === 'Transferencia') {
-      setVuelto(0);
-      return;
-    }
-    
-    // For Dolares, don't auto-calculate - let user enter manually
-    if (tipoPago === 'Dolares') {
-      return;
-    }
-    
-    // For Cordobas, calculate change normally
-    const totalVenta = parseFloat(total) || 0;
-    const pago = parseFloat(pagoCliente) || 0;
-    const cambio = pago - totalVenta;
-    setVuelto(cambio >= 0 ? cambio : 0);
-  }, [tipoPago, total]);
 
   const calcularTotal = (arrayProductos) => {
     let st = 0;  // subtotal sin IVA
