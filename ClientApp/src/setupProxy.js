@@ -17,6 +17,8 @@ const context = [
   "/api/utilidad",
   "/api/session",
   "/api/proveedor",
+  "/api/ingreso",
+  "/api/egreso",
   "/notificationHub",
 ];
 
