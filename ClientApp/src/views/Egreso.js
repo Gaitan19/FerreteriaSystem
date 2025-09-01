@@ -26,6 +26,7 @@ const modeloEgreso = {
   tipoDinero: "efectivo",
   idUsuario: 0,
   esActivo: true,
+  fechaRegistro: new Date().toISOString().slice(0, 16),
 };
 
 const Egreso = () => {
@@ -110,8 +111,13 @@ const Egreso = () => {
 
   const abrirEditarModal = (data) => {
     setEgreso({
-      ...data,
-      monto: parseFloat(data.monto) || 0
+      idEgreso: data.idEgreso,
+      descripcion: data.descripcion,
+      monto: parseFloat(data.monto) || 0,
+      tipoDinero: data.tipoDinero,
+      idUsuario: data.idUsuario,
+      esActivo: data.esActivo,
+      fechaRegistro: data.fechaRegistro
     });
     setModoSoloLectura(false);
     setVerModal(!verModal);
@@ -137,14 +143,19 @@ const Egreso = () => {
       // Get current user data
       const userData = JSON.parse(user);
       
-      // Prepare data for sending
+      // Prepare data for sending with PascalCase property names for backend
       const egresoParaEnviar = {
-        ...egreso,
-        idUsuario: userData.idUsuario
+        IdEgreso: egreso.idEgreso,
+        Descripcion: egreso.descripcion,
+        Monto: egreso.monto,
+        TipoDinero: egreso.tipoDinero,
+        IdUsuario: userData.idUsuario,
+        EsActivo: egreso.esActivo,
+        FechaRegistro: egreso.fechaRegistro
       };
 
       let response;
-      if (egresoParaEnviar.idEgreso === 0) {
+      if (egreso.idEgreso === 0) {
         response = await fetch("api/egreso/Guardar", {
           method: "POST",
           headers: {
@@ -196,9 +207,6 @@ const Egreso = () => {
       cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
-        // Get current user data
-        const userData = JSON.parse(user);
-        
         fetch(`api/egreso/Eliminar/${id}`, {
           method: "DELETE",
         })
@@ -267,6 +275,16 @@ const Egreso = () => {
       name: "Usuario",
       selector: (row) => row.nombreUsuario,
       sortable: true,
+    },
+    {
+      name: "Estado",
+      selector: (row) => row.esActivo,
+      sortable: true,
+      cell: (row) => (
+        <span className={`badge p-2 ${row.esActivo ? 'badge-success' : 'badge-secondary'}`}>
+          {row.esActivo ? 'Activo' : 'Inactivo'}
+        </span>
+      ),
     },
     {
       name: "Acciones",
@@ -436,6 +454,49 @@ const Egreso = () => {
                   >
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
+                  </Input>
+                </FormGroup>
+              </Col>
+            </Row>
+            <Row>
+              <Col sm={6}>
+                <FormGroup>
+                  <Label>Fecha de Registro</Label>
+                  <Input
+                    bsSize="sm"
+                    type="datetime-local"
+                    name="fechaRegistro"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setEgreso({
+                        ...egreso,
+                        fechaRegistro: value
+                      });
+                    }}
+                    value={egreso.fechaRegistro ? new Date(egreso.fechaRegistro).toISOString().slice(0, 16) : ''}
+                    readOnly={modoSoloLectura}
+                  />
+                </FormGroup>
+              </Col>
+              <Col sm={6}>
+                <FormGroup>
+                  <Label>Estado</Label>
+                  <Input
+                    bsSize="sm"
+                    type="select"
+                    name="esActivo"
+                    onChange={(e) => {
+                      const value = e.target.value === "true";
+                      setEgreso({
+                        ...egreso,
+                        esActivo: value
+                      });
+                    }}
+                    value={egreso.esActivo ? "true" : "false"}
+                    disabled={modoSoloLectura}
+                  >
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
                   </Input>
                 </FormGroup>
               </Col>

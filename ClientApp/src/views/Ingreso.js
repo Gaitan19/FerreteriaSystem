@@ -25,8 +25,8 @@ const modeloIngreso = {
   monto: 0,
   tipoDinero: "efectivo",
   idUsuario: 0,
-  actualizadoPor: null,
   esActivo: true,
+  fechaRegistro: new Date().toISOString().slice(0, 16),
 };
 
 const Ingreso = () => {
@@ -111,8 +111,13 @@ const Ingreso = () => {
 
   const abrirEditarModal = (data) => {
     setIngreso({
-      ...data,
-      monto: parseFloat(data.monto) || 0
+      idIngreso: data.idIngreso,
+      descripcion: data.descripcion,
+      monto: parseFloat(data.monto) || 0,
+      tipoDinero: data.tipoDinero,
+      idUsuario: data.idUsuario,
+      esActivo: data.esActivo,
+      fechaRegistro: data.fechaRegistro
     });
     setModoSoloLectura(false);
     setVerModal(!verModal);
@@ -138,14 +143,19 @@ const Ingreso = () => {
       // Get current user data
       const userData = JSON.parse(user);
       
-      // Prepare data for sending
+      // Prepare data for sending with PascalCase property names for backend
       const ingresoParaEnviar = {
-        ...ingreso,
-        idUsuario: userData.idUsuario
+        IdIngreso: ingreso.idIngreso,
+        Descripcion: ingreso.descripcion,
+        Monto: ingreso.monto,
+        TipoDinero: ingreso.tipoDinero,
+        IdUsuario: userData.idUsuario,
+        EsActivo: ingreso.esActivo,
+        FechaRegistro: ingreso.fechaRegistro
       };
 
       let response;
-      if (ingresoParaEnviar.idIngreso === 0) {
+      if (ingreso.idIngreso === 0) {
         response = await fetch("api/ingreso/Guardar", {
           method: "POST",
           headers: {
@@ -197,9 +207,6 @@ const Ingreso = () => {
       cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
-        // Get current user data
-        const userData = JSON.parse(user);
-        
         fetch(`api/ingreso/Eliminar/${id}`, {
           method: "DELETE",
         })
@@ -268,6 +275,16 @@ const Ingreso = () => {
       name: "Usuario",
       selector: (row) => row.nombreUsuario,
       sortable: true,
+    },
+    {
+      name: "Estado",
+      selector: (row) => row.esActivo,
+      sortable: true,
+      cell: (row) => (
+        <span className={`badge p-2 ${row.esActivo ? 'badge-success' : 'badge-secondary'}`}>
+          {row.esActivo ? 'Activo' : 'Inactivo'}
+        </span>
+      ),
     },
     {
       name: "Acciones",
@@ -437,6 +454,49 @@ const Ingreso = () => {
                   >
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
+                  </Input>
+                </FormGroup>
+              </Col>
+            </Row>
+            <Row>
+              <Col sm={6}>
+                <FormGroup>
+                  <Label>Fecha de Registro</Label>
+                  <Input
+                    bsSize="sm"
+                    type="datetime-local"
+                    name="fechaRegistro"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setIngreso({
+                        ...ingreso,
+                        fechaRegistro: value
+                      });
+                    }}
+                    value={ingreso.fechaRegistro ? new Date(ingreso.fechaRegistro).toISOString().slice(0, 16) : ''}
+                    readOnly={modoSoloLectura}
+                  />
+                </FormGroup>
+              </Col>
+              <Col sm={6}>
+                <FormGroup>
+                  <Label>Estado</Label>
+                  <Input
+                    bsSize="sm"
+                    type="select"
+                    name="esActivo"
+                    onChange={(e) => {
+                      const value = e.target.value === "true";
+                      setIngreso({
+                        ...ingreso,
+                        esActivo: value
+                      });
+                    }}
+                    value={ingreso.esActivo ? "true" : "false"}
+                    disabled={modoSoloLectura}
+                  >
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
                   </Input>
                 </FormGroup>
               </Col>
