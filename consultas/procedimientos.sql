@@ -11,6 +11,10 @@ create procedure sp_RegistrarVenta(
 @impuestoTotal decimal(10,2),
 @total decimal(10,2),
 @productos xml,
+@tipoPago varchar(50),
+@numeroRuc varchar(50),
+@montoPago decimal(10,2),
+@vuelto decimal(10,2),
 @nroDocumento varchar(6) output
 )
 as
@@ -42,8 +46,8 @@ begin
 			
 			set @nrodocgenerado =  RIGHT('000000' + convert(varchar(max),@nro),6)
 
-			insert into Venta(numeroDocumento,tipoDocumento,idUsuario,documentoCliente,nombreCliente,subTotal,impuestoTotal,total) 
-			values (@nrodocgenerado,@tipoDocumento,@idUsuario,@documentoCliente,@nombreCliente,@subTotal,@impuestoTotal,@total)
+			insert into Venta(numeroDocumento,tipoDocumento,idUsuario,documentoCliente,nombreCliente,subTotal,impuestoTotal,total,tipoPago,numeroRuc,montoPago,vuelto) 
+			values (@nrodocgenerado,@tipoDocumento,@idUsuario,@documentoCliente,@nombreCliente,@subTotal,@impuestoTotal,@total,@tipoPago,@numeroRuc,@montoPago,@vuelto)
 
 
 			set @idventa = SCOPE_IDENTITY()
@@ -53,6 +57,17 @@ begin
 
 			update p set p.Stock = p.Stock - dv.Cantidad from PRODUCTO p
 			inner join @tbproductos dv on dv.IdProducto = p.IdProducto
+
+			-- Registrar ingreso con el monto que paga el cliente
+			insert into Ingreso(descripcion,monto,tipoDinero,idUsuario,esActivo)
+			values ('Pago de venta #' + @nrodocgenerado,@montoPago,@tipoPago,@idUsuario,1)
+
+			-- Registrar egreso con el vuelto (solo si hay vuelto y no es transferencia)
+			if @vuelto > 0 and @tipoPago != 'Transferencia'
+			begin
+				insert into Egreso(descripcion,monto,tipoDinero,idUsuario,esActivo)
+				values ('Vuelto de venta #' + @nrodocgenerado,@vuelto,'Cordobas',@idUsuario,1)
+			end
 
 		COMMIT
 		set @nroDocumento = @nrodocgenerado

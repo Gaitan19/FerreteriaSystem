@@ -72,6 +72,10 @@ nombreCliente varchar(100),
 subTotal decimal(10,2),
 impuestoTotal decimal(10,2),
 total decimal(10,2),
+tipoPago varchar(50),
+numeroRuc varchar(50),
+montoPago decimal(10,2),
+vuelto decimal(10,2)
 )
 
 go

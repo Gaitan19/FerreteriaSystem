@@ -23,7 +23,7 @@ const modeloIngreso = {
   idIngreso: 0,
   descripcion: "",
   monto: 0,
-  tipoDinero: "efectivo",
+  tipoDinero: "Cordobas",
   idUsuario: 0,
   esActivo: true,
   fechaRegistro: null,
