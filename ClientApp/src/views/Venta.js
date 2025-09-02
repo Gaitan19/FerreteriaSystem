@@ -11,27 +11,26 @@ import {
   Row,
   Table,
   Button,
-} from 'reactstrap';
-import Swal from 'sweetalert2';
-import Autosuggest from 'react-autosuggest';
-import { useContext, useEffect, useState, useCallback } from 'react';
-import './css/Venta.css';
-import { UserContext } from '../context/UserProvider';
-import { generateCode } from '../utils/generateCode';
-import printJS from 'print-js';
-import Ticket from '../componentes/Ticket';
-
+} from "reactstrap";
+import Swal from "sweetalert2";
+import Autosuggest from "react-autosuggest";
+import { useContext, useEffect, useState, useCallback } from "react";
+import "./css/Venta.css";
+import { UserContext } from "../context/UserProvider";
+import { generateCode } from "../utils/generateCode";
+import printJS from "print-js";
+import Ticket from "../componentes/Ticket";
 
 const Venta = () => {
   const { user } = useContext(UserContext);
 
   const [a_Productos, setA_Productos] = useState([]);
-  const [a_Busqueda, setA_Busqueda] = useState('');
+  const [a_Busqueda, setA_Busqueda] = useState("");
 
   const [documentoCliente, setDocumentoCliente] = useState(generateCode());
-  const [nombreCliente, setNombreCliente] = useState('');
+  const [nombreCliente, setNombreCliente] = useState("");
 
-  const [tipoDocumento, setTipoDocumento] = useState('Boleta');
+  const [tipoDocumento, setTipoDocumento] = useState("Boleta");
   const [productos, setProductos] = useState([]);
   const [productsCart, setProductsCart] = useState([]);
   const [total, setTotal] = useState(0);
@@ -39,34 +38,34 @@ const Venta = () => {
   const [igv, setIgv] = useState(0);
   const [tempProducts, setTempProducts] = useState([]);
   const [alreadyProductos, setAlreadyProductos] = useState(false);
-  
+
   // New fields for payment
-  const [tipoPago, setTipoPago] = useState('Cordobas');
-  const [numeroRuc, setNumeroRuc] = useState('');
+  const [tipoPago, setTipoPago] = useState("Cordobas");
+  const [numeroRuc, setNumeroRuc] = useState("");
   const [montoPago, setMontoPago] = useState(0);
   const [vuelto, setVuelto] = useState(0);
   const [tipoCambio, setTipoCambio] = useState(0);
-  
+
   // Estado para la última venta (para imprimir)
   const [ultimaVenta, setUltimaVenta] = useState({});
 
   const reestablecer = () => {
     setDocumentoCliente(generateCode());
-    setNombreCliente('');
-    setTipoDocumento('Boleta');
+    setNombreCliente("");
+    setTipoDocumento("Boleta");
     setProductos([]);
     setTotal(0);
     setSubTotal(0);
     setIgv(0);
-    setTipoPago('Cordobas');
-    setNumeroRuc('');
+    setTipoPago("Cordobas");
+    setNumeroRuc("");
     setMontoPago(0);
     setVuelto(0);
     setTipoCambio(0);
   };
 
   const obtenerProductos = async () => {
-    let response = await fetch('api/producto/Lista');
+    let response = await fetch("api/producto/Lista");
 
     if (response.ok) {
       let data = await response.json();
@@ -74,24 +73,33 @@ const Venta = () => {
     }
   };
 
-  const calcularVuelto = useCallback((pagoCliente) => {
-    // For Transferencia, no change is calculated (exact payment)
-    if (tipoPago === 'Transferencia') {
-      setVuelto(0);
-      return;
-    }
-    
-    // For Dolares, don't auto-calculate - let user enter manually
-    if (tipoPago === 'Dolares') {
-      return;
-    }
-    
-    // For Cordobas, calculate change normally
-    const totalVenta = parseFloat(total) || 0;
-    const pago = parseFloat(pagoCliente) || 0;
-    const cambio = pago - totalVenta;
-    setVuelto(cambio >= 0 ? cambio : 0);
-  }, [tipoPago, total]);
+  const calcularVuelto = useCallback(
+    (pagoCliente) => {
+      // For Transferencia, no change is calculated (exact payment)
+      if (tipoPago === "Transferencia") {
+        setVuelto(0);
+        return;
+      }
+
+      const totalVenta = parseFloat(total) || 0;
+      const pago = parseFloat(pagoCliente) || 0;
+
+      // For Dolares, don't auto-calculate - let user enter manually
+      if (tipoPago === "Dolares") {
+        // convertir a córdobas usando tipo de cambio
+        const montoConvertido = pago * (parseFloat(tipoCambio) || 0);
+        const cambio = montoConvertido - totalVenta;
+        setVuelto(cambio >= 0 ? cambio : 0);
+        return;
+      }
+
+      // For Cordobas, calculate change normally
+
+      const cambio = pago - totalVenta;
+      setVuelto(cambio >= 0 ? cambio : 0);
+    },
+    [tipoCambio, tipoPago, total]
+  );
 
   useEffect(() => {
     obtenerProductos();
@@ -99,21 +107,17 @@ const Venta = () => {
 
   // Recalculate change when payment type changes
   useEffect(() => {
-    if (tipoPago === 'Transferencia') {
+    if (tipoPago === "Transferencia") {
       setVuelto(0);
-    } else if (tipoPago === 'Dolares') {
-      // Don't auto-calculate for dollars, reset to 0
-      setVuelto(0);
-      setTipoCambio(0);
-    } else if (montoPago > 0) {
-      // For Cordobas, recalculate automatically
-      calcularVuelto(montoPago);
+    } else {
+      // For Cordobas and dollars, recalculate automatically
+      calcularVuelto(montoPago); 
     }
   }, [tipoPago, total, montoPago, calcularVuelto]);
 
   //para obtener la lista de sugerencias
   const onSuggestionsFetchRequested = ({ value }) => {
-    fetch('api/venta/Productos/' + value)
+    fetch("api/venta/Productos/" + value)
       .then((response) => {
         return response.ok ? response.json() : Promise.reject(response);
       })
@@ -136,7 +140,7 @@ const Venta = () => {
             const tempStock = tempProducts.filter(
               (item2) => item2.idProducto === item.idProducto
             );
-            
+
             if (
               item.precio > 0 &&
               isInCart &&
@@ -150,7 +154,7 @@ const Venta = () => {
         );
       })
       .catch((error) => {
-        console.log('No se pudo obtener datos, mayor detalle: ', error);
+        console.log("No se pudo obtener datos, mayor detalle: ", error);
       });
   };
 
@@ -163,9 +167,9 @@ const Venta = () => {
   const getSuggestionValue = (sugerencia) => {
     return (
       sugerencia.codigo +
-      ' - ' +
+      " - " +
       sugerencia.marca +
-      ' - ' +
+      " - " +
       sugerencia.descripcion
     );
   };
@@ -174,9 +178,9 @@ const Venta = () => {
   const renderSuggestion = (sugerencia) => (
     <span>
       {sugerencia.codigo +
-        ' - ' +
+        " - " +
         sugerencia.marca +
-        ' - ' +
+        " - " +
         sugerencia.descripcion}
     </span>
   );
@@ -187,7 +191,7 @@ const Venta = () => {
   };
 
   const inputProps = {
-    placeholder: 'Buscar producto',
+    placeholder: "Buscar producto",
     value: a_Busqueda,
     onChange,
   };
@@ -197,34 +201,34 @@ const Venta = () => {
     { suggestion, suggestionValue, suggestionIndex, sectionIndex, method }
   ) => {
     Swal.fire({
-      title: suggestion.marca + ' - ' + suggestion.descripcion,
-      text: 'Ingrese la cantidad',
-      input: 'text',
+      title: suggestion.marca + " - " + suggestion.descripcion,
+      text: "Ingrese la cantidad",
+      input: "text",
       inputAttributes: {
-        autocapitalize: 'off',
+        autocapitalize: "off",
       },
       showCancelButton: true,
-      confirmButtonText: 'Aceptar',
-      cancelButtonText: 'Volver',
+      confirmButtonText: "Aceptar",
+      cancelButtonText: "Volver",
       showLoaderOnConfirm: true,
       preConfirm: (inputValue) => {
         obtenerProductos();
 
         if (isNaN(parseFloat(inputValue))) {
-          setA_Busqueda('');
-          Swal.showValidationMessage('Debe ingresar un valor númerico');
+          setA_Busqueda("");
+          Swal.showValidationMessage("Debe ingresar un valor númerico");
         } else {
           const tempStock = tempProducts.filter(
             (item) => item.idProducto === suggestion.idProducto
           );
 
           if (parseInt(inputValue) > tempStock[0].stock) {
-            setA_Busqueda('');
+            setA_Busqueda("");
             Swal.showValidationMessage(
               `La cantidad excede al stock:${tempStock[0].stock}`
             );
           } else if (parseInt(inputValue) < 1) {
-            setA_Busqueda('');
+            setA_Busqueda("");
             Swal.showValidationMessage(`La cantidad debe ser mayor a "0"`);
           } else {
             setProductsCart(() => [...productsCart, tempStock]);
@@ -248,9 +252,9 @@ const Venta = () => {
       allowOutsideClick: () => !Swal.isLoading(),
     }).then((result) => {
       if (result.isConfirmed) {
-        setA_Busqueda('');
+        setA_Busqueda("");
       } else {
-        setA_Busqueda('');
+        setA_Busqueda("");
       }
     });
   };
@@ -266,56 +270,54 @@ const Venta = () => {
   };
 
   const calcularTotal = (arrayProductos) => {
-    let st = 0;  // subtotal sin IVA
+    let st = 0; // subtotal sin IVA
     let imp = 0; // IVA
-    let t = 0;   // total con IVA
+    let t = 0; // total con IVA
 
     if (arrayProductos.length > 0) {
-        arrayProductos.forEach((p) => {
-            st += p.total   // aquí p.total = precio * cantidad (sin IVA)
-        })
+      arrayProductos.forEach((p) => {
+        st += p.total; // aquí p.total = precio * cantidad (sin IVA)
+      });
 
-        imp = st * 0.15    // IVA del 15% en Nicaragua
-        t = st + imp       // Total con IVA
+      imp = st * 0.15; // IVA del 15% en Nicaragua
+      t = st + imp; // Total con IVA
     }
 
-    setSubTotal(st.toFixed(2))
-    setIgv(imp.toFixed(2))
-    setTotal(t.toFixed(2))
-}
-;
-
+    setSubTotal(st.toFixed(2));
+    setIgv(imp.toFixed(2));
+    setTotal(t.toFixed(2));
+  };
   // Función para obtener detalles de una venta específica
   const obtenerDetalleVenta = async (numeroVenta) => {
     try {
-      let options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-      let fecha = new Date().toLocaleDateString('es-PE', options);
-      
+      let options = { year: "numeric", month: "2-digit", day: "2-digit" };
+      let fecha = new Date().toLocaleDateString("es-PE", options);
+
       const response = await fetch(
         `api/venta/Listar?buscarPor=numero&numeroVenta=${numeroVenta}&fechaInicio=${fecha}&fechaFin=${fecha}`
       );
-      
+
       if (response.ok) {
         const dataJson = await response.json();
         if (dataJson.length > 0) {
           setUltimaVenta(dataJson[0]);
-          console.log('Detalle de venta obtenido:', dataJson[0]);
+          console.log("Detalle de venta obtenido:", dataJson[0]);
           return dataJson[0];
         }
       }
       return null;
     } catch (error) {
-      console.error('Error al obtener detalle de venta:', error);
+      console.error("Error al obtener detalle de venta:", error);
       return null;
     }
   };
 
   // Función para imprimir el ticket (igual que en HistorialVenta)
-   const imprimirTicket = () => {
-     printJS({
-       printable: "ticket-impresion",
-       type: "html",
-       style: `
+  const imprimirTicket = () => {
+    printJS({
+      printable: "ticket-impresion",
+      type: "html",
+      style: `
          .ticket {
         .ticket {
      font-family: 'Courier New', monospace;
@@ -421,42 +423,54 @@ const Venta = () => {
  }
  
        `,
-     });
-   };
+    });
+  };
 
   const terminarVenta = () => {
     if (productos.length < 1) {
-      Swal.fire('Opps!', 'No existen productos', 'error');
+      Swal.fire("Opps!", "No existen productos", "error");
       return;
     }
 
     // Validation for required fields
     if (!tipoPago) {
-      Swal.fire('Opps!', 'Debe seleccionar un tipo de pago', 'error');
+      Swal.fire("Opps!", "Debe seleccionar un tipo de pago", "error");
       return;
     }
 
     if (montoPago <= 0) {
-      Swal.fire('Opps!', 'Debe ingresar el monto que paga el cliente', 'error');
+      Swal.fire("Opps!", "Debe ingresar el monto que paga el cliente", "error");
       return;
     }
 
     // For Dolares payment, validate exchange rate and use conversion
-    if (tipoPago === 'Dolares') {
+    if (tipoPago === "Dolares") {
       if (tipoCambio <= 0) {
-        Swal.fire('Opps!', 'Debe ingresar un tipo de cambio válido (mayor a 0)', 'error');
+        Swal.fire(
+          "Opps!",
+          "Debe ingresar un tipo de cambio válido (mayor a 0)",
+          "error"
+        );
         return;
       }
-      
+
       const montoConvertido = parseFloat(montoPago) * parseFloat(tipoCambio);
       if (montoConvertido < parseFloat(total)) {
-        Swal.fire('Opps!', 'El monto pagado debe ser mayor o igual al total de la venta', 'error');
+        Swal.fire(
+          "Opps!",
+          "El monto pagado debe ser mayor o igual al total de la venta",
+          "error"
+        );
         return;
       }
     } else {
       // For other payment types, validate normally
       if (montoPago < parseFloat(total)) {
-        Swal.fire('Opps!', 'El monto pagado debe ser mayor o igual al total de la venta', 'error');
+        Swal.fire(
+          "Opps!",
+          "El monto pagado debe ser mayor o igual al total de la venta",
+          "error"
+        );
         return;
       }
     }
@@ -470,7 +484,7 @@ const Venta = () => {
       igv: parseFloat(igv),
       total: parseFloat(total),
       tipoPago: tipoPago,
-      numeroRuc: numeroRuc || '',
+      numeroRuc: numeroRuc || "",
       montoPago: parseFloat(montoPago),
       vuelto: parseFloat(vuelto),
       listaProductos: productos,
@@ -478,10 +492,10 @@ const Venta = () => {
 
     setProductsCart([]);
 
-    fetch('api/venta/Registrar', {
-      method: 'POST',
+    fetch("api/venta/Registrar", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json;charset=utf-8',
+        "Content-Type": "application/json;charset=utf-8",
       },
       body: JSON.stringify(venta),
     })
@@ -491,17 +505,17 @@ const Venta = () => {
       .then(async (dataJson) => {
         reestablecer();
         var data = dataJson;
-        
+
         // Mostrar mensaje de éxito con opción de imprimir
         const result = await Swal.fire({
-          title: 'Venta Creada!',
+          title: "Venta Creada!",
           text: `Número de venta: ${data.numeroDocumento}`,
-          icon: 'success',
+          icon: "success",
           showCancelButton: true,
-          confirmButtonText: 'Imprimir Ticket',
-          cancelButtonText: 'Cerrar',
-          confirmButtonColor: '#4e73df',
-          cancelButtonColor: '#6c757d'
+          confirmButtonText: "Imprimir Ticket",
+          cancelButtonText: "Cerrar",
+          confirmButtonColor: "#4e73df",
+          cancelButtonColor: "#6c757d",
         });
 
         // Si el usuario quiere imprimir
@@ -514,15 +528,19 @@ const Venta = () => {
               imprimirTicket();
             }, 500);
           } else {
-            Swal.fire('Error', 'No se pudo obtener los detalles para imprimir', 'error');
+            Swal.fire(
+              "Error",
+              "No se pudo obtener los detalles para imprimir",
+              "error"
+            );
           }
         }
 
         obtenerProductos();
       })
       .catch((error) => {
-        Swal.fire('Opps!', 'No se pudo crear la venta', 'error');
-        console.log('No se pudo enviar la venta ', error);
+        Swal.fire("Opps!", "No se pudo crear la venta", "error");
+        console.log("No se pudo enviar la venta ", error);
       });
   };
 
@@ -534,7 +552,7 @@ const Venta = () => {
             <Col sm={12}>
               <Card>
                 <CardHeader
-                  style={{ backgroundColor: '#4e73df', color: 'white' }}
+                  style={{ backgroundColor: "#4e73df", color: "white" }}
                 >
                   Cliente
                 </CardHeader>
@@ -576,7 +594,9 @@ const Venta = () => {
                     </Col>
                     <Col sm={6}>
                       <FormGroup>
-                        <Label>Tipo de Pago <span style={{color: 'red'}}>*</span></Label>
+                        <Label>
+                          Tipo de Pago <span style={{ color: "red" }}>*</span>
+                        </Label>
                         <Input
                           type="select"
                           bsSize="sm"
@@ -590,11 +610,14 @@ const Venta = () => {
                       </FormGroup>
                     </Col>
                   </Row>
-                  {tipoPago === 'Dolares' && (
+                  {tipoPago === "Dolares" && (
                     <Row>
                       <Col sm={6}>
                         <FormGroup>
-                          <Label>Tipo de Cambio (C$ por US$) <span style={{color: 'red'}}>*</span></Label>
+                          <Label>
+                            Tipo de Cambio (C$ por US$){" "}
+                            <span style={{ color: "red" }}>*</span>
+                          </Label>
                           <Input
                             type="number"
                             step="0.01"
@@ -615,7 +638,7 @@ const Venta = () => {
             <Col sm={12}>
               <Card>
                 <CardHeader
-                  style={{ backgroundColor: '#4e73df', color: 'white' }}
+                  style={{ backgroundColor: "#4e73df", color: "white" }}
                 >
                   Productos
                 </CardHeader>
@@ -692,7 +715,7 @@ const Venta = () => {
             <Col sm={12}>
               <Card>
                 <CardHeader
-                  style={{ backgroundColor: '#4e73df', color: 'white' }}
+                  style={{ backgroundColor: "#4e73df", color: "white" }}
                 >
                   Detalle
                 </CardHeader>
@@ -739,11 +762,13 @@ const Venta = () => {
                   <Row className="mb-2">
                     <Col sm={12}>
                       <InputGroup size="sm">
-                        <InputGroupText>Paga con <span style={{color: 'red'}}>*</span>:</InputGroupText>
-                        <Input 
-                          type="number" 
+                        <InputGroupText>
+                          Paga con <span style={{ color: "red" }}>*</span>:
+                        </InputGroupText>
+                        <Input
+                          type="number"
                           step="0.01"
-                          value={montoPago} 
+                          value={montoPago}
                           onChange={(e) => {
                             const valor = e.target.value;
                             setMontoPago(valor);
@@ -758,16 +783,11 @@ const Venta = () => {
                     <Col sm={12}>
                       <InputGroup size="sm">
                         <InputGroupText>
-                          Vuelto:{tipoPago === 'Dolares' ? '$' : 'C$'}
+                          Vuelto:C$
                         </InputGroupText>
-                        <Input 
-                          disabled={tipoPago !== 'Dolares'} 
-                          value={vuelto.toFixed(2)} 
-                          onChange={(e) => {
-                            if (tipoPago === 'Dolares') {
-                              setVuelto(parseFloat(e.target.value) || 0);
-                            }
-                          }}
+                        <Input
+                          disabled
+                          value={vuelto.toFixed(2)}
                           type="number"
                           step="0.01"
                         />
