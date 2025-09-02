@@ -45,6 +45,7 @@ const Venta = () => {
   const [numeroRuc, setNumeroRuc] = useState('');
   const [montoPago, setMontoPago] = useState(0);
   const [vuelto, setVuelto] = useState(0);
+  const [tipoCambio, setTipoCambio] = useState(0);
   
   // Estado para la última venta (para imprimir)
   const [ultimaVenta, setUltimaVenta] = useState({});
@@ -61,6 +62,7 @@ const Venta = () => {
     setNumeroRuc('');
     setMontoPago(0);
     setVuelto(0);
+    setTipoCambio(0);
   };
 
   const obtenerProductos = async () => {
@@ -102,6 +104,7 @@ const Venta = () => {
     } else if (tipoPago === 'Dolares') {
       // Don't auto-calculate for dollars, reset to 0
       setVuelto(0);
+      setTipoCambio(0);
     } else if (montoPago > 0) {
       // For Cordobas, recalculate automatically
       calcularVuelto(montoPago);
@@ -438,9 +441,24 @@ const Venta = () => {
       return;
     }
 
-    if (montoPago < parseFloat(total)) {
-      Swal.fire('Opps!', 'El monto pagado debe ser mayor o igual al total de la venta', 'error');
-      return;
+    // For Dolares payment, validate exchange rate and use conversion
+    if (tipoPago === 'Dolares') {
+      if (tipoCambio <= 0) {
+        Swal.fire('Opps!', 'Debe ingresar un tipo de cambio válido (mayor a 0)', 'error');
+        return;
+      }
+      
+      const montoConvertido = parseFloat(montoPago) * parseFloat(tipoCambio);
+      if (montoConvertido < parseFloat(total)) {
+        Swal.fire('Opps!', 'El monto pagado debe ser mayor o igual al total de la venta', 'error');
+        return;
+      }
+    } else {
+      // For other payment types, validate normally
+      if (montoPago < parseFloat(total)) {
+        Swal.fire('Opps!', 'El monto pagado debe ser mayor o igual al total de la venta', 'error');
+        return;
+      }
     }
 
     let venta = {
@@ -572,6 +590,23 @@ const Venta = () => {
                       </FormGroup>
                     </Col>
                   </Row>
+                  {tipoPago === 'Dolares' && (
+                    <Row>
+                      <Col sm={6}>
+                        <FormGroup>
+                          <Label>Tipo de Cambio (C$ por US$) <span style={{color: 'red'}}>*</span></Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            bsSize="sm"
+                            value={tipoCambio}
+                            onChange={(e) => setTipoCambio(e.target.value)}
+                            placeholder="Ej: 36.6"
+                          />
+                        </FormGroup>
+                      </Col>
+                    </Row>
+                  )}
                 </CardBody>
               </Card>
             </Col>
